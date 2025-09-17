@@ -266,7 +266,7 @@ const css = `
   justify-content:center;
   background:#2f3132;
   font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  adding: 10px 350px 10px 350px;
+  padding: 10px 150px 10px 150px;
 }
 
 /* Card */
