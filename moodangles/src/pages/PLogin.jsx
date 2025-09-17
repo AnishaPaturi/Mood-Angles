@@ -257,6 +257,20 @@ export default function LoginPage() {
             >
               Login
             </button>
+
+            {/* ===== Added Statement ===== */}
+            <p
+              style={{
+                marginTop: "12px",
+                color: "#6366f1",
+                cursor: "pointer",
+                fontSize: "14px",
+                textAlign: "center",
+              }}
+              onClick={() => navigate("/")}
+            >
+              Not a psychiatrist? 
+            </p>
           </form>
         </div>
       </div>

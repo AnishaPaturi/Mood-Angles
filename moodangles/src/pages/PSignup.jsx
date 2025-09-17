@@ -370,6 +370,20 @@ export default function AuthPage() {
               >
                 Create Account
               </button>
+
+              {/* ===== Added Statement ===== */}
+              <p
+                style={{
+                  marginTop: "12px",
+                  color: "#6e8efb",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  textAlign: "center",
+                }}
+                onClick={() => navigate("/")}
+              >
+                Not a psychiatrist? 
+              </p>
             </form>
           )}
         </div>

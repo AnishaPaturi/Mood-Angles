@@ -1,16 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-/*
- Single-file Login.jsx with embedded CSS so you don't need login.css.
- - Left decorative pink panel with layered shapes
- - White curved notch with LOGIN / SIGN IN toggles
- - Right white form area with logo placeholder
- - Password tooltip & validation rules (8+, 1 uppercase, 1 digit, one of @ # $ _)
- - Google button (no Facebook)
- - Redirects to /dashboard on successful login (calls backend at /api/auth/login)
-*/
-
 export default function Login() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("login"); // "login" or "signup"
@@ -31,7 +21,6 @@ export default function Login() {
       return;
     }
 
-    // Try backend login (replace URL if needed)
     try {
       const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
@@ -40,22 +29,47 @@ export default function Login() {
       });
 
       const data = await res.json();
+
       if (res.ok) {
-        // Successful -> redirect to Dashboard
+        // Store JWT token for SPA
+        localStorage.setItem("token", data.token);
         navigate("/dashboard");
       } else {
         setError(data.msg || data.error || "Invalid credentials");
       }
     } catch (err) {
-      // If backend not running, still redirect for UI testing (remove this in production)
-      console.warn("Backend unavailable — navigating to dashboard for UI testing");
+      console.warn("Backend unavailable — navigating for UI testing");
       navigate("/dashboard");
     }
   };
 
   const handleGoogle = () => {
-    // Replace this endpoint with real Google OAuth backend route when ready
-    window.location.href = "http://localhost:5000/api/auth/google";
+    // Open Google OAuth in a popup
+    const width = 500, height = 600;
+    const left = window.innerWidth / 2 - width / 2;
+    const top = window.innerHeight / 2 - height / 2;
+
+    const popup = window.open(
+      "http://localhost:5000/api/auth/google",
+      "Google Login",
+      `width=${width},height=${height},top=${top},left=${left}`
+    );
+
+    const messageListener = (event) => {
+      if (event.origin !== "http://localhost:5000") return;
+
+      const { token, error } = event.data;
+      if (token) {
+        localStorage.setItem("token", token);
+        navigate("/dashboard");
+      }
+      if (error) setError(error);
+
+      window.removeEventListener("message", messageListener);
+      popup.close();
+    };
+
+    window.addEventListener("message", messageListener);
   };
 
   return (
@@ -63,20 +77,19 @@ export default function Login() {
       <style>{css}</style>
 
       <div className="card">
+        {/* LEFT PANEL */}
         <div className="left">
           <div className="left-decor deco1" />
           <div className="left-decor deco2" />
           <div className="left-decor deco3" />
-
           <div className="brand">
-            <h1>Brand</h1>
-            <p>Make it you</p>
+            <h1>Mood</h1>
+            <h1>Angles</h1>
           </div>
 
           <div
             className={`notch ${tab === "signup" ? "notch-signup" : ""}`}
             role="tablist"
-            aria-label="login signup toggle"
           >
             <button
               className={`tab ${tab === "login" ? "active" : ""}`}
@@ -96,21 +109,19 @@ export default function Login() {
           </div>
         </div>
 
+        {/* RIGHT PANEL */}
         <div className="right">
-          {/* <img
-            alt="logo placeholder"
-            src="image.png"
-            className="logo"
-          /> */}
           <h2>{tab === "login" ? "LOGIN" : "SIGN UP"}</h2>
 
           {tab === "login" ? (
             <form className="form" onSubmit={handleSubmit} noValidate>
               <div className="inputRow">
                 <span className="icon" aria-hidden>
-                  {/* email icon */}
                   <svg width="18" height="18" viewBox="0 0 24 24">
-                    <path fill="#9aa4ad" d="M2 6v12h20V6L12 13 2 6zM20 5c.55 0 1 .45 1 1v12c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V6c0-.55.45-1 1-1h16z"></path>
+                    <path
+                      fill="#9aa4ad"
+                      d="M2 6v12h20V6L12 13 2 6zM20 5c.55 0 1 .45 1 1v12c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V6c0-.55.45-1 1-1h16z"
+                    ></path>
                   </svg>
                 </span>
                 <input
@@ -124,9 +135,11 @@ export default function Login() {
 
               <div className="inputRow">
                 <span className="icon" aria-hidden>
-                  {/* lock icon */}
                   <svg width="18" height="18" viewBox="0 0 24 24">
-                    <path fill="#9aa4ad" d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2v-8a2 2 0 00-2-2zm-7 0V6a2 2 0 114 0v2h-4z"></path>
+                    <path
+                      fill="#9aa4ad"
+                      d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2v-8a2 2 0 00-2-2zm-7 0V6a2 2 0 114 0v2h-4z"
+                    ></path>
                   </svg>
                 </span>
 
@@ -151,7 +164,7 @@ export default function Login() {
               </div>
 
               <div className="row between">
-                <div style={{ height: 24 }} /> {/* spacer */}
+                <div style={{ height: 24 }} />
                 <a onClick={() => navigate("/forgot-password")} className="forgot">
                   Forgot Password?
                 </a>
@@ -162,16 +175,26 @@ export default function Login() {
               <button className="primary" type="submit">
                 LOGIN
               </button>
+
+              {/* ===== Added Not a user link ===== */}
+              <p
+                style={{
+                  marginTop: "12px",
+                  color: "#ff758c",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+                onClick={() => navigate("/")}
+              >
+                Not a user? 
+              </p>
             </form>
           ) : (
             <div className="signup-placeholder">
               <p>Signup UI will be implemented later — click SIGN UP here to switch.</p>
-            <button
-              className="primary"
-              onClick={() => navigate("/signup")}
-            >
-              Create Account
-            </button>
+              <button className="primary" onClick={() => navigate("/signup")}>
+                Create Account
+              </button>
             </div>
           )}
 
@@ -194,7 +217,6 @@ export default function Login() {
   );
 }
 
-// Embedded CSS (kept as a template string so you can drop this single file into your project)
 const css = `
 :root{
   --pink1:#ff7eb3;
@@ -234,7 +256,7 @@ const css = `
   align-items: center;
   min-height: 100vh;
   width: 100%;
-  background: #2f3132;
+  background: #f7cbd4ff;
   font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   padding: 10px 150px 10px 150px;
   box-sizing: border-box;

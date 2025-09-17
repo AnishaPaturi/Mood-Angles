@@ -2,12 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import PAvatar from "../assets/PAvatar.png";
 import UAvatar from "../assets/UAvatar.png";
-import "./Dashboard.css"; // ⬅️ Import styles
+import "./Dashboard.css"; // ⬅️ Styles for animations + dots
 
 export default function Dashboard() {
   return (
     <div style={styles.page} className="page">
-      {/* === Title with Fade-in Animation === */}
+      {/* === Title === */}
       <h1 style={styles.title}>Mood Angles</h1>
 
       <div style={styles.card}>
@@ -57,19 +57,17 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     minHeight: "100vh",
-    background: "linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb)",
-    backgroundSize: "400% 400%",
-    animation: "gradientBG 15s ease infinite",
+    background: "#ffffff", // ⬅️ WHITE background now
     fontFamily: "Poppins, sans-serif",
     padding: "0px 270px",
     position: "relative",
-    overflow: "hidden", // needed for stars
+    overflow: "hidden",
   },
 
   title: {
     fontSize: "40px",
     fontWeight: "700",
-    color: "#fff",
+    color: "#000", // darker title since background is white
     marginBottom: "40px",
     opacity: 0,
     animation: "fadeIn 2s ease forwards",
@@ -83,7 +81,7 @@ const styles = {
     borderRadius: "16px",
     overflow: "hidden",
     boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
-    background: "#fffaf0", // Light peach
+    background: "#fffaf0",
     position: "relative",
     zIndex: 2,
   },

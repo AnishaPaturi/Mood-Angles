@@ -72,8 +72,8 @@ export default function Signup() {
         {/* LEFT PANEL with notch */}
         <div className="left">
           <div className="brand">
-            <h1>Welcome!</h1>
-            <p>Join our platform</p>
+            <h1>Mood</h1>
+            <h1>Angles</h1>
           </div>
           <div className="notch notch-signup">
             <button className="tab" onClick={() => navigate("/login")}>
@@ -138,7 +138,6 @@ export default function Signup() {
                 ))}
               </div>
             </div>
-
 
             <input
               type="number"
@@ -206,6 +205,19 @@ export default function Signup() {
             <button className="primary" type="submit">
               SIGN UP
             </button>
+
+            {/* ===== Added Not a user link ===== */}
+            <p
+              style={{
+                marginTop: "12px",
+                color: "#ff758c",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+              onClick={() => navigate("/")}
+            >
+              Not a user? 
+            </p>
           </form>
 
           <div className="divider" />
@@ -239,7 +251,6 @@ export default function Signup() {
   );
 }
 
-// Embedded CSS (kept as a template string so you can drop this single file into your project)
 const css = `
 :root{
   --pink1:#ff7eb3;
@@ -264,7 +275,7 @@ const css = `
   display:flex;
   align-items:center;
   justify-content:center;
-  background:#2f3132;
+  background: #f7cbd4ff;
   font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   padding: 10px 150px 10px 150px;
 }
