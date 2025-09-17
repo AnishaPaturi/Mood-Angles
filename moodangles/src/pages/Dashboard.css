@@ -1,0 +1,48 @@
+/* Fade-in effect */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Twinkling animation */
+@keyframes twinkle {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50px); }
+}
+
+/* === Twinkling black dots === */
+.page::before,
+.page::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(#222 1px, transparent 1px); /* darker gray dots */
+  background-size: 50px 50px;
+  animation: twinkle 10s linear infinite;
+  opacity: 0.7; /* slightly stronger than before */
+  z-index: 1;
+}
+
+.page::after {
+  animation-duration: 15s;
+  opacity: 0.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes twinkle {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50px); }
+}

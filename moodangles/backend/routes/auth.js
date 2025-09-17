@@ -1,5 +1,6 @@
 import express from "express";
 import bcrypt from "bcryptjs";
+import passport from "passport";
 import User from "../models/User.js";
 import Psychiatrist from "../models/Psychiatrist.js";
 
@@ -10,7 +11,6 @@ router.post("/signup", async (req, res) => {
   try {
     const { firstName, email, phone, gender, age, city, password, terms } = req.body;
 
-    // Password validation
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$._])[A-Za-z\d@#$._]{8,}$/;
     if (!passwordRegex.test(password))
       return res.status(400).json({ msg: "Password does not meet constraints." });
@@ -118,5 +118,19 @@ router.post("/psychiatrist/login", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ==================== GOOGLE LOGIN ====================
+// Start Google OAuth login
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+// Google OAuth callback
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    // Successful login
+    res.redirect("/dashboard"); // Redirect your React frontend
+  }
+);
 
 export default router;
