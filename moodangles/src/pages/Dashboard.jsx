@@ -2,21 +2,22 @@ import React from "react";
 import { Link } from "react-router-dom";
 import PAvatar from "../assets/PAvatar.png";
 import UAvatar from "../assets/UAvatar.png";
+import "./Dashboard.css"; // ⬅️ Import styles
 
 export default function Dashboard() {
   return (
-    <div style={styles.page}>
+    <div style={styles.page} className="page">
+      {/* === Title with Fade-in Animation === */}
+      <h1 style={styles.title}>Mood Angles</h1>
+
       <div style={styles.card}>
-        
         {/* === LEFT: USER SECTION === */}
         <div style={styles.leftSection}>
-          {/* User Image & Label */}
           <div style={styles.imageWrapper}>
-            <div style={styles.avatar}></div>
+            <img src={UAvatar} alt="User Avatar" style={styles.avatarImg} />
             <p style={styles.userLabel}>Users</p>
           </div>
 
-          {/* User Buttons */}
           <div style={styles.buttonGroup}>
             <Link to="/login">
               <button style={styles.tealBtn}>Login</button>
@@ -29,14 +30,11 @@ export default function Dashboard() {
 
         {/* === RIGHT: PSYCHIATRIST SECTION === */}
         <div style={styles.rightSection}>
-          {/* Psychiatrist Image & Label */}
           <div style={styles.imageWrapper}>
-            <div style={styles.avatar}></div>
-            <img src="PAvatar" alt="Psychiatrist Avatar" />
+            <img src={PAvatar} alt="Psychiatrist Avatar" style={styles.avatarImg} />
             <p style={styles.userLabel}>Psychiatrist</p>
           </div>
 
-          {/* Psychiatrist Buttons */}
           <div style={styles.buttonGroup}>
             <Link to="/PLogin">
               <button style={styles.tealBtn}>Login</button>
@@ -46,22 +44,36 @@ export default function Dashboard() {
             </Link>
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-/* === Styles === */
+/* === Inline Styles for Layout Only === */
 const styles = {
   page: {
     display: "flex",
+    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
     minHeight: "100vh",
-    background: "#ffffffff",
+    background: "linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1, #fbc2eb)",
+    backgroundSize: "400% 400%",
+    animation: "gradientBG 15s ease infinite",
     fontFamily: "Poppins, sans-serif",
-    padding: '0px 270px 0px 270px',
+    padding: "0px 270px",
+    position: "relative",
+    overflow: "hidden", // needed for stars
+  },
+
+  title: {
+    fontSize: "40px",
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: "40px",
+    opacity: 0,
+    animation: "fadeIn 2s ease forwards",
+    zIndex: 2,
   },
 
   card: {
@@ -70,14 +82,15 @@ const styles = {
     height: "450px",
     borderRadius: "16px",
     overflow: "hidden",
-    boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
-    background: "#fff",
+    boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
+    background: "#fffaf0", // Light peach
+    position: "relative",
+    zIndex: 2,
   },
 
-  /* Left Section - Users */
   leftSection: {
     width: "50%",
-    background: "#dea0ebff", // Light pink background
+    background: "#dea0ebff",
     padding: "24px",
     display: "flex",
     flexDirection: "column",
@@ -85,10 +98,9 @@ const styles = {
     boxSizing: "border-box",
   },
 
-  /* Right Section - Psychiatrist */
   rightSection: {
     width: "50%",
-    background: "#7b7bf4ff", // Light lavender background
+    background: "#7b7bf4ff",
     padding: "24px",
     display: "flex",
     flexDirection: "column",
@@ -96,7 +108,6 @@ const styles = {
     boxSizing: "border-box",
   },
 
-  /* Shared Styles for Avatar + Label */
   imageWrapper: {
     display: "flex",
     flexDirection: "column",
@@ -105,12 +116,13 @@ const styles = {
     flexGrow: 1,
   },
 
-  avatar: {
+  avatarImg: {
     width: "160px",
     height: "160px",
-    borderRadius: "80%",
-    background: "#d9d9d9", // Placeholder grey
+    borderRadius: "50%",
+    objectFit: "cover",
     marginBottom: "12px",
+    boxShadow: "0 6px 15px rgba(0,0,0,0.2)",
   },
 
   userLabel: {
@@ -119,7 +131,6 @@ const styles = {
     color: "#333",
   },
 
-  /* Button Group */
   buttonGroup: {
     display: "flex",
     flexDirection: "column",
@@ -139,5 +150,6 @@ const styles = {
     cursor: "pointer",
     fontSize: "15px",
     width: "100%",
+    transition: "transform 0.2s ease, background 0.3s ease",
   },
 };
