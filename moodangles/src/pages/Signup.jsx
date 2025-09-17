@@ -76,7 +76,7 @@ export default function Signup() {
             <p>Join our platform</p>
           </div>
           <div className="notch notch-signup">
-            <button className="tab" onClick={() => navigate("/")}>
+            <button className="tab" onClick={() => navigate("/login")}>
               LOGIN
             </button>
             <button className="tab active">SIGN UP</button>
@@ -266,7 +266,7 @@ const css = `
   justify-content:center;
   background:#2f3132;
   font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  padding:120px;
+  adding: 10px 350px 10px 350px;
 }
 
 /* Card */

@@ -236,7 +236,7 @@ const css = `
   width: 100%;
   background: #2f3132;
   font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  padding: 120px;
+  padding: 10px 150px 10px 150px;
   box-sizing: border-box;
 }
 
