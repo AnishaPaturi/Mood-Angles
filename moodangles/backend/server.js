@@ -1,3 +1,41 @@
+// import express from "express";
+// import mongoose from "mongoose";
+// import cors from "cors";
+// import dotenv from "dotenv";
+// import authRoutes from "./routes/auth.js";
+
+// dotenv.config();
+// const app = express();
+// const PORT = process.env.PORT || 5000;
+
+// // Middleware
+// app.use(express.json());
+
+// // ✅ CORS fix for frontend (React @3000 or Vite @5173)
+// app.use(
+//   cors({
+//     origin: ["http://localhost:3000", "http://localhost:5173"],
+//     credentials: true,
+//   })
+// );
+
+// // Mount routes
+// app.use("/api/auth", authRoutes);
+
+// // DB connection
+// mongoose
+//   .connect(process.env.MONGO_URI, {
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true,
+//   })
+//   .then(() => {
+//     app.listen(PORT, () =>
+//       console.log(`🚀 Server running on http://localhost:${PORT}`)
+//     );
+//   })
+//   .catch((err) => console.error("❌ MongoDB Error:", err));
+
+
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";

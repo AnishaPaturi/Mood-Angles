@@ -1,6 +1,5 @@
 import express from "express";
 import bcrypt from "bcryptjs";
-import passport from "passport";
 import User from "../models/User.js";
 import Psychiatrist from "../models/Psychiatrist.js";
 
@@ -9,11 +8,15 @@ const router = express.Router();
 // ==================== USER SIGNUP ====================
 router.post("/signup", async (req, res) => {
   try {
-    const { firstName, email, phone, gender, age, city, password, terms } = req.body;
+    const { firstName, email, phone, gender, age, city, password, terms } =
+      req.body;
 
-    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$._])[A-Za-z\d@#$._]{8,}$/;
+    const passwordRegex =
+      /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$._])[A-Za-z\d@#$._]{8,}$/;
     if (!passwordRegex.test(password))
-      return res.status(400).json({ msg: "Password does not meet constraints." });
+      return res
+        .status(400)
+        .json({ msg: "Password must contain uppercase, number, and special char." });
 
     if (!terms) return res.status(400).json({ msg: "You must agree to the terms." });
 
@@ -33,7 +36,10 @@ router.post("/signup", async (req, res) => {
     });
 
     await newUser.save();
-    res.json({ msg: "User registered successfully!", user: { firstName, email, city } });
+    res.json({
+      msg: "User registered successfully!",
+      user: { firstName, email, city },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -43,6 +49,11 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log("LOGIN BODY:", req.body); // Debugging
+
+    if (!email || !password)
+      return res.status(400).json({ msg: "Email and password required" });
+
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ msg: "User not found" });
 
@@ -68,7 +79,8 @@ router.post("/login", async (req, res) => {
 // ==================== PSYCHIATRIST SIGNUP ====================
 router.post("/psychiatrist/signup", async (req, res) => {
   try {
-    const { fullName, email, password, phone, age, experience, qualification } = req.body;
+    const { fullName, email, password, phone, age, experience, qualification } =
+      req.body;
 
     const existing = await Psychiatrist.findOne({ email });
     if (existing) return res.status(400).json({ msg: "Email already exists" });
@@ -119,18 +131,19 @@ router.post("/psychiatrist/login", async (req, res) => {
   }
 });
 
-// ==================== GOOGLE LOGIN ====================
-// Start Google OAuth login
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+// ==================== USER PROFILE ====================
+router.get("/profile", async (req, res) => {
+  try {
+    const { email } = req.query; // frontend sends ?email=user@gmail.com
+    if (!email) return res.status(400).json({ msg: "Email required" });
 
-// Google OAuth callback
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  (req, res) => {
-    // Successful login
-    res.redirect("/dashboard"); // Redirect your React frontend
+    const user = await User.findOne({ email }).select("-password");
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-);
+});
 
 export default router;

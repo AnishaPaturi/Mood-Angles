@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState("login"); // "login" or "signup"
+  const [tab, setTab] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -31,45 +31,21 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok) {
-        // Store JWT token for SPA
-        localStorage.setItem("token", data.token);
-        navigate("/dashboard");
+        // ✅ Instead of JWT, just store user info temporarily
+        localStorage.setItem("user", JSON.stringify(data.user));
+        navigate("/profile");
       } else {
         setError(data.msg || data.error || "Invalid credentials");
       }
     } catch (err) {
       console.warn("Backend unavailable — navigating for UI testing");
-      navigate("/dashboard");
+      navigate("/profile");
     }
   };
 
   const handleGoogle = () => {
-    // Open Google OAuth in a popup
-    const width = 500, height = 600;
-    const left = window.innerWidth / 2 - width / 2;
-    const top = window.innerHeight / 2 - height / 2;
-
-    const popup = window.open(
-      "http://localhost:5000/api/auth/google",
-      "Google Login",
-      `width=${width},height=${height},top=${top},left=${left}`
-    );
-
-    const messageListener = (event) => {
-      if (event.origin !== "http://localhost:5000") return;
-
-      const { token, error } = event.data;
-      if (token) {
-        localStorage.setItem("token", token);
-        navigate("/dashboard");
-      }
-      if (error) setError(error);
-
-      window.removeEventListener("message", messageListener);
-      popup.close();
-    };
-
-    window.addEventListener("message", messageListener);
+    // Placeholder for future Google OAuth integration
+    setError("Google login is not set up yet.");
   };
 
   return (
@@ -165,7 +141,10 @@ export default function Login() {
 
               <div className="row between">
                 <div style={{ height: 24 }} />
-                <a onClick={() => navigate("/forgot-password")} className="forgot">
+                <a
+                  onClick={() => navigate("/forgot-password")}
+                  className="forgot"
+                >
                   Forgot Password?
                 </a>
               </div>
@@ -176,7 +155,6 @@ export default function Login() {
                 LOGIN
               </button>
 
-              {/* ===== Added Not a user link ===== */}
               <p
                 style={{
                   marginTop: "12px",
@@ -186,12 +164,15 @@ export default function Login() {
                 }}
                 onClick={() => navigate("/")}
               >
-                Not a user? 
+                Not a user?
               </p>
             </form>
           ) : (
             <div className="signup-placeholder">
-              <p>Signup UI will be implemented later — click SIGN UP here to switch.</p>
+              <p>
+                Signup UI will be implemented later — click SIGN UP here to
+                switch.
+              </p>
               <button className="primary" onClick={() => navigate("/signup")}>
                 Create Account
               </button>
@@ -201,12 +182,24 @@ export default function Login() {
           <div className="divider" />
           <div className="social">
             <span>Or Login with</span>
-            <button className="google" onClick={handleGoogle} title="Sign in with Google">
+            <button className="google" onClick={handleGoogle}>
               <svg width="18" height="18" viewBox="0 0 533.5 544.3">
-                <path fill="#4285F4" d="M533.5 278.4c0-17.8-1.6-35.4-4.8-52.4H272v99.6h147.2c-6.4 34.8-26.4 64.2-56.3 83.7v69.6h90.9c53.2-49 83.7-121.2 83.7-200.5z"/>
-                <path fill="#34A853" d="M272 544.3c74.8 0 137.6-24.9 183.5-67.6l-90.9-69.6c-25.3 17-57.7 27-92.6 27-71 0-131.2-47.9-152.8-112.6H23.8v70.8C69.6 480.6 163.2 544.3 272 544.3z"/>
-                <path fill="#FBBC05" d="M119.2 325.8c-8.9-26.4-8.9-54.6 0-81l-95.4-70.8C3.5 217.7 0 244.9 0 272c0 27.1 3.5 54.3 23.8 97.9l95.4-70.1z"/>
-                <path fill="#EA4335" d="M272 107.7c39.8 0 75.7 14 104 40.9l78-78C405.3 19.9 346.2 0 272 0 163.2 0 69.6 63.7 23.8 160.5l95.4 70.8C140.8 155.6 201 107.7 272 107.7z"/>
+                <path
+                  fill="#4285F4"
+                  d="M533.5 278.4c0-17.8-1.6-35.4-4.8-52.4H272v99.6h147.2c-6.4 34.8-26.4 64.2-56.3 83.7v69.6h90.9c53.2-49 83.7-121.2 83.7-200.5z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M272 544.3c74.8 0 137.6-24.9 183.5-67.6l-90.9-69.6c-25.3 17-57.7 27-92.6 27-71 0-131.2-47.9-152.8-112.6H23.8v70.8C69.6 480.6 163.2 544.3 272 544.3z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M119.2 325.8c-8.9-26.4-8.9-54.6 0-81l-95.4-70.8C3.5 217.7 0 244.9 0 272c0 27.1 3.5 54.3 23.8 97.9l95.4-70.1z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M272 107.7c39.8 0 75.7 14 104 40.9l78-78C405.3 19.9 346.2 0 272 0 163.2 0 69.6 63.7 23.8 160.5l95.4 70.8C140.8 155.6 201 107.7 272 107.7z"
+                />
               </svg>
               <span>Sign in with Google</span>
             </button>
@@ -216,6 +209,8 @@ export default function Login() {
     </div>
   );
 }
+
+
 
 const css = `
 :root{
