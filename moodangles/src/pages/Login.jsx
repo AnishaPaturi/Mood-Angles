@@ -33,13 +33,13 @@ export default function Login() {
       if (res.ok) {
         // ✅ Instead of JWT, just store user info temporarily
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/profile");
+        navigate("/UDashboard");
       } else {
         setError(data.msg || data.error || "Invalid credentials");
       }
     } catch (err) {
       console.warn("Backend unavailable — navigating for UI testing");
-      navigate("/profile");
+      navigate("/UDashboard");
     }
   };
 
