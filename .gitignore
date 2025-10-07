@@ -1,0 +1,17 @@
+# Node dependencies
+node_modules/
+package-lock.json
+
+# Environment and config files
+.env
+*.env
+
+# Datasets and models
+*.csv
+*.pkl
+*.pdf
+
+# IDE / OS junk
+.vscode/
+.idea/
+.DS_Store
