@@ -1,3 +1,255 @@
+// import React, { useState } from "react";
+// import { useNavigate } from "react-router-dom";
+
+// export default function Signup() {
+//   const navigate = useNavigate();
+//   const [formData, setFormData] = useState({
+//     firstName: "",
+//     email: "",
+//     phone: "",
+//     gender: "",
+//     age: "",
+//     city: "",
+//     password: "",
+//     terms: false,
+//   });
+//   const [error, setError] = useState("");
+
+//   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$_])[A-Za-z\d@#$_]{8,}$/;
+
+//   const handleChange = (e) => {
+//     const { name, value, type, checked } = e.target;
+//     setFormData((prev) => ({
+//       ...prev,
+//       [name]: type === "checkbox" ? checked : value,
+//     }));
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setError("");
+
+//     if (!passwordRegex.test(formData.password)) {
+//       setError(
+//         "Password must be at least 8 chars, include 1 uppercase, 1 digit & 1 special char (@ # $ _)"
+//       );
+//       return;
+//     }
+
+//     if (!formData.terms) {
+//       setError("Please agree to Terms & Conditions");
+//       return;
+//     }
+
+//     try {
+//       const res = await fetch("http://localhost:5000/api/auth/signup", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify(formData),
+//       });
+
+//       const data = await res.json();
+//       if (res.ok) {
+//         navigate("/dashboard");
+//       } else {
+//         setError(data.msg || data.error || "Signup failed");
+//       }
+//     } catch (err) {
+//       console.warn("Backend unavailable — navigating to dashboard for UI testing");
+//       navigate("/dashboard");
+//     }
+//   };
+
+//   const handleGoogle = () => {
+//     window.location.href = "http://localhost:5000/api/auth/google"; 
+//   };
+
+//   return (
+//     <div className="login-page">
+//       <style>{css}</style>
+
+//       <div className="card">
+//         {/* LEFT PANEL with notch */}
+//         <div className="left">
+//           <div className="brand">
+//             <h1>Mood</h1>
+//             <h1>Angles</h1>
+//           </div>
+//           <div className="notch notch-signup">
+//             <button className="tab" onClick={() => navigate("/login")}>
+//               LOGIN
+//             </button>
+//             <button className="tab active">SIGN UP</button>
+//           </div>
+//           <div className="left-decor deco1"></div>
+//           <div className="left-decor deco2"></div>
+//           <div className="left-decor deco3"></div>
+//         </div>
+
+//         {/* RIGHT PANEL */}
+//         <div className="right">
+//           {/* <img alt="logo placeholder" src="image.png" className="logo" /> */}
+//           <h2>SIGN UP</h2>
+
+//           <form className="form" onSubmit={handleSubmit} noValidate>
+//             <input
+//               type="text"
+//               name="firstName"
+//               placeholder="First Name"
+//               value={formData.firstName}
+//               onChange={handleChange}
+//               required
+//             />
+
+//             <input
+//               type="email"
+//               name="email"
+//               placeholder="Email"
+//               value={formData.email}
+//               onChange={handleChange}
+//               required
+//             />
+
+//             <input
+//               type="tel"
+//               name="phone"
+//               placeholder="Phone Number"
+//               value={formData.phone}
+//               onChange={handleChange}
+//               required
+//             />
+
+//             {/* Gender */}
+//             <div className="form-group">
+//               <label>Gender:</label>
+//               <div style={{ display: "flex", gap: "20px", marginTop: "6px" }}>
+//                 {["male", "female", "other"].map((g) => (
+//                   <label key={g}>
+//                     <input
+//                       type="radio"
+//                       name="gender"
+//                       value={g}
+//                       checked={formData.gender === g}
+//                       onChange={handleChange}
+//                       required
+//                     />{" "}
+//                     {g.charAt(0).toUpperCase() + g.slice(1)}
+//                   </label>
+//                 ))}
+//               </div>
+//             </div>
+
+//             <input
+//               type="number"
+//               name="age"
+//               placeholder="Age"
+//               value={formData.age}
+//               onChange={handleChange}
+//               min="1"
+//               max="120"
+//               required
+//             />
+
+//             <select
+//               name="city"
+//               value={formData.city}
+//               onChange={handleChange}
+//               required
+//             >
+//               <option value="">Select your city</option>
+//               <option value="delhi">Delhi</option>
+//               <option value="mumbai">Mumbai</option>
+//               <option value="bangalore">Bangalore</option>
+//               <option value="hyderabad">Hyderabad</option>
+//               <option value="chennai">Chennai</option>
+//               <option value="kolkata">Kolkata</option>
+//               <option value="pune">Pune</option>
+//               <option value="ahmedabad">Ahmedabad</option>
+//             </select>
+
+//             {/* Password with tooltip */}
+//             <div className="inputRow">
+//               <input
+//                 type="password"
+//                 name="password"
+//                 placeholder="Password"
+//                 value={formData.password}
+//                 onChange={handleChange}
+//                 required
+//               />
+//               <span className="pw-info" tabIndex={0} aria-label="password rules">
+//                 ⓘ
+//                 <span className="tooltip">
+//                   Password rules:
+//                   <br />• Minimum 8 characters
+//                   <br />• At least 1 uppercase letter
+//                   <br />• At least 1 digit
+//                   <br />• One special char: <b>@ # $ _</b>
+//                 </span>
+//               </span>
+//             </div>
+
+//             <label style={{ fontSize: "13px", color: "#555" }}>
+//               <input
+//                 type="checkbox"
+//                 name="terms"
+//                 checked={formData.terms}
+//                 onChange={handleChange}
+//                 required
+//               />{" "}
+//               I agree to the Terms & Conditions
+//             </label>
+
+//             {error && <div className="error">{error}</div>}
+
+//             <button className="primary" type="submit">
+//               SIGN UP
+//             </button>
+
+//             {/* ===== Added Not a user link ===== */}
+//             <p
+//               style={{
+//                 marginTop: "12px",
+//                 color: "#ff758c",
+//                 cursor: "pointer",
+//                 fontSize: "14px",
+//               }}
+//               onClick={() => navigate("/")}
+//             >
+//               Not a user? 
+//             </p>
+//           </form>
+
+//           <div className="divider" />
+//           <div className="social">
+//             <span>Or Sign up with</span>
+//             <button className="google" onClick={handleGoogle}>
+//               <svg width="18" height="18" viewBox="0 0 533.5 544.3">
+//                 <path
+//                   fill="#4285F4"
+//                   d="M533.5 278.4c0-17.8-1.6-35.4-4.8-52.4H272v99.6h147.2c-6.4 34.8-26.4 64.2-56.3 83.7v69.6h90.9c53.2-49 83.7-121.2 83.7-200.5z"
+//                 />
+//                 <path
+//                   fill="#34A853"
+//                   d="M272 544.3c74.8 0 137.6-24.9 183.5-67.6l-90.9-69.6c-25.3 17-57.7 27-92.6 27-71 0-131.2-47.9-152.8-112.6H23.8v70.8C69.6 480.6 163.2 544.3 272 544.3z"
+//                 />
+//                 <path
+//                   fill="#FBBC05"
+//                   d="M119.2 325.8c-8.9-26.4-8.9-54.6 0-81l-95.4-70.8C3.5 217.7 0 244.9 0 272c0 27.1 3.5 54.3 23.8 97.9l95.4-70.1z"
+//                 />
+//                 <path
+//                   fill="#EA4335"
+//                   d="M272 107.7c39.8 0 75.7 14 104 40.9l78-78C405.3 19.9 346.2 0 272 0 163.2 0 69.6 63.7 23.8 160.5l95.4 70.8C140.8 155.6 201 107.7 272 107.7z"
+//                 />
+//               </svg>
+//               <span>Sign up with Google</span>
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -5,6 +257,7 @@ export default function Signup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     gender: "",
@@ -15,6 +268,7 @@ export default function Signup() {
   });
   const [error, setError] = useState("");
 
+  // Password rule: 8+ chars, 1 uppercase, 1 digit, 1 special (@#$ _)
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$_])[A-Za-z\d@#$_]{8,}$/;
 
   const handleChange = (e) => {
@@ -29,13 +283,13 @@ export default function Signup() {
     e.preventDefault();
     setError("");
 
+    // Client-side validation
     if (!passwordRegex.test(formData.password)) {
       setError(
         "Password must be at least 8 chars, include 1 uppercase, 1 digit & 1 special char (@ # $ _)"
       );
       return;
     }
-
     if (!formData.terms) {
       setError("Please agree to Terms & Conditions");
       return;
@@ -45,14 +299,19 @@ export default function Signup() {
       const res = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          age: Number(formData.age),
+        }),
       });
 
       const data = await res.json();
+
       if (res.ok) {
+        alert("Signup successful!");
         navigate("/dashboard");
       } else {
-        setError(data.msg || data.error || "Signup failed");
+        setError(data.msg || data.error || data.message || "Signup failed");
       }
     } catch (err) {
       console.warn("Backend unavailable — navigating to dashboard for UI testing");
@@ -60,16 +319,12 @@ export default function Signup() {
     }
   };
 
-  const handleGoogle = () => {
-    window.location.href = "http://localhost:5000/api/auth/google"; 
-  };
-
   return (
     <div className="login-page">
       <style>{css}</style>
 
       <div className="card">
-        {/* LEFT PANEL with notch */}
+        {/* LEFT PANEL */}
         <div className="left">
           <div className="brand">
             <h1>Mood</h1>
@@ -88,7 +343,6 @@ export default function Signup() {
 
         {/* RIGHT PANEL */}
         <div className="right">
-          {/* <img alt="logo placeholder" src="image.png" className="logo" /> */}
           <h2>SIGN UP</h2>
 
           <form className="form" onSubmit={handleSubmit} noValidate>
@@ -99,6 +353,14 @@ export default function Signup() {
               value={formData.firstName}
               onChange={handleChange}
               required
+            />
+
+            <input
+              type="text"
+              name="lastName"
+              placeholder="Last Name"
+              value={formData.lastName}
+              onChange={handleChange}
             />
 
             <input
@@ -167,7 +429,7 @@ export default function Signup() {
               <option value="ahmedabad">Ahmedabad</option>
             </select>
 
-            {/* Password with tooltip */}
+            {/* Password field */}
             <div className="inputRow">
               <input
                 type="password"
@@ -206,7 +468,6 @@ export default function Signup() {
               SIGN UP
             </button>
 
-            {/* ===== Added Not a user link ===== */}
             <p
               style={{
                 marginTop: "12px",
@@ -214,37 +475,11 @@ export default function Signup() {
                 cursor: "pointer",
                 fontSize: "14px",
               }}
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/login")}
             >
-              Not a user? 
+              Already have an account? Login
             </p>
           </form>
-
-          <div className="divider" />
-          <div className="social">
-            <span>Or Sign up with</span>
-            <button className="google" onClick={handleGoogle}>
-              <svg width="18" height="18" viewBox="0 0 533.5 544.3">
-                <path
-                  fill="#4285F4"
-                  d="M533.5 278.4c0-17.8-1.6-35.4-4.8-52.4H272v99.6h147.2c-6.4 34.8-26.4 64.2-56.3 83.7v69.6h90.9c53.2-49 83.7-121.2 83.7-200.5z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M272 544.3c74.8 0 137.6-24.9 183.5-67.6l-90.9-69.6c-25.3 17-57.7 27-92.6 27-71 0-131.2-47.9-152.8-112.6H23.8v70.8C69.6 480.6 163.2 544.3 272 544.3z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M119.2 325.8c-8.9-26.4-8.9-54.6 0-81l-95.4-70.8C3.5 217.7 0 244.9 0 272c0 27.1 3.5 54.3 23.8 97.9l95.4-70.1z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M272 107.7c39.8 0 75.7 14 104 40.9l78-78C405.3 19.9 346.2 0 272 0 163.2 0 69.6 63.7 23.8 160.5l95.4 70.8C140.8 155.6 201 107.7 272 107.7z"
-                />
-              </svg>
-              <span>Sign up with Google</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
