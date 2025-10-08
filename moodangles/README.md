@@ -54,6 +54,7 @@ A comprehensive mental health application designed to help users track their moo
 2. Install Node.js dependencies:
    ```bash
    npm install
+   npm install express mongoose dotenv cors python-shell openai
    ```
 
 3. Install Python dependencies:
