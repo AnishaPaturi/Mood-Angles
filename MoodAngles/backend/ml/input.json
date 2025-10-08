@@ -1,5 +1,15 @@
 {
-  "age": 98,
-  "phq9_score": 20,
-  "gad7_score": 30
+  "age": 28,
+  "gender": 0,
+  "phq9_score": 10,
+  "gad7_score": 7,
+  "family_history": 1,
+  "treatment_history": 0,
+  "recurrence": 0,
+  "age_scaled": 0.35,
+  "phq9_score_scaled": 0.30,
+  "gad7_score_scaled": 0.25,
+  "age_std": -0.20,
+  "phq9_score_std": -0.10,
+  "gad7_score_std": -0.15
 }

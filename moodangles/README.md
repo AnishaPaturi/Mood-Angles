@@ -29,11 +29,19 @@ A comprehensive mental health application designed to help users track their moo
 - bcryptjs (password hashing)
 - JWT (authentication)
 
+### Machine Learning
+- Python 3.x
+- Pandas (data manipulation)
+- Scikit-learn (machine learning)
+- Joblib (model serialization)
+
 ## Prerequisites
 
 - Node.js (v18 or higher)
 - MongoDB (local or cloud instance)
+- Python 3.x (for ML components)
 - npm or yarn
+- pip (Python package installer)
 
 ## Installation
 
@@ -43,12 +51,17 @@ A comprehensive mental health application designed to help users track their moo
    cd MoodAngles
    ```
 
-2. Install dependencies:
+2. Install Node.js dependencies:
    ```bash
    npm install
    ```
 
-3. Set up environment variables:
+3. Install Python dependencies:
+   ```bash
+   pip install pandas scikit-learn joblib
+   ```
+
+4. Set up environment variables:
    Create a `.env` file in the root directory with:
    ```
    MONGO_URI=your_mongodb_connection_string
@@ -58,18 +71,24 @@ A comprehensive mental health application designed to help users track their moo
    PORT=5000
    ```
 
-4. Start the backend server:
+5. Train the ML model (optional, if not already trained):
+   ```bash
+   cd backend/ml
+   python train_model.py
+   ```
+
+6. Start the backend server:
    ```bash
    cd backend
    node server.js
    ```
 
-5. In a new terminal, start the frontend:
+7. In a new terminal, start the frontend:
    ```bash
    npm run dev
    ```
 
-6. Open your browser to `http://localhost:5173` (Vite default).
+8. Open your browser to `http://localhost:5173` (Vite default).
 
 ## Usage
 
