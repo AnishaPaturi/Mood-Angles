@@ -1,6 +1,10 @@
+// models/ScaleResponse.js
 import mongoose from "mongoose";
-const schema = new mongoose.Schema({
-  userId: String,
-  responses: Object
+
+const scaleResponseSchema = new mongoose.Schema({
+  userId: { type: String, required: true, index: true },
+  responses: { type: Object, required: true }, // e.g. { phq9_Q1: 2, ... }
+  createdAt: { type: Date, default: Date.now }
 });
-export default mongoose.model("ScaleResponse", schema);
+
+export default mongoose.models.ScaleResponse || mongoose.model("ScaleResponse", scaleResponseSchema);

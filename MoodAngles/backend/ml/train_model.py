@@ -1,107 +1,79 @@
-# ==========================================
-# 🧠 MoodAngels - Angel.R Model Trainer (Final Fixed)
-# ==========================================
-# - Handles 'final_diagnosis' instead of 'label'
-# - Converts text columns (like gender, family_history) to numeric
-# - Trains and saves RandomForest model
-# ==========================================
-
-import os
+# ml/train_model.py
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
-from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, roc_auc_score
 import joblib
+import os
+import numpy as np
 
-# ------------------------------------------
-# 🔍 Locate dataset safely
-# ------------------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "../DataSet.csv")
+# === File paths ===
+DATA_PATH = "DataSet.csv"              # Path to your uploaded dataset
+OUT_MODEL = "ml/angelR_model.pkl"      # Output model file
 
-if not os.path.exists(DATA_PATH):
-    raise FileNotFoundError(f"❌ DataSet.csv not found at: {DATA_PATH}")
+if __name__ == "__main__":
+    # === 1. Load dataset ===
+    if not os.path.exists(DATA_PATH):
+        raise SystemExit(f"❌ Dataset not found at {DATA_PATH}")
 
-print(f"📂 Loading dataset from: {DATA_PATH}")
-df = pd.read_csv(DATA_PATH)
-print(f"✅ Dataset loaded successfully with {df.shape[0]} rows and {df.shape[1]} columns.\n")
+    df = pd.read_csv(DATA_PATH)
+    print(f"✅ Loaded dataset with shape: {df.shape}")
+    print(f"Columns: {list(df.columns)}\n")
 
-# ------------------------------------------
-# 🧾 Inspect columns
-# ------------------------------------------
-print("🧾 Columns available in dataset:")
-print(df.columns.tolist(), "\n")
+    # === 2. Automatically detect label/target column ===
+    # Common label indicators: *_label, *_diagnosis, final_diagnosis, etc.
+    label_cols = [c for c in df.columns if "label" in c.lower() or "diagnosis" in c.lower()]
+    if not label_cols:
+        raise SystemExit("❌ No label column found. Expected something like 'final_diagnosis' or 'phq9_label'.")
 
-# ------------------------------------------
-# 🧮 Prepare labels
-# ------------------------------------------
-if "final_diagnosis" not in df.columns:
-    raise KeyError("❌ 'final_diagnosis' column not found. Please check your CSV headers.")
+    # Pick the last relevant label column (most datasets have final_diagnosis at the end)
+    target_col = label_cols[-1]
+    print(f"🎯 Using '{target_col}' as target column\n")
 
-# Define which diagnoses count as mood disorders
-mood_disorders = ["MDD", "GAD", "Mixed Features", "Depression", "Mood Disorder"]
+    # === 3. Prepare features (X) and target (y) ===
+    y = df[target_col]
+    X = df.drop(columns=[target_col])
 
-df["label"] = df["final_diagnosis"].apply(
-    lambda x: 1 if str(x).strip() in mood_disorders else 0
-)
+    # Drop text-based or irrelevant columns (e.g., narrative, history, etc.)
+    text_cols = X.select_dtypes(include=["object"]).columns.tolist()
+    if text_cols:
+        print(f"🧹 Dropping text columns: {text_cols}")
+        X = X.drop(columns=text_cols)
 
-# ------------------------------------------
-# 🧹 Drop irrelevant / text-heavy columns
-# ------------------------------------------
-drop_cols = [
-    "final_diagnosis",
-    "phq9_label", "phq9_symptoms", "phq9_named_scores",
-    "gad7_label", "gad7_symptoms", "gad7_named_scores",
-    "narrative"
-]
-df = df.drop(columns=[c for c in drop_cols if c in df.columns])
+    # Keep only numeric data
+    X = X.select_dtypes(include=[np.number]).fillna(0)
 
-# ------------------------------------------
-# 🔢 Encode categorical columns
-# ------------------------------------------
-categorical_cols = df.select_dtypes(include=["object"]).columns.tolist()
-if categorical_cols:
-    print(f"🧩 Encoding categorical columns: {categorical_cols}")
-    le = LabelEncoder()
-    for col in categorical_cols:
-        df[col] = le.fit_transform(df[col].astype(str))
+    # === 4. Split train/test ===
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y if len(y.unique()) <= 2 else None
+    )
 
-# ------------------------------------------
-# 🧠 Split features and target
-# ------------------------------------------
-X = df.drop(columns=["label"])
-y = df["label"]
+    # === 5. Train model ===
+    print("🚀 Training RandomForest model...")
+    model = RandomForestClassifier(
+        n_estimators=300,
+        random_state=42,
+        class_weight="balanced",
+        n_jobs=-1
+    )
+    model.fit(X_train, y_train)
 
-# ------------------------------------------
-# ✂️ Train/Test Split
-# ------------------------------------------
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
-print(f"📊 Training samples: {X_train.shape[0]} | Testing samples: {X_test.shape[0]}")
+    # === 6. Evaluate ===
+    preds = model.predict(X_test)
+    probs = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else preds
+    print("\n📊 Classification Report:")
+    print(classification_report(y_test, preds))
+    try:
+        auc = roc_auc_score(y_test, probs)
+        print(f"ROC AUC: {auc:.4f}")
+    except Exception as e:
+        print(f"(ROC AUC skipped: {e})")
 
-# ------------------------------------------
-# 🌲 Train RandomForest Model
-# ------------------------------------------
-model = RandomForestClassifier(
-    n_estimators=200,
-    random_state=42,
-    class_weight="balanced"
-)
-model.fit(X_train, y_train)
-
-# ------------------------------------------
-# 📈 Evaluate Model
-# ------------------------------------------
-y_pred = model.predict(X_test)
-report = classification_report(y_test, y_pred)
-print("\n🧩 Model Performance Report:")
-print(report)
-
-# ------------------------------------------
-# 💾 Save Model
-# ------------------------------------------
-MODEL_PATH = os.path.join(BASE_DIR, "angelR_model.pkl")
-joblib.dump(model, MODEL_PATH)
-print(f"✅ Model saved successfully at: {MODEL_PATH}")
+    # === 7. Save model and feature list ===
+    os.makedirs("ml", exist_ok=True)
+    joblib.dump(model, OUT_MODEL)
+    feature_file = OUT_MODEL.replace(".pkl", "_features.txt")
+    with open(feature_file, "w") as f:
+        f.write("\n".join(X.columns))
+    print(f"\n✅ Model saved to: {OUT_MODEL}")
+    print(f"🧾 Feature list saved to: {feature_file}")
