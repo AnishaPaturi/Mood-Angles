@@ -145,7 +145,8 @@ function UDashboard() {
         <aside className={`sidebar ${sidebarOpen ? "" : "closed"}`}>
           <div className="brand">MoodAngels</div>
           <nav className="nav">
-            <a href="#">Dashboard</a>
+            <a href="/UDashboard">Dashboard</a>
+            <a href="#">Find a Therapist?</a>
             <a href="#">Profile</a>
             <a href="#">Settings</a>
           </nav>
@@ -211,13 +212,13 @@ function UDashboard() {
                 title="Upload Documents"
                 icon={<Upload />}
                 desc="Keep your important files in one place."
-                 onClick={() => navigate("/test")}
+                 onClick={() => navigate("/Upload")}
               />
               <FeatureCard
                 title="Talk to Someone"
                 icon={<MessageCircle />}
                 desc="Connect with a counselor instantly."
-                onClick={() => navigate("/test")}
+                onClick={() => navigate("/Help")}
               />
             </div>
 
@@ -226,13 +227,13 @@ function UDashboard() {
                 title="Community Support"
                 icon={<HeartHandshake />}
                 desc="Join group sessions and support circles."
-                onClick={() => navigate("/test")}
+                onClick={() => navigate("/Support")}
               />
               <FeatureCard
                 title="Resources & Tips"
                 icon={<Info />}
                 desc="Read articles and guides for better mental health."
-                onClick={() => navigate("/test")}
+                onClick={() => navigate("/Articles")}
               />
             </div>
 
