@@ -12,34 +12,39 @@ router.get("/diagnose/test/:index", async (req, res) => {
     { cwd: process.cwd() }
   );
 
-  let output = "";
-  let errorOutput = "";
+  let stdoutData = "";
+  let stderrData = "";
 
   py.stdout.on("data", (data) => {
-    console.log("🐍 stdout:", data.toString()); // 👈 log everything from Python
-    output += data.toString();
+    const text = data.toString();
+    console.log("🐍 stdout:", text);
+    stdoutData += text;
   });
 
   py.stderr.on("data", (data) => {
-    console.error("🐍 stderr:", data.toString()); // 👈 log Python errors
-    errorOutput += data.toString();
+    const text = data.toString();
+    console.error("🐍 stderr:", text);
+    stderrData += text;
   });
 
   py.on("close", (code) => {
     console.log(`🐍 Python exited with code ${code}`);
 
-    if (errorOutput) {
-      return res.status(500).json({ error: errorOutput });
+    if (!stdoutData.trim()) {
+      // No JSON output, return stderr logs
+      return res.status(500).json({ error: stderrData });
     }
 
     try {
-      const lines = output.trim().split("\n");
-      const last = lines[lines.length - 1];
-      const parsed = JSON.parse(last);
-      res.json({ success: true, data: parsed });
+      // Parse the JSON object from stdout
+      const parsed = JSON.parse(stdoutData.trim().split("\n").pop());
+      return res.json({ success: true, data: parsed });
     } catch (err) {
-      console.error("❌ JSON parse error:", err, "raw output:", output);
-      res.status(500).json({ error: "Failed to parse Python output", raw: output });
+      console.error("❌ JSON parse error:", err);
+      console.error("Raw stdout:", stdoutData);
+      return res
+        .status(500)
+        .json({ error: "Failed to parse Python output", raw: stdoutData });
     }
   });
 });
