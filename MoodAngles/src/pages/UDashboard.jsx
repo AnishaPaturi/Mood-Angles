@@ -146,7 +146,7 @@ function UDashboard() {
           <div className="brand">MoodAngels</div>
           <nav className="nav">
             <a href="/UDashboard">Dashboard</a>
-            <a href="#">Find a Therapist?</a>
+            <a href="/Therapist">Find a Therapist?</a>
             <a href="#">Profile</a>
             <a href="#">Settings</a>
           </nav>
