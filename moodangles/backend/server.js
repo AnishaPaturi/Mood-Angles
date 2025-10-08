@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-import agentRRoute from "./routes/agentRRoute.js"; 
+import agentRRoute from "./routes/agentR.js"; 
+import agentRTestRoute from "./routes/agentRTestRoute.js";
 
 dotenv.config();
 connectDB();
@@ -17,6 +18,7 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api", agentRRoute);
+app.use("/api", agentRTestRoute);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
