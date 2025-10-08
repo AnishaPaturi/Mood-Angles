@@ -205,16 +205,19 @@ function UDashboard() {
                 title="Take a Test"
                 icon={<FileText />}
                 desc="Assess your mood with a quick test."
+                onClick={() => navigate("/test")}
               />
               <FeatureCard
                 title="Upload Documents"
                 icon={<Upload />}
                 desc="Keep your important files in one place."
+                 onClick={() => navigate("/test")}
               />
               <FeatureCard
                 title="Talk to Someone"
                 icon={<MessageCircle />}
                 desc="Connect with a counselor instantly."
+                onClick={() => navigate("/test")}
               />
             </div>
 
@@ -223,11 +226,13 @@ function UDashboard() {
                 title="Community Support"
                 icon={<HeartHandshake />}
                 desc="Join group sessions and support circles."
+                onClick={() => navigate("/test")}
               />
               <FeatureCard
                 title="Resources & Tips"
                 icon={<Info />}
                 desc="Read articles and guides for better mental health."
+                onClick={() => navigate("/test")}
               />
             </div>
 
@@ -273,9 +278,10 @@ function UDashboard() {
   );
 }
 
-function FeatureCard({ title, icon, desc }) {
+function FeatureCard({ title, icon, desc, onClick }) {
   return (
-    <div className="card">
+    <div className="card" onClick={onClick}
+      style={{ cursor: onClick ? "pointer" : "default" }}>
       <div className="icon">
         {React.cloneElement(icon, { size: 28, color: "#6b46ff" })}
       </div>
