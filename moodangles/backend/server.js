@@ -8,6 +8,7 @@ import agentRTestRoute from "./routes/agentRTestRoute.js";
 import agentDRoute from "./routes/agentD.js"; 
 import agentCRoute from "./routes/agentC.js";
 import agentTRoute from "./routes/agentT.js";
+import agentERoute from "./routes/agentE.js";
 
 dotenv.config();
 connectDB();
@@ -25,6 +26,7 @@ app.use("/api", agentRTestRoute);
 app.use("/api", agentDRoute);
 app.use("/api", agentCRoute);
 app.use("/api", agentTRoute);
+app.use("/api", agentERoute);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
