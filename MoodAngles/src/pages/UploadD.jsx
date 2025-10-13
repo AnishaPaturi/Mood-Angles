@@ -1,80 +1,276 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import UserWrapper from "../components/UserWrapper";
+import { UploadCloud, FileUp, CheckCircle2 } from "lucide-react";
 
-function SingleUpload() {
-  const [fileName, setFileName] = useState("");
+function UploadD() {
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef(null);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) setFileName(file.name);
+  const handleFilesChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    if (selectedFiles.length) setFiles(selectedFiles);
+    setSuccess(false);
   };
 
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length) setFiles(droppedFiles);
+    setSuccess(false);
+  };
+
+  const handleDragOver = (e) => e.preventDefault();
+
   const handleUpload = () => {
-    if (!fileName) {
-      alert("Please select a file first!");
-      return;
-    }
-    // Mock upload, replace with actual API call
-    alert(`File "${fileName}" uploaded successfully!`);
-    setFileName("");
+    if (!files.length) return;
+    setUploading(true);
+    setTimeout(() => {
+      setUploading(false);
+      setSuccess(true);
+      setFiles([]);
+      setTimeout(() => setSuccess(false), 4000);
+    }, 2500);
   };
 
   const css = `
-    .upload-card {
-      background: #fdf6f0;
-      padding: 2rem;
-      border-radius: 1.5rem;
-      max-width: 500px;
-      margin: 2rem auto;
-      box-shadow: 0 8px 20px rgba(200,180,200,0.2);
-      text-align: center;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    .upload-card input[type="file"] {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 8px;
+    .upload-section {
       width: 100%;
-      margin-top: 1rem;
-      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      padding-bottom: 2rem;
     }
 
-    .upload-card button {
-      margin-top: 1.5rem;
-      background: #f5e6f0;
-      color: #6b4b6b;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
+    .upload-card {
+      background: rgba(255, 250, 240, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 30px rgba(200, 180, 200, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
     }
 
-    .upload-card button:hover {
-      background: #e8d8e8;
+    .upload-card:hover {
       transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(200, 180, 200, 0.25);
     }
 
-    .file-name {
+    .drop-zone {
+      border: 2px dashed #f0c4c4;
+      border-radius: 1rem;
+      padding: 2rem 1rem;
+      background: #fff8f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #d08b8b;
+    }
+
+    .drop-zone:hover {
+      background-color: #fff1ed;
+      border-color: #f5baba;
+      transform: scale(1.02);
+    }
+
+    .drop-zone input {
+      display: none;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f7c8c8;
+      font-weight: 600;
+      margin: 1rem 0;
+      position: relative;
+    }
+
+    .divider::before, .divider::after {
+      content: "";
+      height: 1px;
+      background: #ffe4e1;
+      width: 35%;
+      margin: 0 10px;
+    }
+
+    .file-btn {
+      background: linear-gradient(90deg, #ffe4e1, #ffd3d1);
+      color: #8b5c5c;
+      padding: 0.7rem 1.6rem;
+      border: none;
+      border-radius: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(200, 180, 200, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 0 auto 1rem;
+    }
+
+    .file-btn:hover {
+      background: linear-gradient(90deg, #ffd3d1, #ffc0be);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(200, 180, 200, 0.35);
+    }
+
+    .file-names {
       margin-top: 1rem;
-      color: #5a4c5a;
+      text-align: left;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .file-names p {
       font-size: 0.95rem;
+      color: #b35959;
+      word-break: break-word;
+      margin-bottom: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .upload-btn {
+      background: #fcb8b8;
+      color: #7e3a3a;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(200, 180, 200, 0.3);
+      margin-top: 1rem;
+    }
+
+    .upload-btn:hover {
+      background: #f7a5a5;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(200, 180, 200, 0.4);
+    }
+
+    .progress-bar {
+      margin-top: 1rem;
+      height: 8px;
+      width: 100%;
+      background: #ffe6e6;
+      border-radius: 5px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      position: absolute;
+      height: 100%;
+      background: linear-gradient(90deg, #ffcdc9, #ffc1bd);
+      width: 100%;
+      animation: progress 2.5s linear forwards;
+    }
+
+    @keyframes progress {
+      from { width: 0%; }
+      to { width: 100%; }
+    }
+
+    .success-msg {
+      margin-top: 1rem;
+      color: #16a34a;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   `;
 
   return (
     <UserWrapper>
-      <div className="upload-card">
-        <h2>📤 Upload a File</h2>
-        <input type="file" onChange={handleFileChange} />
-        {fileName && <p className="file-name">Selected File: <b>{fileName}</b></p>}
-        <button onClick={handleUpload}>Upload</button>
+      <div className="upload-section">
+        <h1 className="text-2xl font-semibold mb-2">📤 Upload Documents</h1>
+        <p className="text-gray-700 mb-3">
+          Upload test reports or related documents securely to your account.
+        </p>
+
+        <div className="upload-card">
+          {/* Drag & Drop */}
+          <div
+            className="drop-zone"
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onClick={() => fileInputRef.current.click()}
+          >
+            <UploadCloud size={42} color="#b35959" />
+            <span>Drag & Drop files here or click to select</span>
+            <input
+              type="file"
+              multiple
+              ref={fileInputRef}
+              onChange={handleFilesChange}
+            />
+          </div>
+
+          <div className="divider">OR</div>
+
+          {/* Upload from device button */}
+          <button
+            className="file-btn"
+            onClick={() => fileInputRef.current.click()}
+          >
+            <FileUp size={20} /> Choose Files
+          </button>
+
+          {/* Selected files */}
+          {files.length > 0 && (
+            <div className="file-names">
+              {files.map((f, i) => (
+                <p key={i}>
+                  📄 <b>{f.name}</b>
+                </p>
+              ))}
+            </div>
+          )}
+
+          <button className="upload-btn" onClick={handleUpload}>
+            {uploading ? "Uploading..." : "Start Upload"}
+          </button>
+
+          {uploading && (
+            <div className="progress-bar">
+              <div className="progress-fill"></div>
+            </div>
+          )}
+
+          {success && (
+            <div className="success-msg">
+              <CheckCircle2 color="#16a34a" size={20} />
+              <span>Upload Successful!</span>
+            </div>
+          )}
+        </div>
       </div>
       <style>{css}</style>
     </UserWrapper>
   );
 }
 
-export default SingleUpload;
+export default UploadD;
