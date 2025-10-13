@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import UserWrapper from "../components/UserWrapper";
 
-function UploadD() {
+function SingleUpload() {
   const [fileName, setFileName] = useState("");
 
   const handleFileChange = (e) => {
@@ -9,34 +9,72 @@ function UploadD() {
     if (file) setFileName(file.name);
   };
 
+  const handleUpload = () => {
+    if (!fileName) {
+      alert("Please select a file first!");
+      return;
+    }
+    // Mock upload, replace with actual API call
+    alert(`File "${fileName}" uploaded successfully!`);
+    setFileName("");
+  };
+
+  const css = `
+    .upload-card {
+      background: #fdf6f0;
+      padding: 2rem;
+      border-radius: 1.5rem;
+      max-width: 500px;
+      margin: 2rem auto;
+      box-shadow: 0 8px 20px rgba(200,180,200,0.2);
+      text-align: center;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .upload-card input[type="file"] {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px;
+      width: 100%;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+
+    .upload-card button {
+      margin-top: 1.5rem;
+      background: #f5e6f0;
+      color: #6b4b6b;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .upload-card button:hover {
+      background: #e8d8e8;
+      transform: translateY(-2px);
+    }
+
+    .file-name {
+      margin-top: 1rem;
+      color: #5a4c5a;
+      font-size: 0.95rem;
+    }
+  `;
+
   return (
     <UserWrapper>
-      <h1 className="text-2xl font-semibold mb-4">📤 Upload Documents</h1>
-      <p className="text-gray-700 mb-3">
-        Upload test reports or related documents securely to your account.
-      </p>
-
-      <div className="bg-white p-6 rounded-xl shadow-md max-w-lg">
-        <label className="block mb-2 font-medium">Choose File</label>
-        <input
-          type="file"
-          onChange={handleFileChange}
-          className="border border-gray-300 rounded-lg px-3 py-2 w-full"
-        />
-        {fileName && (
-          <p className="mt-3 text-sm text-gray-600">
-            Selected File: <b>{fileName}</b>
-          </p>
-        )}
-        <button
-          className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-          onClick={() => alert("File uploaded successfully (mock)")}
-        >
-          Upload
-        </button>
+      <div className="upload-card">
+        <h2>📤 Upload a File</h2>
+        <input type="file" onChange={handleFileChange} />
+        {fileName && <p className="file-name">Selected File: <b>{fileName}</b></p>}
+        <button onClick={handleUpload}>Upload</button>
       </div>
+      <style>{css}</style>
     </UserWrapper>
   );
 }
 
-export default UploadD;
+export default SingleUpload;
