@@ -8,6 +8,9 @@ import ForgotPassword from './pages/ForgotPassword.jsx'
 import PLogin from './pages/PLogin.jsx'
 import PSignup from './pages/PSignup.jsx'
 import Profile from './pages/Profile.jsx'
+import Support from './pages/Support.jsx'
+import Upload from './pages/UploadD.jsx'
+import Help from './pages/Help.jsx'
 // import './index.css'
 
 function App() {
@@ -23,6 +26,9 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/plogin" element={<PLogin />} />
         <Route path="/psignup" element={<PSignup />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/upload" element={<Upload/>}/>
+        <Route path="/help" element={<Help/>}/>
       </Routes>
     </Router>
   )
