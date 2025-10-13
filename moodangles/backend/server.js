@@ -12,6 +12,7 @@ import agentERoute from "./routes/agentE.js";
 import agentXRoute from "./routes/agentX.js";
 import agentMRoute from "./routes/agentM.js";
 import agentSRoute from "./routes/agentS.js";
+import agentJRoute from "./routes/agentJ.js"; 
 
 dotenv.config();
 connectDB();
@@ -33,6 +34,7 @@ app.use("/api", agentERoute);
 app.use("/api", agentXRoute);
 app.use("/api", agentMRoute);
 app.use("/api", agentSRoute);
+app.use("/api", agentJRoute);
 
 
 const PORT = process.env.PORT || 5000;
