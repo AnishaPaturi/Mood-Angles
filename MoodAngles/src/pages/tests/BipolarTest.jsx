@@ -142,7 +142,7 @@ export default function ADHDTest() {
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <p style={styles.resultScore}>
-                    Your Bipolar Check Score: {result.score}
+                    Your Bipolar Disorder Score: {result.score}
                   </p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>

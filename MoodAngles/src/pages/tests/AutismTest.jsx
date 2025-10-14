@@ -47,10 +47,10 @@ export default function ADHDTest() {
     const score = answers.reduce((a, v) => a + v, 0);
     const level =
       score < 25
-        ? "Low chance of Bipolar Disorder"
+        ? "Low chance of Autistic Traits"
         : score < 55
-        ? "Moderate chance of Bipolar Disorder"
-        : "High chance of Bipolar Disorder";
+        ? "Moderate chance of Autistic Traits"
+        : "High chance of Autistic Traits";
 
     setResult({ score, level });
   };
