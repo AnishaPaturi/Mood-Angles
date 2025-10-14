@@ -160,7 +160,7 @@ export default function ADHDTest() {
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
-    width: "80vw", // full screen width
+    width: "100vw", // full screen width
     maxWidth: "100%",
     margin: "0",
     padding: "0 0 60px",

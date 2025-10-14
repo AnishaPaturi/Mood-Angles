@@ -267,9 +267,9 @@ function Support() {
         <h2>Join Our Community 🌐</h2>
         <p>Connect with others, share experiences, or seek help through our safe and supportive spaces.</p>
         <div className="community-links">
-          <a href="#">Discord</a>
+          <a href="https://discord.gg/yeVMHh3B" target="_blank" rel="noopener noreferrer">Discord</a>
           <a href="#">Forum</a>
-          <a href="mailto:support@moodangles.com">Email Us</a>
+          <a href="mailto:moodangles05@gmail.com">Email Us</a>
         </div>
       </div>
 
