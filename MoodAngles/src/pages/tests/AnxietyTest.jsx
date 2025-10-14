@@ -46,8 +46,9 @@ export default function AnxietyTest() {
       return;
     }
 
-    const score = answers.reduce((a, v) => a + v, 0);
-    const percentage = (score / (questions.length * 4)) * 100;
+    // Convert selections (0-4) to 1-5 scale
+    const totalScore = answers.reduce((sum, val) => sum + (val + 1), 0);
+    const percentage = Math.round((totalScore / (questions.length * 5)) * 100);
 
     let level;
     if (percentage < 33) level = "Low likelihood of Generalized Anxiety Disorder";
@@ -55,7 +56,7 @@ export default function AnxietyTest() {
       level = "Moderate likelihood of Generalized Anxiety Disorder";
     else level = "High likelihood of Generalized Anxiety Disorder";
 
-    setResult({ score, level });
+    setResult({ score: percentage, level });
   };
 
   return (
@@ -147,7 +148,7 @@ export default function AnxietyTest() {
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <p style={styles.resultScore}>
-                    Your Anxiety Score: {result.score}
+                    Your Anxiety Score: {result.score}/100
                   </p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
