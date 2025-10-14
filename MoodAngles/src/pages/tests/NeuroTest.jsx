@@ -33,7 +33,7 @@ export default function NeuroTest() {
 
   const handleSelect = (qIndex, value) => {
     const updated = [...answers];
-    updated[qIndex] = value;
+    updated[qIndex] = value; // store 1–5
     setAnswers(updated);
   };
 
@@ -46,15 +46,16 @@ export default function NeuroTest() {
       return;
     }
 
-    const score = answers.reduce((a, v) => a + v, 0);
-    const percentage = (score / (questions.length * 4)) * 100;
+    const totalScore = answers.reduce((a, v) => a + v, 0);
+    const maxScore = questions.length * 5; // since 5 is max value
+    const percentage = (totalScore / maxScore) * 100;
 
     let level;
     if (percentage < 33) level = "Low level of Neuroticism";
     else if (percentage < 66) level = "Moderate level of Neuroticism";
     else level = "High level of Neuroticism";
 
-    setResult({ score, level });
+    setResult({ score: Math.round(percentage), level });
   };
 
   return (
@@ -82,7 +83,10 @@ export default function NeuroTest() {
         <div style={styles.subSection}>
           <h2 style={styles.subTitle}>How emotionally stable are you?</h2>
           <p style={styles.subDesc}>
-            Neuroticism—the tendency to experience frequent negative emotions such as anxiety, worry, or frustration—can affect your relationships, productivity, and well-being. Take this test to assess your level of emotional stability.
+            Neuroticism—the tendency to experience frequent negative emotions
+            such as anxiety, worry, or frustration—can affect your relationships,
+            productivity, and well-being. Take this test to assess your level of
+            emotional stability.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -112,12 +116,12 @@ export default function NeuroTest() {
                     {colors.map((color, j) => (
                       <button
                         key={j}
-                        onClick={() => handleSelect(i, j)}
+                        onClick={() => handleSelect(i, j + 1)} // store 1–5 instead of 0–4
                         style={{
                           ...styles.circle,
                           borderColor: color,
                           backgroundColor:
-                            answers[i] === j ? color : "transparent",
+                            answers[i] === j + 1 ? color : "transparent",
                         }}
                       />
                     ))}
@@ -143,7 +147,7 @@ export default function NeuroTest() {
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <p style={styles.resultScore}>
-                    Your Neuroticism Score: {result.score}
+                    Your Neuroticism Score: {result.score}/100
                   </p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
