@@ -44,15 +44,17 @@ export default function ADHDTest() {
       });
       return;
     }
-    const score = answers.reduce((a, v) => a + v, 0);
-    const level =
-      score < 25
-        ? "Low chance of ADHD"
-        : score < 55
-        ? "Moderate chance of ADHD"
-        : "High chance of ADHD";
 
-    setResult({ score, level });
+    // Convert options 1-5, calculate score out of 100
+    const totalScore = answers.reduce((a, v) => a + (v + 1), 0);
+    const percentage = Math.round((totalScore / (questions.length * 5)) * 100);
+
+    let level;
+    if (percentage < 33) level = "Low chance of ADHD";
+    else if (percentage < 66) level = "Moderate chance of ADHD";
+    else level = "High chance of ADHD";
+
+    setResult({ score: percentage, level });
   };
 
   return (
@@ -143,7 +145,7 @@ export default function ADHDTest() {
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <p style={styles.resultScore}>
-                    Your ADHD Score: {result.score}
+                    Your ADHD Score: {result.score}/100
                   </p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
@@ -156,19 +158,17 @@ export default function ADHDTest() {
   );
 }
 
-/* ------------------- STYLES ------------------- */
+/* ------------------- INLINE STYLES ------------------- */
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
-    width: "100vw", // full screen width
+    width: "100vw",
     maxWidth: "100%",
     margin: "0",
     padding: "0 0 60px",
     fontFamily: "'Poppins', sans-serif",
     textAlign: "center",
   },
-
-  /* HEADER */
   headerContainer: {
     position: "relative",
     textAlign: "center",
@@ -222,8 +222,6 @@ const styles = {
     fontSize: "14px",
     backdropFilter: "blur(6px)",
   },
-
-  /* SUBSECTION */
   subSection: {
     background: "linear-gradient(180deg, #f97316, #f59e0b)",
     color: "#fff",
@@ -254,8 +252,6 @@ const styles = {
     boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
     transition: "all 0.3s ease",
   },
-
-  /* SCALE BAR */
   scaleBar: {
     display: "flex",
     justifyContent: "center",
@@ -273,8 +269,6 @@ const styles = {
   scaleText: {
     textShadow: "0 1px 2px rgba(0,0,0,0.2)",
   },
-
-  /* QUESTIONS */
   questionList: {
     marginTop: "20px",
     width: "90%",
@@ -317,8 +311,6 @@ const styles = {
     width: "90%",
     margin: "35px auto",
   },
-
-  /* BUTTONS & RESULTS */
   submitButton: {
     display: "block",
     margin: "40px auto 0",
