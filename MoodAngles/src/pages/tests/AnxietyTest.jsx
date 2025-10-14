@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function GADTest() {
+export default function AnxietyTest() {
   const questions = [
     "I often feel as if something bad will happen soon.",
     "I think I worry too much but I can't seem to stop.",
@@ -64,7 +64,7 @@ export default function GADTest() {
         {/* HEADER SECTION */}
         <div style={styles.headerContainer}>
           <img
-            src="https://images.unsplash.com/photo-1551847677-dc82d764e1f7?auto=format&fit=crop&w=1500&q=80"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm9zTAsgnraDUhTdbVTmv3qE_klqTQbh4Zvw&s"
             alt="GAD Test Header"
             style={styles.headerBg}
           />
