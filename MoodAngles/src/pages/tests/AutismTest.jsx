@@ -18,8 +18,8 @@ export default function ADHDTest() {
     "I like to collect or track specific types of information—for example, train schedules, historical dates, or different varieties of birds.",
     "I mimic other people’s behavior to appear “normal.”",
     "It’s easy for me to understand what others are thinking, even if they don’t say it.",
-    " I can talk about my interests for hours and hours.",
-    "I often miss when people say one thing but mean something else.s",
+    "I can talk about my interests for hours and hours.",
+    "I often miss when people say one thing but mean something else.",
     "Certain sounds that don’t seem to bother other people are very upsetting to me.",
     "I find it challenging to be in a conversation with two or more people.",
     "Imagining something that’s not real can be difficult for me."
@@ -44,7 +44,16 @@ export default function ADHDTest() {
       });
       return;
     }
-    const score = answers.reduce((a, v) => a + v, 0);
+
+    // Convert answers (0-4) to 1-5
+    const adjustedAnswers = answers.map(a => a + 1);
+
+    const rawScore = adjustedAnswers.reduce((a, v) => a + v, 0);
+    const minTotal = questions.length;       // all 1s
+    const maxTotal = questions.length * 5;   // all 5s
+
+    const score = Math.round(((rawScore - minTotal) / (maxTotal - minTotal)) * 100);
+
     const level =
       score < 25
         ? "Low chance of Autistic Traits"
@@ -58,11 +67,10 @@ export default function ADHDTest() {
   return (
     <UserWrapper>
       <div style={styles.container}>
-        {/* HEADER SECTION */}
         <div style={styles.headerContainer}>
           <img
             src="https://sentis.com.au/wp-content/uploads/2023/09/kys-story-news-e1694063308229.webp"
-            alt="Bipolar Test Header"
+            alt="Autism Test Header"
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
@@ -76,11 +84,10 @@ export default function ADHDTest() {
           </div>
         </div>
 
-        {/* SUBSECTION */}
         <div style={styles.subSection}>
           <h2 style={styles.subTitle}>Could you be on the autism spectrum?</h2>
           <p style={styles.subDesc}>
-          Autism, which can include social challenges, repetitive behaviors, and differences in information processing, may go undiagnosed until adulthood, particularly for those who are high-functioning. Take this test to determine if you may be showing signs of autism.
+            Autism, which can include social challenges, repetitive behaviors, and differences in information processing, may go undiagnosed until adulthood, particularly for those who are high-functioning. Take this test to determine if you may be showing signs of autism.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -89,17 +96,14 @@ export default function ADHDTest() {
           )}
         </div>
 
-        {/* IF TEST STARTED */}
         {started && (
           <>
-            {/* SCALE BAR */}
             <div style={styles.scaleBar}>
               <span style={styles.scaleText}>STRONGLY DISAGREE</span>
               <span style={styles.scaleText}>NEUTRAL</span>
               <span style={styles.scaleText}>STRONGLY AGREE</span>
             </div>
 
-            {/* QUESTIONS */}
             <div style={styles.questionList}>
               {questions.map((q, i) => (
                 <div key={i} style={styles.questionBlock}>
@@ -131,17 +135,15 @@ export default function ADHDTest() {
               ))}
             </div>
 
-            {/* SUBMIT BUTTON */}
             <button onClick={handleSubmit} style={styles.submitButton}>
               Submit Test
             </button>
 
-            {/* RESULTS SECTION */}
             {result && (
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <p style={styles.resultScore}>
-                    Your Autism Traits Score: {result.score}
+                    Your Autism Traits Score: {result.score}/100
                   </p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
@@ -158,7 +160,7 @@ export default function ADHDTest() {
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
-    width: "100vw", // full screen width
+    width: "100vw",
     maxWidth: "100%",
     margin: "0",
     padding: "0 0 60px",
@@ -166,7 +168,6 @@ const styles = {
     textAlign: "center",
   },
 
-  /* HEADER */
   headerContainer: {
     position: "relative",
     textAlign: "center",
@@ -221,7 +222,6 @@ const styles = {
     backdropFilter: "blur(6px)",
   },
 
-  /* SUBSECTION */
   subSection: {
     background: "linear-gradient(180deg, #f97316, #f59e0b)",
     color: "#fff",
@@ -252,8 +252,6 @@ const styles = {
     boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
     transition: "all 0.3s ease",
   },
-
-  /* SCALE BAR */
   scaleBar: {
     display: "flex",
     justifyContent: "center",
@@ -271,8 +269,6 @@ const styles = {
   scaleText: {
     textShadow: "0 1px 2px rgba(0,0,0,0.2)",
   },
-
-  /* QUESTIONS */
   questionList: {
     marginTop: "20px",
     width: "90%",
@@ -315,8 +311,6 @@ const styles = {
     width: "90%",
     margin: "35px auto",
   },
-
-  /* BUTTONS & RESULTS */
   submitButton: {
     display: "block",
     margin: "40px auto 0",
