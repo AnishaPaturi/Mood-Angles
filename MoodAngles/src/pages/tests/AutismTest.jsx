@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function ADHDTest() {
+export default function AutismTest() {
   const questions = [
     "I am good at spotting patterns that other people miss.",
     "I prefer to do things the same way every time.",
