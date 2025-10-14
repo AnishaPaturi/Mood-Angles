@@ -7,13 +7,13 @@ function TestPage() {
 
   // Each test now has a direct page route
   const tests = [
-    { title: "😔 Feeling Low? Depression Test", subtitle: "Check your current mood balance.", page: "/depression" },
-    { title: "😰 Feeling Tense? Anxiety Test", subtitle: "See if stress might be catching up to you.", page: "/anxiety" },
-    { title: "💭 Distracted Lately? ADHD Test", subtitle: "Explore focus and attention patterns.", page: "/adhd" },
-    { title: "🌈 Understand Yourself? Autism Traits", subtitle: "Learn about social & sensory traits.", page: "/autism" },
-    { title: "⚡ Mood Swings? Bipolar Check", subtitle: "Discover if mood instability affects you.", page: "/bipolar" },
-    { title: "🌀 Confused Thoughts? Neuropsychiatric Check", subtitle: "Evaluate changes in memory or behavior.", page: "/neuro" },
-    { title: "🧩 Curious Mind? Personality Test", subtitle: "Find out how your mind shapes your world.", page: "/personality" },
+    { title: "😔 Feeling Low? Depression Test", subtitle: "Check your current mood balance.", page: "/test/depression" },
+    { title: "😰 Feeling Tense? Anxiety Test", subtitle: "See if stress might be catching up to you.", page: "/test/anxiety" },
+    { title: "💭 Distracted Lately? ADHD Test", subtitle: "Explore focus and attention patterns.", page: "/test/adhd" },
+    { title: "🌈 Understand Yourself? Autism Traits", subtitle: "Learn about social & sensory traits.", page: "/test/autism" },
+    { title: "⚡ Mood Swings? Bipolar Check", subtitle: "Discover if mood instability affects you.", page: "/test/bipolar" },
+    { title: "🌀 Confused Thoughts? Neuropsychiatric Check", subtitle: "Evaluate changes in memory or behavior.", page: "/test/neuro" },
+    { title: "🧩 Curious Mind? Personality Test", subtitle: "Find out how your mind shapes your world.", page: "/test/personality" },
   ];
 
   // Navigate directly to the page
