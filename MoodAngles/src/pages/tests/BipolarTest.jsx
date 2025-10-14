@@ -44,13 +44,24 @@ export default function ADHDTest() {
       });
       return;
     }
-    const score = answers.reduce((a, v) => a + v, 0);
+
+    // Calculate raw score (0-80)
+    const rawScore = answers.reduce((a, v) => a + v, 0);
+
+    // Scale to 0-100
+    const score = Math.round((rawScore / 80) * 100);
+
+    // Determine level based on 0-100 scale
     const level =
-      score < 25
+      score <= 19
         ? "Low chance of Bipolar Disorder"
-        : score < 55
+        : score <= 50
         ? "Moderate chance of Bipolar Disorder"
-        : "High chance of Bipolar Disorder";
+        : score <= 74
+        ? "Some Concern (Watch for Symptoms)"
+        : score <= 86
+        ? "Significant Behavioral Dysregulation"
+        : "High likelihood of Bipolar Disorder";
 
     setResult({ score, level });
   };
@@ -80,7 +91,7 @@ export default function ADHDTest() {
         <div style={styles.subSection}>
           <h2 style={styles.subTitle}>Could you be experiencing Bipolar disorder??</h2>
           <p style={styles.subDesc}>
-           Bipolar disorder, sometimes called manic depression, is characterized by bouts of manic, high-energy episodes coupled with damaging bouts of depression. The condition is highly treatable, though, once it’s determined that symptoms are present. This test could help.
+            Bipolar disorder, sometimes called manic depression, is characterized by bouts of manic, high-energy episodes coupled with damaging bouts of depression. The condition is highly treatable, though, once it’s determined that symptoms are present. This test could help.
             Take this quick test to find out if you might have the disorder.
           </p>
           {!started && (
@@ -142,7 +153,7 @@ export default function ADHDTest() {
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <p style={styles.resultScore}>
-                    Your Bipolar Disorder Score: {result.score}
+                    Your Bipolar Check Score: {result.score}/100
                   </p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
@@ -159,7 +170,7 @@ export default function ADHDTest() {
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
-    width: "100vw", // full screen width
+    width: "100vw",
     maxWidth: "100%",
     margin: "0",
     padding: "0 0 60px",
