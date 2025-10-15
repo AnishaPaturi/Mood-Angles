@@ -233,7 +233,7 @@ function UDashboard() {
                 title="Resources & Tips"
                 icon={<Info />}
                 desc="Read articles and guides for better mental health."
-                onClick={() => navigate("/Articles")}
+                onClick={() => navigate("/articles")}
               />
             </div>
 
