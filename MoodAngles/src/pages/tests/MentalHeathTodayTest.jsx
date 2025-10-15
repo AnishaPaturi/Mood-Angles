@@ -1,33 +1,34 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function DepressionTest() {
+export default function MentalHealthTodayTest() {
   const questions = [
-    "I generally feel down and unhappy.",
-    "I have less interest in other people than I used to.",
-    "It takes a lot of effort to start working on something new.",
-    "I don't get as much satisfaction out of things as I used to.",
-    "I have headaches or back pain for no apparent reason.",
-    "I easily get impatient, frustrated, or angry.",
-    "I feel lonely, and that people aren't that interested in me.",
-    "I feel like I have nothing to look forward to.",
-    "I have episodes of crying that are hard to stop.",
-    "I have trouble getting to sleep or I sleep in too late.",
-    "I feel like my life has been a failure or a disappointment.",
-    "I have trouble staying focused on what I'm supposed to be doing.",
-    "I blame myself for my faults and mistakes.",
-    "I feel like I've slowed down; sometimes I don't have the energy to get anything done.",
-    "I have trouble finishing books, movies, or TV shows.",
-    "I put off making decisions more often than I used to.",
-    "When I feel down, friends and family can't cheer me up.",
-    "I think about people being better off without me.",
-    "I'm eating much less (or much more) than normal and it's affecting my weight.",
-    "I have less interest in sex than I used to.",
+    "I feel overwhelmed by my emotions.",
+    "I am able to handle the level of stress I experience.",
+    "I have physical symptoms of anxiety, such as sweaty palms.",
+    "I have strong relationships with people I care about.",
+    "I've made many terrible decisions in my life.",
+    "I am very self-critical.",
+    "I cannot get beyond long-past traumatic events or significant losses.",
+    "I am able to identify and express my emotions.",
+    "I trust that if I confide in others, they will be supportive.",
+    "I engage in at least one behavior that significantly impairs my ability to function on a daily basis.",
+    "When I experience a strong emotion, I usually know why it's hitting me.",
+    "My mood is stable.",
+    "I procrastinate and/or avoid dealing with important things in my life.",
+    "I often feel sad.",
+    "I have a sense of purpose in life.",
+    "I am lonely.",
+    "I get upset or angry easily.",
+    "I've noticed changes in my appetite or sleep patterns relative to when I was at my best.",
+    "I'm able to bounce back from setbacks.",
+    "I manage my time and my obligations; most days life feels under control.",
   ];
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
+
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const handleSelect = (qIndex, value) => {
@@ -45,17 +46,21 @@ export default function DepressionTest() {
       return;
     }
 
-    const rawScore = answers.reduce((a, v) => a + v, 0);
-    const score = Math.round((rawScore / (questions.length * 4)) * 100);
+    const score = answers.reduce((a, v) => a + v, 0);
+    // Convert total (max 80) to a 10-point scale
+    const normalizedScore = (score / (questions.length * 4)) * 10;
 
-    let level = "";
-    if (score <= 20) level = "Minimal or No Depression";
-    else if (score <= 40) level = "Mild Depression (Monitor your mood)";
-    else if (score <= 65) level = "Moderate Depression (Consider talking to someone)";
-    else if (score <= 85) level = "Severe Depression (Seek professional help)";
-    else level = "Extremely Severe Depression (Immediate support advised)";
+    let level;
+    if (normalizedScore < 3.3)
+      level = "You appear to be coping well overall.";
+    else if (normalizedScore < 6.6)
+      level =
+        "You show some signs of emotional distress—consider healthy coping strategies.";
+    else
+      level =
+        "You may be experiencing significant stress or emotional challenges. Seeking professional help could be beneficial.";
 
-    setResult({ score, level });
+    setResult({ score: normalizedScore.toFixed(1), level });
   };
 
   return (
@@ -64,14 +69,14 @@ export default function DepressionTest() {
         {/* HEADER SECTION */}
         <div style={styles.headerContainer}>
           <img
-            src="https://images.pexels.com/photos/8978173/pexels-photo-8978173.jpeg"
-            alt="Depression Test Header"
+            src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1500&q=80"
+            alt="Mental Health Test Header"
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
 
           <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>Depression Check</h1>
+            <h1 style={styles.mainTitle}>Your Mental Health Today</h1>
             <div style={styles.testMeta}>
               <span style={styles.metaBtnOrange}>✔ 20 QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
@@ -79,16 +84,17 @@ export default function DepressionTest() {
           </div>
         </div>
 
-        {/* INTRO SECTION */}
+        {/* SUBSECTION */}
         <div style={styles.subSection}>
-          <h2 style={styles.subTitle}>Are you feeling persistently low or unmotivated?</h2>
+          <h2 style={styles.subTitle}>How well do you cope?</h2>
           <p style={styles.subDesc}>
-            Depression can affect your thoughts, mood, and overall energy. This self-assessment
-            helps you reflect on your emotional well-being and understand if you may be showing signs of depression.
+            Most people face mental health challenges at some point. This test
+            helps you understand how you're coping day to day and whether you
+            might benefit from therapy or professional support.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
-              🧠 Start Test
+              🚀 Start Test
             </button>
           )}
         </div>
@@ -140,12 +146,12 @@ export default function DepressionTest() {
               Submit Test
             </button>
 
-            {/* RESULT */}
+            {/* RESULTS */}
             {result && (
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <p style={styles.resultScore}>
-                    Your Depression Score: {result.score}/100
+                    Your Coping Score: {result.score} / 10
                   </p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
@@ -158,7 +164,7 @@ export default function DepressionTest() {
   );
 }
 
-/* ------------------- STYLES ------------------- */
+/* ------------------- INLINE STYLES ------------------- */
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
@@ -169,8 +175,6 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     textAlign: "center",
   },
-
-  /* HEADER */
   headerContainer: {
     position: "relative",
     textAlign: "center",
@@ -213,6 +217,7 @@ const styles = {
     borderRadius: "25px",
     fontWeight: "600",
     fontSize: "14px",
+    backdropFilter: "blur(6px)",
   },
   metaBtnPink: {
     background: "rgba(236,72,153,0.9)",
@@ -221,11 +226,10 @@ const styles = {
     borderRadius: "25px",
     fontWeight: "600",
     fontSize: "14px",
+    backdropFilter: "blur(6px)",
   },
-
-  /* INTRO SECTION */
   subSection: {
-    background: "linear-gradient(180deg, #2563eb, #3b82f6)",
+    background: "linear-gradient(180deg, #243cc9, #4169e1)",
     color: "#fff",
     padding: "40px 20px 60px",
     clipPath: "ellipse(120% 65% at 50% 25%)",
@@ -242,7 +246,7 @@ const styles = {
     margin: "0 auto 20px",
   },
   startButton: {
-    background: "#f59e0b",
+    background: "#7b61ff",
     color: "#fff",
     border: "none",
     borderRadius: "30px",
@@ -251,10 +255,9 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
     marginTop: "10px",
-    boxShadow: "0 6px 14px rgba(245,158,11,0.3)",
+    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
+    transition: "all 0.3s ease",
   },
-
-  /* SCALE BAR */
   scaleBar: {
     display: "flex",
     justifyContent: "center",
@@ -272,8 +275,6 @@ const styles = {
   scaleText: {
     textShadow: "0 1px 2px rgba(0,0,0,0.2)",
   },
-
-  /* QUESTIONS */
   questionList: {
     marginTop: "20px",
     width: "90%",
@@ -316,12 +317,10 @@ const styles = {
     width: "90%",
     margin: "35px auto",
   },
-
-  /* SUBMIT & RESULT */
   submitButton: {
     display: "block",
     margin: "40px auto 0",
-    backgroundColor: "#2563eb",
+    backgroundColor: "#7b61ff",
     color: "#fff",
     border: "none",
     borderRadius: "10px",
@@ -329,7 +328,8 @@ const styles = {
     fontSize: "16px",
     fontWeight: "600",
     cursor: "pointer",
-    boxShadow: "0 6px 14px rgba(37,99,235,0.3)",
+    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
   resultBox: {
     marginTop: "40px",
@@ -350,6 +350,6 @@ const styles = {
   resultText: {
     fontSize: "18px",
     fontWeight: "600",
-    color: "#2563eb",
+    color: "#7b61ff",
   },
 };

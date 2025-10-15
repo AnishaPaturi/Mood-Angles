@@ -1,33 +1,34 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function DepressionTest() {
+export default function EmotionalIntelligenceTest() {
   const questions = [
-    "I generally feel down and unhappy.",
-    "I have less interest in other people than I used to.",
-    "It takes a lot of effort to start working on something new.",
-    "I don't get as much satisfaction out of things as I used to.",
-    "I have headaches or back pain for no apparent reason.",
-    "I easily get impatient, frustrated, or angry.",
-    "I feel lonely, and that people aren't that interested in me.",
-    "I feel like I have nothing to look forward to.",
-    "I have episodes of crying that are hard to stop.",
-    "I have trouble getting to sleep or I sleep in too late.",
-    "I feel like my life has been a failure or a disappointment.",
-    "I have trouble staying focused on what I'm supposed to be doing.",
-    "I blame myself for my faults and mistakes.",
-    "I feel like I've slowed down; sometimes I don't have the energy to get anything done.",
-    "I have trouble finishing books, movies, or TV shows.",
-    "I put off making decisions more often than I used to.",
-    "When I feel down, friends and family can't cheer me up.",
-    "I think about people being better off without me.",
-    "I'm eating much less (or much more) than normal and it's affecting my weight.",
-    "I have less interest in sex than I used to.",
+    "I am able to regulate my emotions.",
+    "I pick up on body language cues.",
+    "I fly off the handle easily.",
+    "I grow from my emotional experiences.",
+    "When making a high-stakes decision, I try to factor in how I'm feeling now as well as how I might feel later.",
+    "Emotional setbacks are hard, but I manage them.",
+    "I can express a variety of emotions to others.",
+    "I can remain collected during conflict.",
+    "I remain non-judgmental and accept the emotions of others.",
+    "I remain at ease in challenging situations.",
+    "I remain calm when things are rough.",
+    "I blurt things out without thinking about the impact on others.",
+    "I feel grateful for others and share my appreciation.",
+    "I accept my difficult emotions, even negative ones like anger.",
+    "I am able to adjust my behavior when the situation calls for it.",
+    "I am open to doing things differently.",
+    "I validate how other people feel.",
+    "I can adapt to different situations.",
+    "I do not handle the emotions of others well.",
+    "I cannot identify my emotions easily.",
   ];
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
+
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const handleSelect = (qIndex, value) => {
@@ -40,38 +41,44 @@ export default function DepressionTest() {
     if (answers.some((a) => a === null)) {
       setResult({
         score: null,
-        level: "Please answer all questions before submitting!",
+        level: "⚠️ Please answer all questions before submitting!",
       });
       return;
     }
 
-    const rawScore = answers.reduce((a, v) => a + v, 0);
-    const score = Math.round((rawScore / (questions.length * 4)) * 100);
+    // Convert selections (0–4) to 1–5 scale
+    const totalScore = answers.reduce((sum, val) => sum + (val + 1), 0);
+    const percentage = Math.round((totalScore / (questions.length * 5)) * 100);
 
     let level = "";
-    if (score <= 20) level = "Minimal or No Depression";
-    else if (score <= 40) level = "Mild Depression (Monitor your mood)";
-    else if (score <= 65) level = "Moderate Depression (Consider talking to someone)";
-    else if (score <= 85) level = "Severe Depression (Seek professional help)";
-    else level = "Extremely Severe Depression (Immediate support advised)";
+    if (percentage <= 16)
+      level = "Very low emotional intelligence";
+    else if (percentage <= 36)
+      level = "Low emotional intelligence";
+    else if (percentage <= 63)
+      level = "Neither low nor high emotional intelligence";
+    else if (percentage <= 83)
+      level = "High emotional intelligence";
+    else
+      level = "Very high emotional intelligence";
 
-    setResult({ score, level });
+    setResult({ score: percentage, level });
   };
 
   return (
     <UserWrapper>
       <div style={styles.container}>
-        {/* HEADER SECTION */}
+        {/* HEADER */}
         <div style={styles.headerContainer}>
           <img
-            src="https://images.pexels.com/photos/8978173/pexels-photo-8978173.jpeg"
-            alt="Depression Test Header"
+            src="https://img.freepik.com/free-vector/emotional-intelligence-concept-illustration_114360-4395.jpg"
+            alt="Emotional Intelligence Header"
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
 
           <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>Depression Check</h1>
+            <h1 style={styles.mainTitle}>Emotional Intelligence (EQ) Test</h1>
             <div style={styles.testMeta}>
               <span style={styles.metaBtnOrange}>✔ 20 QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
@@ -81,14 +88,17 @@ export default function DepressionTest() {
 
         {/* INTRO SECTION */}
         <div style={styles.subSection}>
-          <h2 style={styles.subTitle}>Are you feeling persistently low or unmotivated?</h2>
+          <h2 style={styles.subTitle}>How emotionally intelligent are you?</h2>
           <p style={styles.subDesc}>
-            Depression can affect your thoughts, mood, and overall energy. This self-assessment
-            helps you reflect on your emotional well-being and understand if you may be showing signs of depression.
+            Emotional intelligence — often called EQ — reflects how well you
+            understand, manage, and express emotions, both your own and those of
+            others. People with strong EQ handle stress effectively and navigate
+            relationships with empathy. Take this quick quiz to see how well you
+            recognize and respond to feelings in everyday life.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
-              🧠 Start Test
+              🚀 Start Test
             </button>
           )}
         </div>
@@ -96,14 +106,12 @@ export default function DepressionTest() {
         {/* TEST SECTION */}
         {started && (
           <>
-            {/* SCALE BAR */}
             <div style={styles.scaleBar}>
               <span style={styles.scaleText}>STRONGLY DISAGREE</span>
               <span style={styles.scaleText}>NEUTRAL</span>
               <span style={styles.scaleText}>STRONGLY AGREE</span>
             </div>
 
-            {/* QUESTIONS */}
             <div style={styles.questionList}>
               {questions.map((q, i) => (
                 <div key={i} style={styles.questionBlock}>
@@ -135,17 +143,15 @@ export default function DepressionTest() {
               ))}
             </div>
 
-            {/* SUBMIT BUTTON */}
             <button onClick={handleSubmit} style={styles.submitButton}>
               Submit Test
             </button>
 
-            {/* RESULT */}
             {result && (
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <p style={styles.resultScore}>
-                    Your Depression Score: {result.score}/100
+                    Your EQ Score: {result.score}/100
                   </p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
@@ -158,7 +164,7 @@ export default function DepressionTest() {
   );
 }
 
-/* ------------------- STYLES ------------------- */
+/* ------------------- INLINE STYLES ------------------- */
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
@@ -169,8 +175,6 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     textAlign: "center",
   },
-
-  /* HEADER */
   headerContainer: {
     position: "relative",
     textAlign: "center",
@@ -213,6 +217,7 @@ const styles = {
     borderRadius: "25px",
     fontWeight: "600",
     fontSize: "14px",
+    backdropFilter: "blur(6px)",
   },
   metaBtnPink: {
     background: "rgba(236,72,153,0.9)",
@@ -221,11 +226,10 @@ const styles = {
     borderRadius: "25px",
     fontWeight: "600",
     fontSize: "14px",
+    backdropFilter: "blur(6px)",
   },
-
-  /* INTRO SECTION */
   subSection: {
-    background: "linear-gradient(180deg, #2563eb, #3b82f6)",
+    background: "linear-gradient(180deg, #243cc9, #4169e1)",
     color: "#fff",
     padding: "40px 20px 60px",
     clipPath: "ellipse(120% 65% at 50% 25%)",
@@ -242,7 +246,7 @@ const styles = {
     margin: "0 auto 20px",
   },
   startButton: {
-    background: "#f59e0b",
+    background: "#7b61ff",
     color: "#fff",
     border: "none",
     borderRadius: "30px",
@@ -251,10 +255,9 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
     marginTop: "10px",
-    boxShadow: "0 6px 14px rgba(245,158,11,0.3)",
+    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
+    transition: "all 0.3s ease",
   },
-
-  /* SCALE BAR */
   scaleBar: {
     display: "flex",
     justifyContent: "center",
@@ -272,8 +275,6 @@ const styles = {
   scaleText: {
     textShadow: "0 1px 2px rgba(0,0,0,0.2)",
   },
-
-  /* QUESTIONS */
   questionList: {
     marginTop: "20px",
     width: "90%",
@@ -316,12 +317,10 @@ const styles = {
     width: "90%",
     margin: "35px auto",
   },
-
-  /* SUBMIT & RESULT */
   submitButton: {
     display: "block",
     margin: "40px auto 0",
-    backgroundColor: "#2563eb",
+    backgroundColor: "#7b61ff",
     color: "#fff",
     border: "none",
     borderRadius: "10px",
@@ -329,7 +328,8 @@ const styles = {
     fontSize: "16px",
     fontWeight: "600",
     cursor: "pointer",
-    boxShadow: "0 6px 14px rgba(37,99,235,0.3)",
+    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
   resultBox: {
     marginTop: "40px",
@@ -350,6 +350,6 @@ const styles = {
   resultText: {
     fontSize: "18px",
     fontWeight: "600",
-    color: "#2563eb",
+    color: "#7b61ff",
   },
 };

@@ -19,6 +19,9 @@ import BipolarTest from './pages/tests/BipolarTest.jsx';
 import NeuroTest from './pages/tests/NeuroTest.jsx';
 import PersonalityTest from './pages/tests/PersonalityTest.jsx';
 import TestPage from './pages/TestPage.jsx'
+import EQTest from './pages/tests/EQTest.jsx';
+import MentalHealthTodayTest from './pages/tests/MentalHeathTodayTest.jsx';
+
 
 function App() {
   return (
@@ -44,6 +47,9 @@ function App() {
         <Route path="/test/bipolar" element={<BipolarTest />} />
         <Route path="/test/neuro" element={<NeuroTest />} />
         <Route path="/test/personality" element={<PersonalityTest />} />
+        <Route path="/test/eq" element={<EQTest />} />
+        <Route path="/test/MentalHealth" element={<MentalHealthTodayTest/>}/>
+        
       </Routes>
     </Router>
   )
