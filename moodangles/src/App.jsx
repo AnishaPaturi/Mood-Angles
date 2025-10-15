@@ -10,6 +10,7 @@ import PSignup from './pages/PSignup.jsx'
 import Profile from './pages/Profile.jsx'
 import Support from './pages/Support.jsx'
 import Upload from './pages/UploadD.jsx'
+import Articles from './pages/Articles.jsx'
 import Help from './pages/Help.jsx'
 import DepressionTest from './pages/tests/DepressionTest.jsx';
 import AnxietyTest from "./pages/tests/AnxietyTest.jsx";
@@ -38,6 +39,7 @@ function App() {
         <Route path="/psignup" element={<PSignup />} />
         <Route path="/support" element={<Support />} />
         <Route path="/upload" element={<Upload/>}/>
+        <Route path="/articles" element={<Articles/>}/>
         <Route path="/help" element={<Help/>}/>
         <Route path="/test" element={<TestPage/>}/>
         <Route path="/test/depression" element={<DepressionTest />} />
