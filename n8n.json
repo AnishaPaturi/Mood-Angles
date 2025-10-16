@@ -1,0 +1,163 @@
+{
+  "name": "Mood-Angles Workflow (Fixed)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "cake-test",
+        "method": "POST"
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{\n  json: {\n    agent: 'AngelR',\n    message: `${$json.testType} score: ${$json.score}`\n  }\n}];"
+      },
+      "name": "Prepare Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/angelR",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{$json}}"
+      },
+      "name": "Angel R",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [750, 100]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/angelT",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{$json}}"
+      },
+      "name": "Angel T",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/angelC",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{$json}}"
+      },
+      "name": "Angel C",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [750, 500]
+    },
+    {
+      "parameters": {},
+      "name": "Merge Angels",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 1,
+      "position": [1000, 300],
+      "typeOptions": {
+        "mode": "mergeByIndex"
+      }
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/debate",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{$json}}"
+      },
+      "name": "Debate Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/judge",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{$json}}"
+      },
+      "name": "Judge Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.confidence}}",
+              "operation": "larger",
+              "value2": 0.8
+            }
+          ]
+        }
+      },
+      "name": "IF Confidence > 0.8",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1750, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5000/api/saveResult",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={{$json}}"
+      },
+      "name": "Save Result Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [2000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Prepare Data", "type": "main", "index": 0 }]]
+    },
+    "Prepare Data": {
+      "main": [
+        [
+          { "node": "Angel R", "type": "main", "index": 0 },
+          { "node": "Angel T", "type": "main", "index": 0 },
+          { "node": "Angel C", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Angel R": {
+      "main": [[{ "node": "Merge Angels", "type": "main", "index": 0 }]]
+    },
+    "Angel T": {
+      "main": [[{ "node": "Merge Angels", "type": "main", "index": 1 }]]
+    },
+    "Angel C": {
+      "main": [[{ "node": "Merge Angels", "type": "main", "index": 2 }]]
+    },
+    "Merge Angels": {
+      "main": [[{ "node": "Debate Agent", "type": "main", "index": 0 }]]
+    },
+    "Debate Agent": {
+      "main": [[{ "node": "Judge Agent", "type": "main", "index": 0 }]]
+    },
+    "Judge Agent": {
+      "main": [[{ "node": "IF Confidence > 0.8", "type": "main", "index": 0 }]]
+    },
+    "IF Confidence > 0.8": {
+      "main": [[{ "node": "Save Result Backend", "type": "main", "index": 0 }]]
+    }
+  }
+}
