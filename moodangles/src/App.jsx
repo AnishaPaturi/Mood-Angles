@@ -8,6 +8,7 @@ import ForgotPassword from './pages/ForgotPassword.jsx'
 import PLogin from './pages/PLogin.jsx'
 import PSignup from './pages/PSignup.jsx'
 import Profile from './pages/Profile.jsx'
+import FindTherapist from './pages/TherapistF.jsx'
 import Support from './pages/Support.jsx'
 import Upload from './pages/UploadD.jsx'
 import Articles from './pages/Articles.jsx'
@@ -37,6 +38,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/plogin" element={<PLogin />} />
         <Route path="/psignup" element={<PSignup />} />
+        <Route path='/TherapistF'element={<FindTherapist/>}/>
         <Route path="/support" element={<Support />} />
         <Route path="/upload" element={<Upload/>}/>
         <Route path="/articles" element={<Articles/>}/>

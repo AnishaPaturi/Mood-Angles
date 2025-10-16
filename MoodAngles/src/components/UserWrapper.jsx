@@ -108,7 +108,7 @@ function UserWrapper({children}) {
           <div className="brand">MoodAngels</div>
           <nav className="nav">
             <a href="/UDashboard">Dashboard</a>
-            <a href="/Therapist">Find a Therapist?</a>
+            <a href="/TherapistF">Find a Therapist?</a>
             <a href="#">Profile</a>
             <a href="#">Settings</a>
           </nav>
