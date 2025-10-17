@@ -71,7 +71,7 @@ export default function EmotionalIntelligenceTest() {
         {/* HEADER */}
         <div style={styles.headerContainer}>
           <img
-            src="https://img.freepik.com/free-vector/emotional-intelligence-concept-illustration_114360-4395.jpg"
+            src="https://t4.ftcdn.net/jpg/06/04/38/29/240_F_604382909_wIVX5mencOVhuW0mR5l4tUduOooaUCib.jpg"
             alt="Emotional Intelligence Header"
             style={styles.headerBg}
           />
