@@ -124,8 +124,6 @@ export default function Login() {
                 {showPassword ? "Hide" : "Show"}
               </button>
 
-
-
               <span className="pw-info" tabIndex={0} aria-label="password rules">
                 ⓘ
                 <span className="tooltip">
@@ -139,12 +137,22 @@ export default function Login() {
             </div>
 
             <div className="row between">
-              <a
+              <button
+                type="button"
                 onClick={() => navigate("/forgot-password")}
                 className="forgot"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#ff758c",
+                  cursor: "pointer",
+                  padding: 0,
+                  fontSize: "14px",
+                  textDecoration: "underline",
+                }}
               >
                 Forgot Password?
-              </a>
+              </button>
             </div>
 
             {error && <div className="error">{error}</div>}
