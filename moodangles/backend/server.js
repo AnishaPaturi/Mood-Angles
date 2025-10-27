@@ -14,6 +14,8 @@ import agentCRoute from "./routes/agentC.js";
 // import agentSRoute from "./routes/agentS.js";
 import agentJRoute from "./routes/agentJ.js"; 
 import agentBRoute from "./routes/agentB.js"; 
+import uploadRoute from "./routes/uploadRoute.js";
+
 
 dotenv.config();
 connectDB();
@@ -37,7 +39,10 @@ app.use("/api", agentCRoute);
 // app.use("/api", agentSRoute);
 app.use("/api", agentJRoute);
 app.use("/api", agentBRoute);
+app.use("/api", uploadRoute);
 
 
 const PORT = process.env.PORT || 5000;
+app.use("/uploads", express.static("uploads"));
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
