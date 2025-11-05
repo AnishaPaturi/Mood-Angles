@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import UserWrapper from "../components/UserWrapper";
 import { UploadCloud, FileUp, CheckCircle2 } from "lucide-react";
 
@@ -6,8 +6,18 @@ function UploadD() {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
   const fileInputRef = useRef(null);
 
+  // ✅ Fetch already uploaded files
+  useEffect(() => {
+    fetch("http://localhost:5000/api/uploads")
+      .then((res) => res.json())
+      .then((data) => setUploadedFiles(data))
+      .catch((err) => console.error("Error fetching uploaded files:", err));
+  }, []);
+
+  // Handle file selection or drop
   const handleFilesChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length) setFiles(selectedFiles);
@@ -23,15 +33,37 @@ function UploadD() {
 
   const handleDragOver = (e) => e.preventDefault();
 
-  const handleUpload = () => {
-    if (!files.length) return;
+  // ✅ Upload to backend
+  const handleUpload = async () => {
+    if (!files.length) return alert("Please select a file!");
+
     setUploading(true);
-    setTimeout(() => {
+
+    try {
+      const formData = new FormData();
+      formData.append("file", files[0]); // uploading one at a time
+
+      const res = await fetch("http://localhost:5000/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setSuccess(true);
+        setFiles([]);
+        setUploadedFiles((prev) => [...prev, data.filePath]);
+      } else {
+        alert("Upload failed: " + data.message);
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Something went wrong!");
+    } finally {
       setUploading(false);
-      setSuccess(true);
-      setFiles([]);
       setTimeout(() => setSuccess(false), 4000);
-    }, 2500);
+    }
   };
 
   const css = `
@@ -201,6 +233,32 @@ function UploadD() {
       from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    .uploaded-list {
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 600px;
+      text-align: left;
+    }
+
+    .uploaded-item {
+      background: #fff8f5;
+      border-radius: 0.75rem;
+      padding: 0.6rem 1rem;
+      margin-bottom: 0.5rem;
+      color: #8b5c5c;
+      box-shadow: 0 2px 8px rgba(200, 180, 200, 0.15);
+    }
+
+    .uploaded-item a {
+      color: #b35959;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .uploaded-item a:hover {
+      text-decoration: underline;
+    }
   `;
 
   return (
@@ -212,7 +270,6 @@ function UploadD() {
         </p>
 
         <div className="upload-card">
-          {/* Drag & Drop */}
           <div
             className="drop-zone"
             onDrop={handleDrop}
@@ -231,7 +288,6 @@ function UploadD() {
 
           <div className="divider">OR</div>
 
-          {/* Upload from device button */}
           <button
             className="file-btn"
             onClick={() => fileInputRef.current.click()}
@@ -239,13 +295,10 @@ function UploadD() {
             <FileUp size={20} /> Choose Files
           </button>
 
-          {/* Selected files */}
           {files.length > 0 && (
             <div className="file-names">
               {files.map((f, i) => (
-                <p key={i}>
-                  📄 <b>{f.name}</b>
-                </p>
+                <p key={i}>📄 <b>{f.name}</b></p>
               ))}
             </div>
           )}
@@ -267,7 +320,61 @@ function UploadD() {
             </div>
           )}
         </div>
+
+        {/* ✅ Uploaded file list */}
+        <div className="uploaded-list">
+          <h3 className="text-lg font-semibold mb-2">Previously Uploaded</h3>
+          {uploadedFiles.length > 0 ? (
+            uploadedFiles.map((file, i) => {
+  const filename = file.split("/").pop();
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete ${filename}?`)) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/uploads/${filename}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setUploadedFiles((prev) => prev.filter((f) => f !== file));
+      } else {
+        alert("Delete failed: " + data.message);
+      }
+    } catch (err) {
+      alert("Error deleting file!");
+    }
+  };
+
+  return (
+    <div key={i} className="uploaded-item" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <a href={`http://localhost:5000${file}`} target="_blank" rel="noopener noreferrer">
+        {filename}
+      </a>
+      <button
+        onClick={handleDelete}
+        style={{
+          background: "#ffb3b3",
+          border: "none",
+          color: "#7e3a3a",
+          borderRadius: "8px",
+          padding: "4px 10px",
+          cursor: "pointer",
+          fontWeight: "600"
+        }}
+      >
+        Delete
+      </button>
+    </div>
+  );
+})
+
+          ) : (
+            <p className="text-gray-500">No files uploaded yet.</p>
+          )}
+        </div>
       </div>
+
       <style>{css}</style>
     </UserWrapper>
   );
