@@ -646,6 +646,11 @@ export default function BipolarTest() {
                     <strong>Agent D Summary:</strong> {result.agentDExplanation}
                   </p>
                 )}
+                {result.agentCComparison && (
+                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
+                    <strong>Agent C Comparative Summary:</strong> {result.agentCComparison}
+                  </p>
+                )}
               </div>
             )}
           </>
