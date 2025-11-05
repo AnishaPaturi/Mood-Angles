@@ -267,9 +267,13 @@ function Support() {
         <h2>Join Our Community 🌐</h2>
         <p>Connect with others, share experiences, or seek help through our safe and supportive spaces.</p>
         <div className="community-links">
-          <a href="https://discord.gg/yeVMHh3B" target="_blank" rel="noopener noreferrer">Discord</a>
-          <a href="#">Forum</a>
-          <a href="mailto:moodangles05@gmail.com">Email Us</a>
+          <a href="https://discord.gg/4gKsmdYz" target="_blank" rel="noopener noreferrer">Discord</a>
+          <a href="https://discord.com/channels/1435685956484337676/1435687137776242921"
+          target="_blank"
+          rel="noopener noreferrer">Forum</a>
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=moodangles05@gmail.com"
+          target="_blank"
+          rel="noopener noreferrer">Email Us</a>
         </div>
       </div>
 
