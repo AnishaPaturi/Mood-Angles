@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const [method, setMethod] = useState("email");
   const [contact, setContact] = useState("");
   const [otp, setOtp] = useState("");
   const [enteredOtp, setEnteredOtp] = useState("");
@@ -17,21 +16,32 @@ export default function ForgotPassword() {
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$_])[A-Za-z\d@#$_]{8,}$/;
 
+  // ✅ UPDATED: Send OTP via backend mailer
   const handleSendOtp = async () => {
     setError("");
     if (!contact) {
-      setError(`Please enter your ${method}`);
+      setError("Please enter your email");
       return;
     }
 
-    // Simulate OTP sending
     try {
-      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      setOtp(generatedOtp);
-      setOtpSent(true);
-      alert(`OTP sent to your ${method}: ${generatedOtp}`); // demo only
+      const response = await fetch("http://localhost:5000/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: contact }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setOtp(data.otp);
+        setOtpSent(true);
+        alert("✅ OTP has been sent to your email!");
+      } else {
+        setError("❌ Failed to send OTP. Please try again.");
+      }
     } catch (err) {
-      setError("Failed to send OTP");
+      console.error(err);
+      setError("⚠️ Server error while sending OTP");
     }
   };
 
@@ -39,7 +49,7 @@ export default function ForgotPassword() {
     if (enteredOtp === otp) {
       setOtpVerified(true);
       setError("");
-      alert("OTP verified successfully!");
+      alert("🎉 OTP verified successfully!");
     } else {
       setError("Invalid OTP. Please try again.");
     }
@@ -51,7 +61,7 @@ export default function ForgotPassword() {
 
     if (!passwordRegex.test(newPassword)) {
       setError(
-        "Password must be at least 8 characters, include 1 uppercase letter, 1 digit, and 1 special char (@ # $ _)"
+        "Password must be at least 8 characters, include 1 uppercase letter, 1 digit, and 1 special character (@ # $ _)"
       );
       return;
     }
@@ -74,52 +84,25 @@ export default function ForgotPassword() {
           alt="Decorative"
           className="forgot-img"
         />
-        <h2>Goldfish Memory??</h2>
-
-        {/* Method selection */}
-        <div className="method-selector">
-          <button
-            className={method === "email" ? "active" : ""}
-            onClick={() => {
-              setMethod("email");
-              setOtpSent(false);
-              setOtpVerified(false);
-            }}
-          >
-            Email
-          </button>
-          <button
-            className={method === "phone" ? "active" : ""}
-            onClick={() => {
-              setMethod("phone");
-              setOtpSent(false);
-              setOtpVerified(false);
-            }}
-          >
-            Phone
-          </button>
-        </div>
+        <h2>
+          Goldfish Memory??? <span className="fish">🐠🐠</span>
+        </h2>
 
         <form className="form" onSubmit={handleResetPassword}>
-          {/* Contact input */}
           <input
-            type={method === "email" ? "email" : "tel"}
-            placeholder={
-              method === "email" ? "Enter your email" : "Enter your phone number"
-            }
+            type="email"
+            placeholder="Enter your email"
             value={contact}
             onChange={(e) => setContact(e.target.value)}
             required
           />
 
-          {/* Send OTP */}
           {!otpSent && (
             <button type="button" className="primary" onClick={handleSendOtp}>
               Send OTP
             </button>
           )}
 
-          {/* Enter OTP */}
           {otpSent && !otpVerified && (
             <>
               <input
@@ -135,7 +118,6 @@ export default function ForgotPassword() {
             </>
           )}
 
-          {/* Password fields appear only after OTP is verified */}
           {otpVerified && (
             <>
               <div className="inputRow">
@@ -188,50 +170,52 @@ const css = `
 }
 
 .forgot-card {
-  width: 1000px;
+  width: 600px;
   max-width: 95%;
-  min-height: 550px;
+  min-height: 480px;
   background: #fff;
-  border-radius: 12px;
-  padding: 32px 24px;
-  box-shadow: 0 18px 50px rgba(0,0,0,0.2);
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 15px 45px rgba(0,0,0,0.18);
   text-align: center;
+  transition: all 0.3s ease;
+}
+
+.forgot-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
 
 .forgot-img {
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   object-fit: cover;
   border-radius: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 h2 {
   margin-bottom: 20px;
   color: #ff758c;
-}
-
-.method-selector {
+  font-weight: 700;
+  font-size: 1.7rem;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
-  gap: 12px;
+  gap: 6px;
 }
 
-.method-selector button {
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1px solid #ff758c;
-  background: white;
-  color: #ff758c;
-  cursor: pointer;
-  font-weight: 600;
+.fish {
+  display: inline-block;
+  animation: swim 2.5s ease-in-out infinite;
 }
 
-.method-selector button.active {
-  background: linear-gradient(90deg, #ff7eb3, #ff758c);
-  color: #fff;
-  border: none;
+@keyframes swim {
+  0% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(5px) rotate(5deg); }
+  50% { transform: translateX(0) rotate(0deg); }
+  75% { transform: translateX(-5px) rotate(-5deg); }
+  100% { transform: translateX(0) rotate(0deg); }
 }
 
 .form {
@@ -245,22 +229,23 @@ input {
   border-radius: 8px;
   border: 1px solid #e6e6e6;
   outline: none;
+  font-size: 0.95rem;
 }
 
 .inputRow {
-  position: relative;
   display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .showBtn {
-  margin-left: 8px;
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: 6px 10px;
+  font-size: 13px;
   cursor: pointer;
   border: none;
   background: #ff758c;
   color: white;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .primary {
