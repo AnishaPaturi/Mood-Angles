@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-# agentC.py  — comparative analysis (Agent.C)
+# agentC.py — Agent C: comparative summarizer with sanitization, markdown cleanup, and robust output.
 
 import sys
 import json
 import os
+import re
 import traceback
 from dotenv import load_dotenv
 from openai import OpenAI, APIError
@@ -11,106 +12,149 @@ from openai import OpenAI, APIError
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def safe_read_stdin():
-    raw = sys.stdin.read()
+
+# =================== UTF-8 & STRUCTURE SANITIZERS ===================
+
+def sanitize_string(s: str) -> str:
+    """Replace lone UTF-16 surrogate code units with safe Unicode."""
+    if not isinstance(s, str):
+        return s
+    return "".join(ch if not 0xD800 <= ord(ch) <= 0xDFFF else "\uFFFD" for ch in s)
+
+def sanitize_obj(obj):
+    """Recursively sanitize strings inside dicts/lists."""
+    if isinstance(obj, str):
+        return sanitize_string(obj)
+    if isinstance(obj, dict):
+        return {sanitize_string(k): sanitize_obj(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_obj(v) for v in obj]
+    if isinstance(obj, tuple):
+        return tuple(sanitize_obj(v) for v in obj)
+    return obj
+
+def safe_json_output(obj):
+    """Safely write JSON as UTF-8 bytes (no surrogate errors)."""
     try:
-        return json.loads(raw)
-    except Exception as e:
-        print(json.dumps({"error": "invalid_json", "details": str(e)}))
-        sys.exit(1)
+        sys.stdout.buffer.write(json.dumps(obj, ensure_ascii=False).encode("utf-8", "replace"))
+    except Exception:
+        sys.stdout.write(json.dumps({"error": "json_dump_failed"}))
 
-def make_retrieval_placeholder(answers, score, level, medical_record):
-    """
-    Placeholder retrieval: in production replace with your vector DB retriever that returns
-    top-5 similar historical cases (each case = dict with keys: id, summary, similarity_score).
-    """
-    # Simple mock: return empty list or a tiny synthetic example to let LLM compare.
-    return [
-        {
-            "id": "case_001",
-            "summary": "35yo, episodic elevated mood and decreased need for sleep; had severe impulsive spending. Clinician: bipolar diagnosed.",
-            "similarity": 0.87
-        },
-        {
-            "id": "case_042",
-            "summary": "50yo, chronic low mood, insomnia; clinician: major depressive disorder.",
-            "similarity": 0.72
-        }
-    ]
 
-def build_prompt(current, retrieved_cases):
-    sr = "\n\n".join([f"Case {i+1} (sim={c.get('similarity')}): {c.get('summary')}" for i,c in enumerate(retrieved_cases)])
-    prompt = f"""
-You are Agent.C, a comparative diagnostic analyst. You will compare the CURRENT CASE with the TOP-RETRIEVED HISTORICAL CASES and summarize how similar/different patterns affect the diagnostic judgement.
+# =================== OPENAI RESPONSE PARSING ===================
 
-CURRENT CASE:
-- numeric score: {current.get('score')}
-- level interpretation: {current.get('level')}
-- medical record (if any): {current.get('medicalRecord') or 'N/A'}
-- answers summary: {current.get('answers_summary') or 'N/A'}
+def extract_text_from_resp(resp):
+    """Robustly extract text from OpenAI Responses API result."""
+    try:
+        out = getattr(resp, "output_text", None)
+        if isinstance(out, str) and out.strip():
+            return out.strip()
+    except Exception:
+        pass
 
-RETRIEVED CASES:
-{sr}
+    try:
+        if isinstance(resp, dict) and resp.get("output_text"):
+            return str(resp.get("output_text")).strip()
+    except Exception:
+        pass
 
-TASK:
-1) Produce a concise 2-4 sentence analysis that:
-   - explains how the retrieved cases are similar or different vs the current case;
-   - indicates whether the similarities support or undermine a mood-disorder diagnosis for the current visitor;
-   - suggest any caution or next-step (e.g., need for clinician review or further data).
-2) Output plain text only (no JSON wrappers).
+    try:
+        if hasattr(resp, "to_dict"):
+            d = resp.to_dict()
+            if "output_text" in d:
+                return d["output_text"]
+    except Exception:
+        pass
 
-Be factual, non-alarming, and concise.
-"""
-    return prompt
+    return str(resp)
+
+
+# =================== MAIN EXECUTION ===================
 
 def main():
-    data = safe_read_stdin()
-    # Expect keys: answers (dict or whatever), score (int), level (string), medicalRecord (optional)
     try:
-        current = {
-            "answers": data.get("answers"),
-            "score": data.get("score"),
-            "level": data.get("level"),
-            "medicalRecord": data.get("medicalRecord"),
-            # Compose a compact answers summary so model sees readable text:
-            "answers_summary": "\n".join([f"{k}: {v}" for k,v in (data.get("answers") or {}).items()])[:2000]
-        }
+        raw = sys.stdin.read()
+        data = json.loads(raw or "{}")
+    except Exception as e:
+        safe_json_output({"error": "invalid_json", "details": str(e)})
+        return
 
-        # Do retrieval (replace this with your real retriever)
-        retrieved_cases = make_retrieval_placeholder(current["answers"], current["score"], current["level"], current["medicalRecord"])
+    agentR_result = data.get("agentR_result", "")
+    agentD_result = data.get("agentD_result", "")
+    score = data.get("score")
+    level = data.get("level", "")
+    answers = data.get("answers", {})
 
-        prompt = build_prompt(current, retrieved_cases)
+    if not any([agentR_result, agentD_result, answers]):
+        safe_json_output({
+            "error": "no_context_provided",
+            "details": "Need at least one of agentR_result, agentD_result, or answers."
+        })
+        return
 
+    # Format answers
+    if isinstance(answers, dict) and answers:
+        formatted_answers = "\n".join([f"{k}: {v}" for k, v in answers.items()])
+    else:
+        formatted_answers = "No detailed responses provided."
+
+    prompt = f"""
+You are Agent C, an AI comparative reasoning assistant.
+Integrate and summarize the diagnostic findings concisely.
+
+Context:
+- Agent R finding: "{agentR_result}"
+- Agent D summary: "{agentD_result}"
+- Numeric score: {score}
+- Level: "{level}"
+- Responses: {formatted_answers}
+
+Task:
+Summarize the combined insights from Agents R and D in 3–4 short sentences.
+Include what the findings imply and the recommended next step (e.g., monitoring, self-care, or professional evaluation).
+Output only the final summary — no JSON, no code block, no markdown formatting.
+"""
+
+    messages = [
+        {"role": "system", "content": "You are Agent C, a balanced, evidence-based clinical reasoning AI."},
+        {"role": "user", "content": prompt}
+    ]
+
+    messages = sanitize_obj(messages)
+
+    try:
+        # ========== OpenAI Call ==========
         resp = client.responses.create(
             model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            input=[
-                {"role":"system", "content":"You are Agent.C, comparative analysis expert."},
-                {"role":"user", "content": prompt}
-            ],
-            max_output_tokens=300
+            input=messages,
+            max_output_tokens=400
         )
 
-        out_text = getattr(resp, "output_text", None)
-        if not out_text:
-            # fallback to parsing response object
-            try:
-                respdict = resp.to_dict() if hasattr(resp, "to_dict") else dict(resp)
-                out_text = respdict.get("output_text") or str(respdict)
-            except Exception:
-                out_text = str(resp)
+        # ========== Clean Output ==========
+        out_text = extract_text_from_resp(resp) or ""
 
-        result_text = (out_text or "").strip()
-        if not result_text:
-            print(json.dumps({"error":"no_output_text","raw_preview":str(resp)[:2000]}))
-            return
+        # --- Remove markdown code fences like ```json ... ``` ---
+        text = re.sub(r"^```(?:json)?", "", out_text, flags=re.IGNORECASE).strip("` \n")
+        text = re.sub(r"```$", "", text).strip()
 
-        print(json.dumps({"result": result_text}))
+        # Try parse JSON if model included it
+        try:
+            j = json.loads(text)
+            result = j.get("result") or j.get("Result") or text
+        except Exception:
+            result = text
+
+        # Sanitize and output clean text only
+        result = sanitize_string(result).strip()
+        safe_json_output({"result": result})
+
     except APIError as e:
-        traceback.print_exc(file=sys.stderr)
-        print(json.dumps({"error":"openai_api_error","details":str(e)}))
+        tb = traceback.format_exc()
+        safe_json_output({"error": "openai_api_error", "details": str(e), "traceback": tb})
     except Exception as e:
-        traceback.print_exc(file=sys.stderr)
-        print(json.dumps({"error":"unexpected_error","details":str(e)}))
+        tb = traceback.format_exc()
+        safe_json_output({"error": "unexpected_error", "details": str(e), "traceback": tb})
+
 
 if __name__ == "__main__":
     main()
