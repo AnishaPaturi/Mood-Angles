@@ -410,6 +410,7 @@ export default function BipolarTest() {
     setAnswers(updated);
   };
 
+  // ---- Submit & Call Agents ----
   const handleSubmit = async () => {
     if (answers.some((a) => a === null)) {
       setResult({
@@ -419,7 +420,7 @@ export default function BipolarTest() {
       return;
     }
 
-    // ---------- Local score logic ----------
+    // ---------- Local Score ----------
     const rawScore = answers.reduce((a, v) => a + v, 0);
     const score = Math.round((rawScore / 80) * 100);
     const level =
@@ -433,12 +434,11 @@ export default function BipolarTest() {
         ? "Significant Behavioral Dysregulation"
         : "High likelihood of Bipolar Disorder";
 
-    // Show local result instantly
     setResult({ score, level });
-
-    // ---------- Agent R API call ----------
     setLoading(true);
+
     try {
+      // ---------- Agent R ----------
       const payload = {
         score,
         level,
@@ -455,89 +455,89 @@ export default function BipolarTest() {
       });
 
       if (!res.ok) {
-        let errorBody = null;
-        try {
-          errorBody = await res.json();
-        } catch (e) {
-          errorBody = await res.text();
-        }
+        const errText = await res.text();
         setResult((prev) => ({
           ...prev,
-          aiDiagnosis: `⚠️ Agent R backend error: ${res.status} ${res.statusText} — ${JSON.stringify(
-            errorBody
-          )}`,
+          aiDiagnosis: `⚠️ Agent R failed: ${res.status} ${res.statusText} — ${errText}`,
         }));
         return;
       }
 
       const data = await res.json();
+      if (!data?.result) throw new Error("Invalid Agent R response");
 
-      if (data && data.result) {
-        const text = String(data.result).trim();
-        const first = text.split(/[.!?]/)[0].trim();
-        const finalSummary = first || text;
+      const finalSummary = String(data.result).trim().split(/[.!?]/)[0].trim();
+      setResult((prev) => ({ ...prev, aiDiagnosis: finalSummary }));
 
-        // ✅ Store Agent R’s result
+      // ---------- Agent D ----------
+      const dRes = await fetch(`${API_BASE}/api/angelD`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentR_result: finalSummary,
+          score,
+          level,
+        }),
+      });
+
+      if (!dRes.ok) {
+        const txt = await dRes.text();
         setResult((prev) => ({
           ...prev,
-          aiDiagnosis: finalSummary,
+          agentDExplanation: `⚠️ Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`,
         }));
+        return;
+      }
 
-        // ---------- Agent D API call ----------
-        try {
-          const dRes = await fetch(`${API_BASE}/api/angelD`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              agentR_result: finalSummary,
-              score,
-              level,
-            }),
-          });
+      const dData = await dRes.json();
+      if (!dData?.result) throw new Error("Invalid Agent D response");
 
-          if (dRes.ok) {
-            const dData = await dRes.json();
-            if (dData && dData.result) {
-              setResult((prev) => ({
-                ...prev,
-                agentDExplanation: dData.result,
-              }));
-            } else if (dData && dData.error) {
-              setResult((prev) => ({
-                ...prev,
-                agentDExplanation: `⚠️ Agent D error: ${JSON.stringify(dData)}`,
-              }));
-            }
-          } else {
-            const txt = await dRes.text();
-            setResult((prev) => ({
-              ...prev,
-              agentDExplanation: `⚠️ Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`,
-            }));
-          }
-        } catch (err) {
-          console.error("Agent D connection error:", err);
-          setResult((prev) => ({
-            ...prev,
-            agentDExplanation: "⚠️ Could not connect to Agent D backend.",
-          }));
-        }
-      } else if (data && data.error) {
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result }));
+
+      // ---------- Agent C ----------
+      const cRes = await fetch(`${API_BASE}/api/angelC`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentR_result: finalSummary,
+          agentD_result: dData.result,
+          score,
+          level,
+          answers: questions.reduce((acc, q, i) => {
+            acc[`Q${i + 1}`] = `${q} → Answer: ${answers[i]}`;
+            return acc;
+          }, {}),
+        }),
+      });
+
+      if (!cRes.ok) {
+        const txt = await cRes.text();
         setResult((prev) => ({
           ...prev,
-          aiDiagnosis: `⚠️ Agent R error: ${JSON.stringify(data)}`,
+          agentCComparison: `⚠️ Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`,
+        }));
+        return;
+      }
+
+      const cData = await cRes.json();
+      if (cData?.result) {
+        setResult((prev) => ({ ...prev, agentCComparison: cData.result }));
+      } else if (cData?.error) {
+        setResult((prev) => ({
+          ...prev,
+          agentCComparison: `⚠️ Agent C error: ${JSON.stringify(cData)}`,
         }));
       } else {
         setResult((prev) => ({
           ...prev,
-          aiDiagnosis: "⚠️ Unexpected Agent R response shape.",
+          agentCComparison: "⚠️ Unexpected Agent C response shape.",
         }));
       }
     } catch (err) {
-      console.error("Agent R connection error:", err);
+      console.error("Agent chain error:", err);
       setResult((prev) => ({
         ...prev,
-        aiDiagnosis: "⚠️ Could not connect to Agent R backend.",
+        aiDiagnosis: "⚠️ Could not complete diagnosis chain.",
       }));
     } finally {
       setLoading(false);
