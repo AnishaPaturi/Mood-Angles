@@ -57,7 +57,7 @@ def main():
 
     # Try OpenAI but handle exceptions and fallback
     try:
-        client = OpenAI(apiKey=os.getenv("OPENAI_API_KEY"))
+        client = OpenAI(api_Key=os.getenv("OPENAI_API_KEY"))
         prompt = f"""
 You are Agent D, a follow-up diagnostic summarizer for a mental-health screener.
 Given:
