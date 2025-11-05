@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# agentJ.py — Judge agent: produce a compact, structured decision after debate
+# agentJ.py — Judge agent: produce a clinical diagnosis-style decision (NO references to other agents)
 
 import sys
 import json
@@ -14,14 +14,15 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def sanitize_string(s: str) -> str:
     if not isinstance(s, str):
         return s
-    out_chars = []
+    out = []
     for ch in s:
         cp = ord(ch)
+        # replace lone surrogates with replacement char
         if 0xD800 <= cp <= 0xDFFF:
-            out_chars.append("\uFFFD")
+            out.append("\uFFFD")
         else:
-            out_chars.append(ch)
-    return "".join(out_chars)
+            out.append(ch)
+    return "".join(out)
 
 def sanitize_obj(obj):
     if isinstance(obj, str):
@@ -40,6 +41,56 @@ def safe_print_json(obj):
     except Exception:
         sys.stdout.write(json.dumps({"error": "print_failed", "preview": str(obj)}))
 
+def extract_text(resp):
+    # Best-effort to get text from the Responses SDK object
+    try:
+        out = getattr(resp, "output_text", None)
+        if out and isinstance(out, str):
+            return out.strip()
+    except Exception:
+        pass
+    try:
+        if isinstance(resp, dict) and resp.get("output_text"):
+            return str(resp.get("output_text")).strip()
+    except Exception:
+        pass
+    try:
+        s = str(resp)
+        return s.strip()
+    except Exception:
+        return ""
+
+def build_clinical_context(data):
+    """Return a short plain-text clinical context summarizing score, level, condition, family history, and key responses."""
+    score = data.get("score")
+    level = data.get("level", "")
+    condition = data.get("condition", "")  # optional: e.g., "Bipolar Disorder"
+    answers = data.get("answers", {})  # dict of Q#: "Question -> Answer"
+    # Pull brief symptom highlights from answers: keep only yes/agree answers (values > 2) if numeric, else include non-empty
+    highlights = []
+    if isinstance(answers, dict):
+        for k, v in list(answers.items())[:50]:
+            # v might be "Question → Answer: X" or a number
+            try:
+                # if format "Question → Answer: value"
+                if isinstance(v, str) and "→ Answer:" in v:
+                    # try to extract numeric value at end
+                    parts = v.split("→ Answer:")
+                    q_text = parts[0].strip()
+                    a_text = parts[1].strip()
+                    highlights.append(f"{q_text} — {a_text}")
+                else:
+                    highlights.append(f"{k}: {v}")
+            except Exception:
+                highlights.append(f"{k}: {v}")
+    if not highlights:
+        highlights_text = "No symptom detail provided."
+    else:
+        # limit to first 7 highlights
+        highlights_text = "\n".join(highlights[:7])
+    ctx = f"Condition (if known): {condition}\nNumeric score: {score}\nLevel: {level}\nKey self-report highlights:\n{highlights_text}"
+    return ctx
+
 def main():
     try:
         raw = sys.stdin.read()
@@ -48,37 +99,40 @@ def main():
         safe_print_json({"error": "invalid_json", "details": str(e)})
         return
 
-    # input fields we expect (all optional but helpful)
-    agentR = data.get("agentR_result", "")
-    agentD = data.get("agentD_result", "")
-    agentC = data.get("agentC_result", "")
-    agentE = data.get("agentE_result", "")
-    score = data.get("score")
-    level = data.get("level", "")
+    # sanitize input fields
+    data = sanitize_obj(data)
 
-    # Compose judge prompt
+    # Build a clinical-only prompt (explicitly forbid referencing other agents)
+    clinical_context = build_clinical_context(data)
     prompt = f"""
-You are Agent J (Judge). You receive short outputs from prior agents about a screening.
-Inputs:
-- Agent R: "{agentR}"
-- Agent D: "{agentD}"
-- Agent C: "{agentC}"
-- Agent E (debate/consensus): "{agentE}"
-- Numeric score: {score}
-- Level classification: "{level}"
+You are a clinical reasoning assistant producing a concise, medical-style diagnostic judgment.
+Do NOT mention or refer to any other agent names, system internals, or tooling. Use only the clinical data (score, level, condition if provided, family history, and the patient's self-report highlights) to produce medical reasoning.
+
+Context:
+{clinical_context}
 
 Task:
-Produce a concise, evidence-based judgment. Output ONLY valid JSON (no extra text) with the following keys:
-- "decision": short label (e.g., "Likely", "Possible", "Unlikely", "Insufficient evidence").
-- "confidence": a number between 0.0 and 1.0 representing confidence.
-- "reasoning": 1-3 brief sentences explaining why (cite which agent outputs or score inform the decision).
-- "actions": an array of 0..3 short recommended next actions (e.g., "Schedule professional evaluation", "Monitor mood for 2 weeks", "Immediate emergency care if suicidal ideation").
+1) Give a short diagnostic decision label in plain language (one of: "Likely", "Possible", "Unlikely", or "Insufficient evidence").
+2) Provide a confidence score as a decimal between 0.0 and 1.0.
+3) Explain the medical reasoning in 2–3 brief sentences (describe which symptoms or patterns support the decision; relate to known clinical features of the named condition if condition is provided).
+4) Recommend 0–3 concrete next actions (short phrases), e.g., "Schedule comprehensive clinical assessment", "Monitor symptoms for 2–4 weeks and record patterns", "Immediate emergency care if suicidal ideation".
 
-Keep language neutral, avoid alarmist phrasing. Keep fields short and machine-friendly.
+Constraints:
+- Output only valid JSON (no surrounding markdown, no extra text).
+- JSON keys must be: decision, confidence, reasoning, actions (actions is an array).
+- Keep reasoning clinical and non-alarmist. Do not say "ask another agent" or mention other agents.
+
+Example output format:
+{{
+  "decision": "Possible",
+  "confidence": 0.72,
+  "reasoning": "Two weeks of mood elevation with reduced need for sleep and impulsive behavior suggest hypomanic episodes; intermittent low mood periods are consistent with depressive episodes, supporting a possible mood disorder.",
+  "actions": ["Schedule comprehensive clinical assessment", "Monitor mood and sleep patterns for 2–4 weeks"]
+}}
 """
 
     messages = [
-        {"role": "system", "content": "You are Agent J, an impartial clinical judge who turns combined agent outputs into a single structured decision."},
+        {"role": "system", "content": "You are a concise clinical diagnostician. Focus on medical reasoning only."},
         {"role": "user", "content": prompt}
     ]
 
@@ -86,33 +140,51 @@ Keep language neutral, avoid alarmist phrasing. Keep fields short and machine-fr
         resp = client.responses.create(
             model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
             input=messages,
-            max_output_tokens=250
+            max_output_tokens=300
         )
-        # Best-effort extract text
-        out_text = getattr(resp, "output_text", None) or str(resp)
 
-        # sometimes the model returns fenced JSON; try extracting
-        text = str(out_text).strip()
-        # remove markdown fences if present
+        out_text = extract_text(resp)
+        # strip fencing if any
+        text = out_text.strip()
         if text.startswith("```"):
-            # find first newline after opening fence
             parts = text.split("\n")
-            # remove fence lines
             if parts[0].startswith("```"):
                 parts = parts[1:]
-            # drop final fence if present
             if parts and parts[-1].strip().startswith("```"):
                 parts = parts[:-1]
             text = "\n".join(parts).strip()
 
-        # try to parse JSON
+        # Try parse JSON strictly
+        parsed = None
         try:
             parsed = json.loads(text)
         except Exception:
-            # If the model returned non-json, wrap into fallback JSON
-            parsed = {"decision": "", "confidence": 0.0, "reasoning": text, "actions": []}
+            # If the model didn't produce JSON, craft a fallback with the raw reasoning in 'reasoning'
+            parsed = {
+                "decision": "Insufficient evidence",
+                "confidence": 0.0,
+                "reasoning": sanitize_string(text),
+                "actions": []
+            }
 
         parsed = sanitize_obj(parsed)
+        # Normalize confidence to float between 0 and 1 if provided as percent/string
+        conf = parsed.get("confidence")
+        try:
+            if isinstance(conf, str):
+                c = conf.strip().rstrip("%")
+                parsed["confidence"] = max(0.0, min(1.0, float(c) / 100.0 if "%" in conf or float(c) > 1.0 else float(c)))
+            elif isinstance(conf, (int, float)):
+                val = float(conf)
+                if val > 1.0:
+                    parsed["confidence"] = max(0.0, min(1.0, val / 100.0))
+                else:
+                    parsed["confidence"] = max(0.0, min(1.0, val))
+            else:
+                parsed["confidence"] = 0.0
+        except Exception:
+            parsed["confidence"] = 0.0
+
         safe_print_json(parsed)
 
     except APIError as e:
