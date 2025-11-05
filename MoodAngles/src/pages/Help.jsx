@@ -89,31 +89,24 @@ export default function Help() {
 
   const computeReply = (text) => {
     const t = text.toLowerCase();
-
     if (/(hi|hello|hey|how are you)/.test(t)) {
       return "Hey! 😊 I can help with tests, results, profile, login, or contacting professionals. What would you like to know?";
     }
-
     if (t.includes("mood test") || t.includes("take a test") || t.includes("test")) {
       return <>🧠 Take a test via <Link to="/test" className="faq-link">Mood Test</Link> in your Dashboard.</>;
     }
-
     if (t.includes("result") || t.includes("score")) {
       return <>📊 View your results at <Link to="/Dashboard" className="faq-link">Dashboard → Results</Link>.</>;
     }
-
     if (t.includes("doctor") || t.includes("psychologist") || t.includes("professional") || t.includes("contact")) {
       return <>💬 Reach professionals via <Link to="/Therapist" className="faq-link">Contact</Link>.</>;
     }
-
     if (t.includes("profile") || t.includes("settings") || t.includes("account")) {
       return <>⚙️ Update your profile at <Link to="/Profile" className="faq-link">Profile</Link>.</>;
     }
-
     if (t.includes("login") || t.includes("password") || t.includes("username")) {
       return <>🔑 For login issues, reset your password on the <Link to="/forgot-password" className="faq-link">Forgot Password</Link> page or check your username/email.</>;
     }
-
     return "❌ Sorry, I can only help with MoodAngels website-related questions.";
   };
 
@@ -127,6 +120,48 @@ export default function Help() {
     padding:3rem 1rem;
     background: linear-gradient(to bottom, #ffe5f0, #f0faff);
     min-height:100vh;
+  }
+
+  /* ---------- Calming Info Cards ---------- */
+  .info-cards {
+    display:flex;
+    flex-direction:column;
+    gap:2rem;
+    max-width:1000px;
+    width:100%;
+  }
+
+  .info-card {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(15px);
+    border-radius:2rem;
+    padding:2rem 2.5rem;
+    box-shadow:0 20px 50px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    font-family: 'Quicksand', sans-serif;
+  }
+
+  .info-card:hover {
+    transform: translateY(-3px);
+    box-shadow:0 25px 60px rgba(0,0,0,0.12);
+  }
+
+  .info-card h2 {
+    font-family: 'Poppins', sans-serif;
+    font-size:1.8rem;
+    color:#ff69b4;
+    margin-bottom:1rem;
+  }
+
+  .info-card p, .info-card li {
+    font-size:1rem;
+    line-height:1.6;
+    color:#4c4c6b;
+  }
+
+  .info-card ul {
+    padding-left:1.2rem;
+    margin-top:0.5rem;
   }
 
   /* Combined Help Card */
@@ -323,6 +358,58 @@ export default function Help() {
   return (
     <UserWrapper>
       <div className="help-section">
+        {/* ---------- Info Cards ---------- */}
+        <div className="info-cards">
+          {/* Express Yourself */}
+          <div className="info-card">
+            <h2>🖋 Express Yourself</h2>
+            <ul>
+              <li>💭 <strong>Mood Journal:</strong> Write freely about your day and tag your feelings with emojis like 😔, 😊, 😤.</li>
+              <li>🎙 <strong>Voice Notes:</strong> Record your thoughts aloud and revisit them to reflect on growth.</li>
+              <li>✨ <strong>Emotion Doodles:</strong> Draw or color your feelings and save your sketches as "mood art."</li>
+              <li>🕊 <strong>Letter You'll Never Send:</strong> Write letters to yourself or others, just to let feelings flow.</li>
+              <li>📖 <strong>Thought Jar:</strong> Note strong emotions in a digital jar and track patterns later.</li>
+              <li>🌈 <strong>Daily Reflection Prompt:</strong> Get a daily question like "What made you smile today?" or "What do you wish someone told you right now?"</li>
+            </ul>
+          </div>
+
+          {/* Calm & Relax */}
+          <div className="info-card">
+            <h2>🧘 Calm & Relax</h2>
+            <ul>
+              <li>🧘 Short Guided Meditations: 5–10 minutes of focused breathing or visualization.</li>
+              <li>💨 Breathing Exercises: Try "4-7-8 breathing" to calm your nervous system.</li>
+              <li>🎶 Soothing Sounds: Nature sounds or soft instrumental music for focus and relaxation.</li>
+              <li>💬 Motivational Quotes / Affirmations: Repeat "I am safe, I am calm, I am enough."</li>
+              <li>🌿 Mini Relaxation Rituals: Stretch, do gentle yoga, or light a scented candle to create calm.</li>
+            </ul>
+          </div>
+
+          {/* Community Kindness */}
+          <div className="info-card">
+            <h2>💖 Community Kindness</h2>
+            <ul>
+              <li>Connect with others and share positivity to uplift mental well-being.</li>
+              <li>Read messages or quotes from people who have overcome challenges.</li>
+              <li>Post your own encouraging notes — even a small “You are valued” can brighten someone’s day.</li>
+              <li>Participate safely in our forums or Discord: <a href="https://discord.gg/moodangles" target="_blank" className="faq-link">discord.gg/moodangles</a></li>
+              <li>Reach support via email: <a href="mailto:support@moodangles.com" className="faq-link">support@moodangles.com</a></li>
+            </ul>
+          </div>
+
+          {/* Safety Reminder */}
+          <div className="info-card">
+            <h2>🛡 Safety Reminder</h2>
+            <ul>
+              <li>You are never alone. If you feel hopeless, anxious, or unsafe, reach out to someone you trust.</li>
+              <li>Friends, family, or professionals can support you — asking for help is a sign of strength.</li>
+              <li>Take small steps to ensure your safety and well-being.</li>
+              <li>Remember: Your mental health matters, and seeking help is brave.</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* ---------- Help & FAQs ---------- */}
         <div className="help-card">
           <h1>🆘 Help & FAQs</h1>
           <p className="intro">
@@ -335,7 +422,6 @@ export default function Help() {
                 {faq.q}
                 <span>{openFAQ === i ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}</span>
               </div>
-              {/* FIX: Added onClick to stop the event from bubbling up and closing the FAQ item */}
               <div 
                 className={`faq-answer ${openFAQ === i ? "open" : ""}`}
                 onClick={(e) => e.stopPropagation()}
@@ -346,7 +432,7 @@ export default function Help() {
           ))}
         </div>
 
-        {/* Chatbot */}
+        {/* ---------- Chatbot ---------- */}
         {chatOpen && (
           <div className="chatbot-window">
             <div className="chatbot-header">
