@@ -28,17 +28,15 @@ import PersonalityTest from "./pages/tests/PersonalityTest.jsx";
 import TestPage from "./pages/TestPage.jsx";
 import EQTest from "./pages/tests/EQTest.jsx";
 import MentalHealthTodayTest from "./pages/tests/MentalHeathTodayTest.jsx";
+import Settings from "./pages/Settings.jsx";
 
-// NavigatorInjector: obtains `navigate` from Router and exposes it on window.__navigate.
-// This keeps PDashboard.safeNavigate() SPA-friendly. If you prefer not to use it,
-// you can omit this and safeNavigate will fallback to full page navigation.
+// NavigatorInjector: exposes navigate globally for safe navigation in PDashboard, etc.
 function NavigatorInjector({ children }) {
   const navigate = useNavigate();
   useEffect(() => {
-    // expose navigate for safeNavigate in other components
     window.__navigate = navigate;
     return () => {
-      // optional cleanup if the app unmounts Router at runtime
+      // cleanup when Router unmounts
       // window.__navigate = undefined;
     };
   }, [navigate]);
@@ -61,7 +59,7 @@ function App() {
           {/* Psychiatrist routes */}
           <Route path="/plogin" element={<PLogin />} />
           <Route path="/psignup" element={<PSignup />} />
-          <Route path="/PDashboard" element={<PDashboard />} /> {/* <- ADDED */}
+          <Route path="/PDashboard" element={<PDashboard />} />
           <Route path="/ChatBot" element={<ChatBot />} />
           <Route path="/TherapistF" element={<FindTherapist />} />
           <Route path="/support" element={<Support />} />
@@ -78,8 +76,9 @@ function App() {
           <Route path="/test/personality" element={<PersonalityTest />} />
           <Route path="/test/eq" element={<EQTest />} />
           <Route path="/test/MentalHealth" element={<MentalHealthTodayTest />} />
+          <Route path="/Settings" element={<Settings />} />
 
-          {/* optional: catch-all route */}
+          {/* fallback route */}
           <Route path="*" element={<Landing />} />
         </Routes>
       </NavigatorInjector>
