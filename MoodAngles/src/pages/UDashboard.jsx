@@ -139,8 +139,8 @@ function UDashboard() {
           <nav className="nav">
             <a href="/UDashboard">Dashboard</a>
             <a href="/TherapistF">Find a Therapist?</a>
-            <a href="#">Profile</a>
-            <a href="#">Settings</a>
+            <a href="/Profile">Profile</a>
+            <a href="/settings">Settings</a>
           </nav>
         </aside>
 
