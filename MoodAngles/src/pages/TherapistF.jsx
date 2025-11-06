@@ -16,6 +16,30 @@ const FindTherapist = () => {
       about: "Expert in supporting individuals with anxiety, depression, and life stressors."
     },
     {
+      name: "Dr. Aisha Verma",
+      specialty: "Cognitive Behavioral Therapy (CBT) & Adolescent Mental Health",
+      location: "Mumbai, India",
+      contact: "aisha.verma.psych@gmail.com",
+      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
+      about: "Expert in supporting individuals with anxiety, depression, and life stressors."
+    },
+    {
+      name: "Dr. Ethan Rao",
+      specialty: "Neuropsychiatry & Mood Disorders",
+      location: "Mumbai, India",
+      contact: "ethan.rao.mindcare@outlook.com",
+      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
+      about: "Expert in supporting individuals with anxiety, depression, and life stressors."
+    },
+    {
+      name: "Dr. Leena Kapoor",
+      specialty: "Depression & Anxiety",
+      location: "Mumbai, India",
+      contact: "leena.kapoor.healspace@gmail.com",
+      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
+      about: "Expert in supporting individuals with anxiety, depression, and life stressors."
+    },
+    {
       name: "Dr. Rajiv Mehta",
       specialty: "ADHD & Child Therapy",
       location: "Bangalore, India",
@@ -43,7 +67,10 @@ const FindTherapist = () => {
   const testimonials = [
     { name: "Amit S.", text: "Therapy helped me cope with anxiety and gave me practical tools to manage stress." },
     { name: "Rhea K.", text: "I never knew self-awareness could be so transformative. Therapy was life-changing!" },
-    { name: "Sanjay P.", text: "I learned how to deal with my moods and communicate better with loved ones." }
+    { name: "Sanjay P.", text: "I learned how to deal with my moods and communicate better with loved ones." },
+    { name: "Aarav M.", text: "Opening up wasn’t easy, but my therapist made me feel heard for the first time." },
+    { name: "Nina S.", text: "Therapy helped me find peace in my own mind — I finally feel lighter and stronger." }
+
   ];
 
   const filteredTherapists = therapists.filter(
