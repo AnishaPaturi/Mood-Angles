@@ -19,19 +19,22 @@ export default function Settings() {
   const fileRef = useRef(null);
 
   // 🌸 States
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(
+    JSON.parse(localStorage.getItem("moodangels_settings"))?.darkMode || false
+  );
   const [notifications, setNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
   const [privateAccount, setPrivateAccount] = useState(false);
   const [dailyReminders, setDailyReminders] = useState(true);
   const [quoteReminders, setQuoteReminders] = useState(true);
+  const [enableMoodTracking, setEnableMoodTracking] = useState(true);
   const [feedback, setFeedback] = useState("");
   const [rating, setRating] = useState(0);
   const [profileImage, setProfileImage] = useState(
     localStorage.getItem("profileImage") || ""
   );
 
-  // 📊 Dynamic activity data (previously from activityTracker)
+  // 📊 Dynamic activity data
   const [activityData, setActivityData] = useState({
     timeSpent: "15 mins today",
     testsTaken: 3,
@@ -47,19 +50,21 @@ export default function Settings() {
     }
   );
 
-  // 🌿 Load + Save Settings
+  // 🌿 Load other settings from localStorage (if present)
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("moodangels_settings"));
     if (saved) {
-      setDarkMode(saved.darkMode);
-      setNotifications(saved.notifications);
-      setEmailUpdates(saved.emailUpdates);
-      setPrivateAccount(saved.privateAccount);
-      setDailyReminders(saved.dailyReminders);
-      setQuoteReminders(saved.quoteReminders);
+      setNotifications(saved.notifications ?? notifications);
+      setEmailUpdates(saved.emailUpdates ?? emailUpdates);
+      setPrivateAccount(saved.privateAccount ?? privateAccount);
+      setDailyReminders(saved.dailyReminders ?? dailyReminders);
+      setQuoteReminders(saved.quoteReminders ?? quoteReminders);
+      setEnableMoodTracking(saved.enableMoodTracking ?? enableMoodTracking);
+      // darkMode already initialized from localStorage above
     }
-  }, []);
+  }, []); // run once
 
+  // Save settings whenever they change
   useEffect(() => {
     const settings = {
       darkMode,
@@ -68,6 +73,7 @@ export default function Settings() {
       privateAccount,
       dailyReminders,
       quoteReminders,
+      enableMoodTracking,
     };
     localStorage.setItem("moodangels_settings", JSON.stringify(settings));
   }, [
@@ -77,9 +83,10 @@ export default function Settings() {
     privateAccount,
     dailyReminders,
     quoteReminders,
+    enableMoodTracking,
   ]);
 
-  // 🌙 Global Dark Mode
+  // 🌙 Global Dark Mode class on <body>
   useEffect(() => {
     if (darkMode) document.body.classList.add("dark-mode");
     else document.body.classList.remove("dark-mode");
@@ -93,12 +100,13 @@ export default function Settings() {
     if (feedback.trim().length > 0) ach.empath = true;
     setAchievements(ach);
     localStorage.setItem("moodangels_achievements", JSON.stringify(ach));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activityData, feedback]);
 
   // 📸 Profile Upload
-  const handleUpload = () => fileRef.current.click();
+  const handleUpload = () => fileRef.current?.click();
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files && e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -119,6 +127,7 @@ export default function Settings() {
 
   // 🚪 Logout
   const handleLogout = () => {
+    // If you want to keep some localStorage items (like settings), consider clearing selective keys instead.
     localStorage.clear();
     navigate("/");
   };
@@ -127,6 +136,7 @@ export default function Settings() {
     <UserWrapper>
       <div className="settings-container">
         <style>{`
+          /* ---------- Base / Light Theme ---------- */
           .settings-container {
             font-family: 'Poppins', sans-serif;
             color: #2d2d2d;
@@ -136,6 +146,7 @@ export default function Settings() {
             background: linear-gradient(120deg, #f5d0fe, #dbeafe, #fde4ec);
             display: flex;
             justify-content: center;
+            transition: background 0.4s ease, color 0.4s ease;
           }
           .settings-card {
             background: rgba(255, 255, 255, 0.7);
@@ -148,12 +159,14 @@ export default function Settings() {
             display: flex;
             flex-direction: column;
             gap: 60px;
+            transition: background 0.4s ease, color 0.4s ease;
           }
           .section {
             background: rgba(255, 255, 255, 0.9);
             padding: 35px;
             border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
           }
           .section h2 {
             font-size: 1.7rem;
@@ -182,6 +195,7 @@ export default function Settings() {
             position: relative;
             cursor: pointer;
             transition: all 0.3s ease;
+            flex-shrink: 0;
           }
           .switch::after {
             content: "";
@@ -203,6 +217,7 @@ export default function Settings() {
             padding: 12px;
             resize: none;
             font-size: 1rem;
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
           }
           .rating { display: flex; gap: 10px; margin: 15px 0; }
           .star { font-size: 1.8rem; cursor: pointer; color: #ccc; transition: 0.3s; }
@@ -233,6 +248,70 @@ export default function Settings() {
             text-align: center; color: #6b6b76;
             font-size: 0.9rem; margin-top: 10px;
           }
+
+          /* ---------- DARK MODE OVERRIDES ---------- */
+          body.dark-mode {
+            background: linear-gradient(120deg, #071226, #1a1632, #2b0449);
+            color: #e6eef8;
+          }
+
+          body.dark-mode .settings-card {
+            background: rgba(15, 23, 42, 0.8);
+            color: #e6eef8;
+          }
+
+          body.dark-mode .section {
+            background: rgba(20, 26, 39, 0.85);
+            color: #dbeafe;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          }
+
+          body.dark-mode .section h2 {
+            color: #c4b5fd;
+          }
+
+          body.dark-mode .toggle {
+            background: rgba(39, 49, 66, 0.6);
+          }
+
+          body.dark-mode .toggle:hover {
+            background: rgba(58, 68, 90, 0.65);
+          }
+
+          body.dark-mode .switch {
+            background: #475569;
+          }
+
+          body.dark-mode .switch.active {
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+          }
+
+          body.dark-mode textarea {
+            background: #0b1220;
+            border-color: #374151;
+            color: #e6eef8;
+          }
+
+          body.dark-mode .stat-card {
+            background: linear-gradient(120deg, #6d28d9, #be185d);
+            color: white;
+          }
+
+          body.dark-mode .achievement {
+            background: rgba(76, 29, 149, 0.18);
+            color: #f3e8ff;
+          }
+
+          body.dark-mode .footer {
+            color: #94a3b8;
+          }
+
+          /* small responsive tweaks */
+          @media (max-width: 720px) {
+            .settings-card { padding: 30px 20px; }
+            .section { padding: 20px; }
+            .section h2 { font-size: 1.3rem; }
+          }
         `}</style>
 
         <div className="settings-card">
@@ -257,18 +336,26 @@ export default function Settings() {
           {/* WELLNESS */}
           <div className="section">
             <h2>🧘 Wellness Preferences</h2>
-            {[
-              ["Show Daily Motivation Quotes", quoteReminders, setQuoteReminders],
-              ["Enable Mood Tracking", true, () => {}],
-            ].map(([label, state, setState]) => (
-              <div key={label} className="toggle">
-                <span>{label}</span>
-                <div
-                  className={`switch ${state ? "active" : ""}`}
-                  onClick={() => setState(!state)}
-                ></div>
-              </div>
-            ))}
+
+            <div className="toggle">
+              <span>Show Daily Motivation Quotes</span>
+              <div
+                className={`switch ${quoteReminders ? "active" : ""}`}
+                onClick={() => setQuoteReminders(!quoteReminders)}
+                role="button"
+                aria-pressed={quoteReminders}
+              />
+            </div>
+
+            <div className="toggle">
+              <span>Enable Mood Tracking</span>
+              <div
+                className={`switch ${enableMoodTracking ? "active" : ""}`}
+                onClick={() => setEnableMoodTracking(!enableMoodTracking)}
+                role="button"
+                aria-pressed={enableMoodTracking}
+              />
+            </div>
           </div>
 
           {/* APPEARANCE */}
@@ -279,25 +366,35 @@ export default function Settings() {
               <div
                 className={`switch ${darkMode ? "active" : ""}`}
                 onClick={() => setDarkMode(!darkMode)}
-              ></div>
+                role="button"
+                aria-pressed={darkMode}
+              />
             </div>
           </div>
 
           {/* PRIVACY */}
           <div className="section">
             <h2><Lock size={22} /> Privacy & Security</h2>
-            {[
-              ["Private Account", privateAccount, setPrivateAccount],
-              ["Two-Step Verification", false, () => alert("Coming soon 🔒")],
-            ].map(([label, state, setState]) => (
-              <div key={label} className="toggle">
-                <span>{label}</span>
-                <div
-                  className={`switch ${state ? "active" : ""}`}
-                  onClick={() => setState(!state)}
-                ></div>
-              </div>
-            ))}
+
+            <div className="toggle">
+              <span>Private Account</span>
+              <div
+                className={`switch ${privateAccount ? "active" : ""}`}
+                onClick={() => setPrivateAccount(!privateAccount)}
+                role="button"
+                aria-pressed={privateAccount}
+              />
+            </div>
+
+            <div className="toggle">
+              <span>Two-Step Verification</span>
+              <div
+                className={`switch`}
+                onClick={() => alert("Two-step verification is coming soon 🔒")}
+                role="button"
+                aria-pressed={false}
+              />
+            </div>
           </div>
 
           {/* ACTIVITY */}
@@ -315,8 +412,11 @@ export default function Settings() {
           <div className="section">
             <h2><Award size={22} /> Your Achievements</h2>
             {achievements.mindful && <div className="achievement">🌞 <span>Mindful Starter</span> — Completed 3 tests</div>}
-            {achievements.calm && <div className="achievement">🧘 <span>Calm Soul</span> — Logged in 5 days in a row</div>}
+            {achievements.calm && <div className="achievement">🧘 <span>Calm Soul</span> — Logged in 1 day in a row</div>}
             {achievements.empath && <div className="achievement">💖 <span>Empath Angel</span> — Shared feedback</div>}
+            {!achievements.mindful && !achievements.calm && !achievements.empath && (
+              <p style={{ color: "#7c3aed", fontWeight: 600 }}>No achievements yet — keep going! 🌱</p>
+            )}
           </div>
 
           {/* FEEDBACK */}
@@ -326,6 +426,7 @@ export default function Settings() {
               placeholder="Share your thoughts — we’re always listening 💬"
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
+              rows={5}
             />
             <div className="rating">
               {[1, 2, 3, 4, 5].map((num) => (
@@ -340,6 +441,17 @@ export default function Settings() {
               Send Feedback
             </button>
           </div>
+
+          {/* UPLOAD (hidden input + trigger example) */}
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileRef}
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+          {/* If you want a visible trigger: */}
+          {/* <button onClick={handleUpload} className="save-btn">Upload Profile Image</button> */}
 
           {/* LOGOUT */}
           <div className="section" style={{ textAlign: "center" }}>
