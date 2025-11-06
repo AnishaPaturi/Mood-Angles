@@ -10,10 +10,10 @@ const FindTherapist = () => {
 
   const therapists = [
     {
-      name: "Dr. Ananya Sharma",
+      name: "Dr. Anay Sharma",
       specialty: "Depression & Anxiety",
       location: "Mumbai, India",
-      contact: "ananya@example.com",
+      contact: "anay@example.com",
       image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80",
       about: "Expert in supporting individuals with anxiety, depression, and life stressors."
     },
@@ -50,10 +50,10 @@ const FindTherapist = () => {
       about: "Helps children with ADHD, communication challenges, and emotional regulation."
     },
     {
-      name: "Dr. Neha Kapoor",
+      name: "Dr. Neveen Kapoor",
       specialty: "Cognitive Behavioral Therapy",
       location: "Delhi, India",
-      contact: "neha@example.com",
+      contact: "naveen@example.com",
       image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80",
       about: "Helps clients identify negative thinking patterns & reframe them through CBT."
     }

@@ -133,7 +133,7 @@ function UserWrapper2({children}) {
               </div>
               {showUserMenu && (
                 <div className="userMenu">
-                  Hello,<br />
+                  Hello<br />
                   <button
                     onClick={() => {
                       localStorage.clear();
