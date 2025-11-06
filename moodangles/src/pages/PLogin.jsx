@@ -323,7 +323,7 @@ export default function PLogin() {
   // Redirect if already logged in
   useEffect(() => {
     const psyId = localStorage.getItem("psychiatristId") || localStorage.getItem("token");
-    if (psyId) navigate("/psychiatrist-dashboard");
+    if (psyId) navigate("/PDashboard");
   }, [navigate]);
 
   // Typewriter effect
@@ -394,7 +394,7 @@ export default function PLogin() {
 
         localStorage.setItem("role", "psychiatrist");
         alert("Login successful!");
-        navigate("/psychiatrist-dashboard");
+        navigate("/PDashboard");
       } else {
         setError(data.msg || data.error || "Invalid credentials");
       }
@@ -426,7 +426,7 @@ export default function PLogin() {
           borderRadius: "16px",
           overflow: "hidden",
           maxWidth: "1200px",      // increased from 900 -> 1200
-          width: "95%",
+          width: "100%",
           minHeight: "650px",      // increased from 500 -> 650
           height: "auto",
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
