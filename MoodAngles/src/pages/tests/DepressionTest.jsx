@@ -5,6 +5,7 @@ export default function DepressionTest() {
   const API_BASE = "http://localhost:5000";
   const testName = "Depression";
 
+  
   const questions = [
     "I often feel sad or down, even when things are going okay.",
     "I don’t enjoy my usual hobbies or activities as much as I used to.",
@@ -27,7 +28,6 @@ export default function DepressionTest() {
     "My appetite has changed — I’m eating much more or much less than usual.",
     "I don’t feel as affectionate or close to others as I used to."
   ];
-
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [result, setResult] = useState(null);
@@ -66,185 +66,139 @@ export default function DepressionTest() {
       ? "Severe Depression (Seek professional help)"
       : "Extremely Severe Depression (Immediate support advised)";
 
-   // add inside your component (replace existing handleSubmit)
-const sendResultToDB = async (payload) => {
-  try {
-    const res = await fetch(`${API_BASE}/api/results`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // If you use auth add token here:
-        // "Authorization": `Bearer ${yourAuthToken}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Save failed: ${res.status} ${res.statusText} — ${txt}`);
-    }
-    const json = await res.json();
-    return json; // expected { ok: true, id: "..."} per route
-  } catch (err) {
-    console.error("Error saving result to DB:", err);
-    return { error: String(err) };
-  }
-};
-
-const handleSubmit = async () => {
-  if (answers.some((a) => a === null)) {
-    setResult({
-      score: null,
-      level: "Please answer all questions before submitting!",
-    });
-    return;
-  }
-
-  setLoading(true);
-
-  const percentScore = computePercent();
-  const norm10 = computeNormalized10();
-  const level = interpretLevel(percentScore);
-
-  // local immediate feedback
-  setResult({ scorePercent: percentScore, score10: norm10, level });
-
-  // agent outputs to fill in as they complete
-  let agentR_summary = "";
-  let dData = null;
-  let cData = null;
-  let eData = null;
-  let cSummary = "";
-  let eSummary = "";
-  let jData = null;
-
-  try {
-    // Agent R
-    const rPayload = {
-      testName,
-      condition: "psychopathy",
-      score_percent: percentScore,
-      score_10: norm10,
-      answers: buildAnswersPayload(),
-    };
-    const rRes = await fetch(`${API_BASE}/api/angelR`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rPayload),
-    });
-    if (!rRes.ok) throw new Error(`Agent R failed: ${rRes.status}`);
-    const rJson = await rRes.json();
-    agentR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
-    setResult((prev) => ({ ...prev, agentRDiagnosis: agentR_summary }));
-
-    // Agent D
-    const dRes = await fetch(`${API_BASE}/api/angelD`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        testName,
-        agentR_result: agentR_summary,
-        score_percent: percentScore,
-        score_10: norm10,
-      }),
-    });
-    if (!dRes.ok) throw new Error(`Agent D failed: ${dRes.status}`);
-    dData = await dRes.json();
-    setResult((prev) => ({ ...prev, agentDExplanation: dData.result || safeText(dData) }));
-
-    // Agent C
-    const cRes = await fetch(`${API_BASE}/api/angelC`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        testName,
-        agentR_result: agentR_summary,
-        agentD_result: dData.result || safeText(dData),
-        score_percent: percentScore,
-        score_10: norm10,
-        answers: buildAnswersPayload(),
-      }),
-    });
-    if (!cRes.ok) throw new Error(`Agent C failed: ${cRes.status}`);
-    cData = await cRes.json();
-    cSummary = cData.result || cData.Result || safeText(cData);
-    setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
-
-    // Agent E
-    const eRes = await fetch(`${API_BASE}/api/angelE`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        testName,
-        agentR_result: agentR_summary,
-        agentD_result: dData.result || safeText(dData),
-        agentC_result: cSummary,
-      }),
-    });
-    if (!eRes.ok) throw new Error(`Agent E failed: ${eRes.status}`);
-    eData = await eRes.json();
-    eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
-    setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
-
-    // Agent J (Judge)
-    const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        testName,
-        agentR_result: agentR_summary,
-        agentD_result: dData.result || safeText(dData),
-        agentC_result: cSummary,
-        agentE_result: eSummary,
-        score_percent: percentScore,
-        score_10: norm10,
-      }),
-    });
-
-    if (!jRes.ok) {
-      const txt = await jRes.text();
-      setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} — ${txt}` }));
-    } else {
-      jData = await jRes.json();
-      setResult((prev) => ({ ...prev, agentJDecision: jData }));
+  const handleSubmit = async () => {
+    if (answers.some((a) => a === null)) {
+      setResult({
+        score: null,
+        level: "Please answer all questions before submitting!"
+      });
+      return;
     }
 
-    // ---------------------------
-    // SEND FINAL RESULT TO DATABASE
-    // ---------------------------
-    const payloadToSave = {
-      testType: testName,
-      score: percentScore,
-      score_10: norm10,
-      level,
-      answers: buildAnswersPayload(),
-      agentR_result: agentR_summary || null,
-      agentD_result: dData?.result || null,
-      agentC_result: cSummary || null,
-      agentE_result: eSummary || null,
-      agentJ_result: jData || null,
-      meta: { submittedAt: new Date().toISOString() },
-    };
+    const score = computeScore();
+    const level = interpretLevel(score);
+    setResult({ score, level });
+    setLoading(true);
 
-    const saveResp = await sendResultToDB(payloadToSave);
+    let finalSummary = "";
+    let dData = null;
+    let cData = null;
+    let eData = null;
+    let cSummary = "";
+    let eSummary = "";
 
-    if (saveResp && saveResp.ok) {
-      setResult((prev) => ({ ...prev, savedId: saveResp.id || saveResp._id || null, savedOk: true }));
-    } else if (saveResp && saveResp.error) {
-      setResult((prev) => ({ ...prev, savedOk: false, savedError: saveResp.error }));
-    } else {
-      setResult((prev) => ({ ...prev, savedOk: false }));
+    try {
+      // ---------- Agent R ----------
+      const payloadR = {
+        condition: testName,
+        testName,
+        score,
+        level,
+        answers: buildAnswersPayload()
+      };
+
+      const rRes = await fetch(`${API_BASE}/api/angelR`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payloadR)
+      });
+      if (!rRes.ok) throw new Error(`Agent R failed: ${rRes.status}`);
+      const rData = await rRes.json();
+      finalSummary = String(rData.result || rData.Result || "").trim();
+      setResult((prev) => ({ ...prev, aiDiagnosis: finalSummary }));
+
+      // ---------- Agent D ----------
+      const dRes = await fetch(`${API_BASE}/api/angelD`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          score,
+          level
+        })
+      });
+      if (!dRes.ok) throw new Error(`Agent D failed: ${dRes.status}`);
+      dData = await dRes.json();
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result }));
+
+      // ---------- Agent C ----------
+      const cRes = await fetch(`${API_BASE}/api/angelC`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
+          score,
+          level,
+          answers: buildAnswersPayload()
+        })
+      });
+      if (!cRes.ok) throw new Error(`Agent C failed: ${cRes.status}`);
+      cData = await cRes.json();
+      cSummary = cData.result || cData.Result;
+      setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
+
+      // ---------- Agent E ----------
+      const eRes = await fetch(`${API_BASE}/api/angelE`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
+          agentC_result: cSummary
+        })
+      });
+      if (!eRes.ok) throw new Error(`Agent E failed: ${eRes.status}`);
+      eData = await eRes.json();
+      eSummary =
+        eData.final_consensus ||
+        eData.result ||
+        `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
+      setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
+
+      // ---------- Agent J ----------
+      const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
+          agentC_result: cSummary,
+          agentE_result: eSummary,
+          score,
+          level
+        })
+      });
+
+      if (!jRes.ok) {
+        const txt = await jRes.text();
+        setResult((prev) => ({
+          ...prev,
+          agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}`
+        }));
+      } else {
+        const jData = await jRes.json();
+        setResult((prev) => ({ ...prev, agentJDecision: jData }));
+      }
+    } catch (err) {
+      console.error("Agent chain error:", err);
+      setResult((prev) => ({
+        ...prev,
+        aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain.",
+        chainError: err.message
+      }));
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Agent chain error:", err);
-    setResult((prev) => ({
-      ...prev,
-      chainError: err.message,
-    }));
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <UserWrapper>
