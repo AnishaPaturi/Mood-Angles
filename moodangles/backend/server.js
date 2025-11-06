@@ -1,34 +1,42 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
+import { spawn } from "child_process";
 import connectDB from "./config/db.js";
-import { spawn } from 'child_process'; 
+
+// ✅ Import routes
+import authRoutes from "./routes/authRoutes.js";
+import profileRoute from "./routes/profileRoute.js";
 import resultsRoute from "./routes/results.js";
 
+// ✅ Load environment variables
 dotenv.config();
+
+// ✅ Connect to MongoDB
 connectDB();
 
+// ✅ Initialize app
 const app = express();
 
-
-// Middleware
+// ✅ Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-
+// ✅ Use routes
+app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoute);
 app.use("/api/results", resultsRoute);
 
-
-// =================== AGENT R INTEGRATION (robust) ===================
-import path from "path";
-
+// =====================================================
+// =============== AGENT R INTEGRATION =================
+// =====================================================
 app.post("/api/angelR", (req, res) => {
   const PY = process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
   const script = path.join(process.cwd(), "agentR.py");
 
-  let stdout = "";
-  let stderr = "";
-  let killedByTimeout = false;
+  let stdout = "", stderr = "", killedByTimeout = false;
 
   const py = spawn(PY, [script], {
     env: { ...process.env },
@@ -50,8 +58,8 @@ app.post("/api/angelR", (req, res) => {
     return res.status(500).json({ error: "agent_r_stdin_error", details: String(e) });
   }
 
-  py.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
-  py.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+  py.stdout.on("data", chunk => stdout += chunk.toString());
+  py.stderr.on("data", chunk => stderr += chunk.toString());
 
   const timeLimit = Number(process.env.AGENT_PY_TIMEOUT_MS || 15000);
   const killTimeout = setTimeout(() => {
@@ -61,27 +69,20 @@ app.post("/api/angelR", (req, res) => {
 
   py.on("close", (code, signal) => {
     clearTimeout(killTimeout);
-
-    if (killedByTimeout) {
-      console.error("❌ Agent R killed by timeout. stdout:", stdout, "stderr:", stderr);
+    if (killedByTimeout)
       return res.status(500).json({ error: "agent_r_timed_out", stdout, stderr });
-    }
-
-    if (code !== 0) {
-      console.error("❌ Agent R exited with code", code, "signal", signal, "stderr:", stderr);
+    if (code !== 0)
       return res.status(500).json({ error: "agent_r_failed", code, signal, stderr, stdout });
-    }
 
     try {
       const parsed = JSON.parse(stdout.trim());
       return res.json(parsed);
     } catch (err) {
-      console.error("❌ Could not JSON.parse agentR stdout:", stdout, "err:", err, "stderr:", stderr);
-      return res.status(500).json({ error: "agent_r_invalid_response", parseError: String(err), stdout, stderr });
+      console.error("❌ Could not JSON.parse agentR stdout:", stdout, "err:", err);
+      return res.status(500).json({ error: "agent_r_invalid_response", stdout, stderr });
     }
   });
 });
-
 
 // =====================================================
 // =============== AGENT D INTEGRATION =================
@@ -90,9 +91,7 @@ app.post("/api/angelD", (req, res) => {
   const PY = process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
   const script = path.join(process.cwd(), "agentD.py");
 
-  let stdout = "";
-  let stderr = "";
-  let killedByTimeout = false;
+  let stdout = "", stderr = "", killedByTimeout = false;
 
   const py = spawn(PY, [script], {
     env: { ...process.env },
@@ -114,8 +113,8 @@ app.post("/api/angelD", (req, res) => {
     return res.status(500).json({ error: "agent_d_stdin_error", details: String(e) });
   }
 
-  py.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
-  py.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+  py.stdout.on("data", chunk => stdout += chunk.toString());
+  py.stderr.on("data", chunk => stderr += chunk.toString());
 
   const timeLimit = Number(process.env.AGENT_PY_TIMEOUT_MS || 15000);
   const killTimeout = setTimeout(() => {
@@ -126,33 +125,29 @@ app.post("/api/angelD", (req, res) => {
   py.on("close", (code, signal) => {
     clearTimeout(killTimeout);
 
-    if (killedByTimeout) {
-      console.error("❌ Agent D killed by timeout. stdout:", stdout, "stderr:", stderr);
+    if (killedByTimeout)
       return res.status(500).json({ error: "agent_d_timed_out", stdout, stderr });
-    }
-
-    if (code !== 0) {
-      console.error("❌ Agent D exited with code", code, "signal", signal, "stderr:", stderr);
+    if (code !== 0)
       return res.status(500).json({ error: "agent_d_failed", code, signal, stderr, stdout });
-    }
 
     try {
       const parsed = JSON.parse(stdout.trim());
       return res.json(parsed);
     } catch (err) {
-      console.error("❌ Could not JSON.parse Agent D stdout:", stdout, "err:", err, "stderr:", stderr);
-      return res.status(500).json({ error: "agent_d_invalid_response", parseError: String(err), stdout, stderr });
+      console.error("❌ Could not JSON.parse Agent D stdout:", stdout, "err:", err);
+      return res.status(500).json({ error: "agent_d_invalid_response", stdout, stderr });
     }
   });
 });
-// =================== AGENT C INTEGRATION ===================
+
+// =====================================================
+// =============== AGENT C INTEGRATION =================
+// =====================================================
 app.post("/api/angelC", (req, res) => {
   const PY = process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
   const script = path.join(process.cwd(), "agentC.py");
 
-  let stdout = "";
-  let stderr = "";
-  let killedByTimeout = false;
+  let stdout = "", stderr = "", killedByTimeout = false;
 
   const py = spawn(PY, [script], {
     env: { ...process.env },
@@ -174,8 +169,8 @@ app.post("/api/angelC", (req, res) => {
     return res.status(500).json({ error: "agent_c_stdin_error", details: String(e) });
   }
 
-  py.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
-  py.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+  py.stdout.on("data", chunk => stdout += chunk.toString());
+  py.stderr.on("data", chunk => stderr += chunk.toString());
 
   const timeLimit = Number(process.env.AGENT_PY_TIMEOUT_MS || 60000);
   const killTimeout = setTimeout(() => {
@@ -186,32 +181,30 @@ app.post("/api/angelC", (req, res) => {
   py.on("close", (code, signal) => {
     clearTimeout(killTimeout);
 
-    if (killedByTimeout) {
-      console.error("❌ Agent C killed by timeout. stdout:", stdout, "stderr:", stderr);
+    if (killedByTimeout)
       return res.status(500).json({ error: "agent_c_timed_out", stdout, stderr });
-    }
-
-    if (code !== 0) {
-      console.error("❌ Agent C exited with code", code, "signal", signal, "stderr:", stderr);
+    if (code !== 0)
       return res.status(500).json({ error: "agent_c_failed", code, signal, stderr, stdout });
-    }
 
     try {
       const parsed = JSON.parse(stdout.trim());
       return res.json(parsed);
     } catch (err) {
-      console.error("❌ Could not JSON.parse agentC stdout:", stdout, "err:", err, "stderr:", stderr);
-      return res.status(500).json({ error: "agent_c_invalid_response", parseError: String(err), stdout, stderr });
+      console.error("❌ Could not JSON.parse agentC stdout:", stdout, "err:", err);
+      return res.status(500).json({ error: "agent_c_invalid_response", stdout, stderr });
     }
   });
 });
 
-// =================== AGENT E INTEGRATION ===================
+// =====================================================
+// =============== AGENT E INTEGRATION =================
+// =====================================================
 app.post("/api/angelE", (req, res) => {
   const PY = process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
   const script = path.join(process.cwd(), "agentE.py");
 
   let stdout = "", stderr = "", killedByTimeout = false;
+
   const py = spawn(PY, [script], {
     env: { ...process.env },
     cwd: process.cwd(),
@@ -258,15 +251,14 @@ app.post("/api/angelE", (req, res) => {
   });
 });
 
-// =================== AGENT J INTEGRATION ===================
-
+// =====================================================
+// =============== AGENT J INTEGRATION =================
+// =====================================================
 app.post("/api/angelJ", (req, res) => {
   const PY = process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
   const script = path.join(process.cwd(), "agentJ.py");
 
-  let stdout = "";
-  let stderr = "";
-  let killedByTimeout = false;
+  let stdout = "", stderr = "", killedByTimeout = false;
 
   const py = spawn(PY, [script], {
     env: { ...process.env },
@@ -288,8 +280,8 @@ app.post("/api/angelJ", (req, res) => {
     return res.status(500).json({ error: "agent_j_stdin_error", details: String(e) });
   }
 
-  py.stdout.on("data", (chunk) => { stdout += chunk.toString(); });
-  py.stderr.on("data", (chunk) => { stderr += chunk.toString(); });
+  py.stdout.on("data", chunk => stdout += chunk.toString());
+  py.stderr.on("data", chunk => stderr += chunk.toString());
 
   const timeLimit = Number(process.env.AGENT_PY_TIMEOUT_MS || 15000);
   const killTimeout = setTimeout(() => {
@@ -299,16 +291,10 @@ app.post("/api/angelJ", (req, res) => {
 
   py.on("close", (code, signal) => {
     clearTimeout(killTimeout);
-
-    if (killedByTimeout) {
-      console.error("❌ Agent J killed by timeout. stdout:", stdout, "stderr:", stderr);
+    if (killedByTimeout)
       return res.status(500).json({ error: "agent_j_timed_out", stdout, stderr });
-    }
-
-    if (code !== 0) {
-      console.error("❌ Agent J exited with code", code, "signal", signal, "stderr:", stderr);
+    if (code !== 0)
       return res.status(500).json({ error: "agent_j_failed", code, signal, stderr, stdout });
-    }
 
     try {
       const parsed = JSON.parse(stdout.trim());
@@ -320,10 +306,9 @@ app.post("/api/angelJ", (req, res) => {
   });
 });
 
-
-
-
-const PORT = process.env.PORT || 5000;
+// ✅ Static uploads
 app.use("/uploads", express.static("uploads"));
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
+// ✅ Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

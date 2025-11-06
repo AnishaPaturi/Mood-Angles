@@ -9,8 +9,7 @@ import {
   Info,
   User
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
 
 function UDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,21 +29,13 @@ function UDashboard() {
     "Keep going, because you did not come this far just to come this far."
   ];
 
-  // Fetch user info from backend
+  // ✅ Fetch username if stored
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const storedName = localStorage.getItem("firstName"); // or "username" if you store it that way
-        if (storedName) setUsername(storedName);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchUser();
+    const storedName = localStorage.getItem("firstName");
+    if (storedName) setUsername(storedName);
   }, []);
 
-  // Auto-close dropdown when clicking outside
+  // ✅ Auto-close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -55,7 +46,7 @@ function UDashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Cycle quotes
+  // ✅ Rotate motivational quotes every few seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setQuoteIndex((prev) => (prev + 1) % quotes.length);
@@ -63,30 +54,36 @@ function UDashboard() {
     return () => clearInterval(interval);
   }, [quotes.length]);
 
-  // Weekly progress and streak
+  // ✅ Dynamic Streak Logic (only updates for the current day)
   useEffect(() => {
-    const savedStreak = parseInt(localStorage.getItem("moodStreak")) || 0;
-    const lastLogin = localStorage.getItem("lastLogin");
-    const today = new Date().toDateString();
+    const today = new Date();
+    const todayStr = today.toDateString();
+    const lastLogin = localStorage.getItem("lastLoginDate");
+    let savedStreak = parseInt(localStorage.getItem("moodStreak")) || 0;
 
-    let newStreak = savedStreak;
-    if (lastLogin !== today) {
-      newStreak = savedStreak + 1;
-      setStreak(newStreak);
-      localStorage.setItem("moodStreak", newStreak);
-      localStorage.setItem("lastLogin", today);
-      alert(`Welcome back! You’re on a ${newStreak}-day streak 🌟`);
+    if (!lastLogin) {
+      savedStreak = 1;
     } else {
-      setStreak(savedStreak);
+      const lastDate = new Date(lastLogin);
+      const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        savedStreak += 1;
+      } else if (diffDays > 1) {
+        savedStreak = 1;
+      }
     }
 
-    const calcProgress = Math.min((newStreak / 7) * 100, 100);
+    localStorage.setItem("moodStreak", savedStreak);
+    localStorage.setItem("lastLoginDate", todayStr);
+    setStreak(savedStreak);
+
+    const calcProgress = Math.min((savedStreak / 7) * 100, 100);
     setProgress(calcProgress);
   }, []);
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const todayIndex =
-    new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // fix Sunday
+  const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // fix Sunday
 
   const styles = `
     :root{
@@ -111,7 +108,6 @@ function UDashboard() {
     .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:auto;transition:margin-left 300ms ease-in-out;margin-left:260px;}
     .main.expanded{margin-left:0}
     .header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:var(--card);backdrop-filter:blur(6px);box-shadow:0 4px 18px rgba(20,20,40,0.06);transition:all 300ms ease;position:relative;}
-    .header.full{width:100%}
     .toggleBtn{background:transparent;border:0;cursor:pointer;font-size:18px}
     .title{font-size:18px;color:#3b3b4a;font-weight:600}
     .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(180deg,#b894ff,#9b6bff);display:flex;align-items:center;justify-content:center;cursor:pointer;}
@@ -121,20 +117,15 @@ function UDashboard() {
     .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;width:100%}
     .card{background:var(--card);padding:20px;border-radius:16px;box-shadow:0 8px 30px rgba(20,20,40,0.06);text-align:center;transition:transform 250ms ease,box-shadow 250ms ease}
     .card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(20,20,40,0.09)}
-    .card .icon{width:48px;height:48px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
-    .card h3{margin:6px 0 8px;font-size:16px;color:#3b3b4a}
-    .card p{margin:0;color:#6b6b76;font-size:14px}
     .quoteCenter{max-width:700px;margin:40px auto;padding:20px 32px;font-style:italic;color:#342f3f;text-align:center;min-height:70px;display:flex;align-items:center;justify-content:center;animation:fadeQuote 1s ease;font-size:18px}
     @keyframes fadeQuote{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .progressWrap{padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0.9));border-radius:14px;width:100%;}
-    .progressBar{height:12px;background:#eee;border-radius:999px;overflow:hidden}
+    .progressWrap{padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0.9));border-radius:14px;width:100%;text-align:center;}
+    .progressBar{height:12px;background:#eee;border-radius:999px;overflow:hidden;margin-top:8px;}
     .progressFill{height:100%;background:linear-gradient(90deg,var(--accent),#c084fc);width:0;border-radius:999px;transition:width 1.2s ease-in-out}
-    .progressMeta{margin-top:8px;font-size:13px;color:#6b6b76}
     .streakCalendar{display:flex;justify-content:center;gap:12px;margin-top:14px}
     .dayCircle{width:28px;height:28px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555;transition:all 0.3s ease}
-    .dayCircle.active{background:var(--accent);color:#fff;box-shadow:0 4px 10px rgba(123,97,255,0.3)}
+    .dayCircle.active{background:#ff69b4;color:#fff;box-shadow:0 4px 10px rgba(255,105,180,0.3)}
     .footer{padding:16px;text-align:center;color:#6b6b76;font-size:13px;background:transparent}
-    @media(max-width:960px){.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.main{margin-left:0}}
   `;
 
   return (
@@ -142,6 +133,7 @@ function UDashboard() {
       <style>{styles}</style>
       <div className="bg-animated" />
       <div className="layout">
+        {/* === Sidebar === */}
         <aside className={`sidebar ${sidebarOpen ? "" : "closed"}`}>
           <div className="brand">MoodAngels</div>
           <nav className="nav">
@@ -152,22 +144,17 @@ function UDashboard() {
           </nav>
         </aside>
 
+        {/* === Main Content === */}
         <div className={`main ${sidebarOpen ? "" : "expanded"}`}>
-          <header className={`header ${sidebarOpen ? "" : "full"}`}>
-            <button
-              className="toggleBtn"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
+          <header className="header">
+            <button className="toggleBtn" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X /> : <Menu />}
             </button>
             <div className="title">Welcome Back 💜</div>
 
-            <div ref={userMenuRef} className="relative">
-              <div
-                className="avatar"
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                title="User Menu"
-              >
+            {/* User Dropdown */}
+            <div ref={userMenuRef}>
+              <div className="avatar" onClick={() => setShowUserMenu(!showUserMenu)} title="User Menu">
                 <User color="white" size={22} />
               </div>
               {showUserMenu && (
@@ -175,13 +162,13 @@ function UDashboard() {
                   Hello, <b>{username}</b>! <br />
                   <button
                     onClick={() => {
-                      localStorage.clear(); // remove all stored data
-                      navigate("/");  // redirect to login page
+                      localStorage.clear();
+                      navigate("/");
                     }}
                     style={{
                       marginTop: "8px",
                       padding: "6px 12px",
-                      background: "red", // red color as you wanted
+                      background: "red",
                       color: "#fff",
                       border: "none",
                       borderRadius: "6px",
@@ -201,6 +188,7 @@ function UDashboard() {
               “{quotes[quoteIndex]}”
             </div>
 
+            {/* === Feature Cards === */}
             <div className="grid3">
               <FeatureCard
                 title="Take a Test"
@@ -212,7 +200,7 @@ function UDashboard() {
                 title="Upload Documents"
                 icon={<Upload />}
                 desc="Keep your important files in one place."
-                 onClick={() => navigate("/Upload")}
+                onClick={() => navigate("/Upload")}
               />
               <FeatureCard
                 title="Talk to Someone"
@@ -237,30 +225,24 @@ function UDashboard() {
               />
             </div>
 
+            {/* === Weekly Progress / Streak === */}
             <div className="progressWrap">
-              <h4 style={{ margin: 0, marginBottom: 8, color: "#3b3b4a" }}>
-                Your Weekly Progress
-              </h4>
+              <h4 style={{ marginBottom: 8, color: "#3b3b4a" }}>Your Weekly Progress</h4>
               <div className="progressBar">
-                <div
-                  className="progressFill"
-                  style={{ width: progress + "%" }}
-                />
+                <div className="progressFill" style={{ width: progress + "%" }} />
               </div>
-              <div className="progressMeta">
+              <div style={{ marginTop: 8, fontSize: "14px", color: "#555" }}>
                 {streak > 0
-                  ? `You’ve logged in ${streak} days in a row ✨`
-                  : "Start your streak today!"}{" "}
-                (Progress: {Math.round(progress)}%)
+                  ? `You’ve logged in ${streak} day${streak > 1 ? "s" : ""} in a row ✨`
+                  : "Start your streak today!"}
               </div>
 
+              {/* ✅ Only highlight today’s day */}
               <div className="streakCalendar">
                 {daysOfWeek.map((day, idx) => (
                   <div
                     key={idx}
-                    className={`dayCircle ${
-                      idx <= todayIndex && streak > idx ? "active" : ""
-                    }`}
+                    className={`dayCircle ${idx === todayIndex ? "active" : ""}`}
                   >
                     {day[0]}
                   </div>
@@ -270,8 +252,7 @@ function UDashboard() {
           </div>
 
           <div className="footer">
-            © {new Date().getFullYear()} MoodAngels • Crafted with 💜 to support
-            your well-being
+            © {new Date().getFullYear()} MoodAngels • Crafted with 💜 to support your well-being
           </div>
         </div>
       </div>
@@ -281,11 +262,8 @@ function UDashboard() {
 
 function FeatureCard({ title, icon, desc, onClick }) {
   return (
-    <div className="card" onClick={onClick}
-      style={{ cursor: onClick ? "pointer" : "default" }}>
-      <div className="icon">
-        {React.cloneElement(icon, { size: 28, color: "#6b46ff" })}
-      </div>
+    <div className="card" onClick={onClick} style={{ cursor: onClick ? "pointer" : "default" }}>
+      <div className="icon">{React.cloneElement(icon, { size: 28, color: "#6b46ff" })}</div>
       <h3>{title}</h3>
       <p>{desc}</p>
     </div>
