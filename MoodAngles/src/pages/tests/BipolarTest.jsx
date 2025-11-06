@@ -3,7 +3,9 @@ import UserWrapper from "../../components/UserWrapper";
 
 export default function BipolarTest() {
   const API_BASE = "http://localhost:5000";
+  const testName = "Bipolar Test";
 
+  
   const questions = [
     "I often experience bursts of energy or excitement that feel much stronger than my usual mood.",
     "There are times when I talk more rapidly or feel an unusual pressure to keep talking.",
@@ -27,207 +29,253 @@ export default function BipolarTest() {
     "These changes in mood and energy have interfered with my daily life or responsibilities."
 ];
 
-
+  // answers store 1..5
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
-  // selection handler
-  const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
-    const updated = [...answers];
-    updated[qIndex] = value;
-    setAnswers(updated);
+  // --- Helpers ---
+  const safeText = (x) => {
+    if (x === undefined || x === null) return "";
+    if (typeof x === "string") return x;
+    try {
+      return JSON.stringify(x);
+    } catch {
+      return String(x);
+    }
   };
 
-  // helper to build answers object
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {
       acc[`Q${i + 1}`] = `${q} → Answer: ${answers[i]}`;
       return acc;
     }, {});
 
-   // add inside your component (replace existing handleSubmit)
-const sendResultToDB = async (payload) => {
-  try {
-    const res = await fetch(`${API_BASE}/api/results`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // If you use auth add token here:
-        // "Authorization": `Bearer ${yourAuthToken}`,
-      },
-      body: JSON.stringify(payload),
-    });
+  const computePercent = () => {
+    // answers are 1..5
+    const raw = answers.reduce((s, v) => s + (typeof v === "number" ? v : 0), 0);
+    const maxRaw = questions.length * 5;
+    if (maxRaw === 0) return 0;
+    return Math.round((raw / maxRaw) * 100);
+  };
 
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`Save failed: ${res.status} ${res.statusText} — ${txt}`);
+  const computeNormalized10 = () => {
+    const percent = computePercent();
+    return Math.round(((percent / 100) * 10) * 10) / 10; // one decimal
+  };
+
+  const interpretLevel = (percent) =>
+    percent <= 19
+      ? "Low chance of Bipolar Disorder"
+      : percent <= 50
+      ? "Moderate chance of Bipolar Disorder"
+      : percent <= 74
+      ? "Some Concern (Watch for Symptoms)"
+      : percent <= 86
+      ? "Significant Behavioral Dysregulation"
+      : "High likelihood of Bipolar Disorder";
+
+  // --- Save results to DB helper ---
+  const sendResultToDB = async (payload) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Save failed: ${res.status} ${res.statusText} — ${txt}`);
+      }
+      return await res.json();
+    } catch (err) {
+      console.error("Error saving result to DB:", err);
+      return { error: String(err) };
     }
-    const json = await res.json();
-    return json; // expected { ok: true, id: "..."} per route
-  } catch (err) {
-    console.error("Error saving result to DB:", err);
-    return { error: String(err) };
-  }
-};
+  };
 
-const handleSubmit = async () => {
-  if (answers.some((a) => a === null)) {
-    setResult({
-      score: null,
-      level: "Please answer all questions before submitting!",
-    });
-    return;
-  }
+  // --- Selection handler: store 1..5 ---
+  const handleSelect = (qIndex, value) => {
+    if (qIndex < 0 || qIndex >= questions.length) return;
+    const updated = [...answers];
+    updated[qIndex] = value; // value should be 1..5
+    setAnswers(updated);
+  };
 
-  setLoading(true);
+  // --- Submit & agent chain ---
+  const handleSubmit = async () => {
+    if (answers.some((a) => a === null)) {
+      setResult({
+        scorePercent: null,
+        level: "Please answer all questions before submitting!",
+      });
+      return;
+    }
 
-  const percentScore = computePercent();
-  const norm10 = computeNormalized10();
-  const level = interpretLevel(percentScore);
+    setLoading(true);
 
-  // local immediate feedback
-  setResult({ scorePercent: percentScore, score10: norm10, level });
+    const percentScore = computePercent();
+    const norm10 = computeNormalized10();
+    const level = interpretLevel(percentScore);
 
-  // agent outputs to fill in as they complete
-  let agentR_summary = "";
-  let dData = null;
-  let cData = null;
-  let eData = null;
-  let cSummary = "";
-  let eSummary = "";
-  let jData = null;
+    // show immediate local result
+    setResult({ scorePercent: percentScore, score10: norm10, level });
 
-  try {
-    // Agent R
-    const rPayload = {
-      testName,
-      condition: "psychopathy",
-      score_percent: percentScore,
-      score_10: norm10,
-      answers: buildAnswersPayload(),
-    };
-    const rRes = await fetch(`${API_BASE}/api/angelR`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rPayload),
-    });
-    if (!rRes.ok) throw new Error(`Agent R failed: ${rRes.status}`);
-    const rJson = await rRes.json();
-    agentR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
-    setResult((prev) => ({ ...prev, agentRDiagnosis: agentR_summary }));
+    let agentR_summary = "";
+    let dData = null;
+    let cData = null;
+    let eData = null;
+    let cSummary = "";
+    let eSummary = "";
+    let jData = null;
 
-    // Agent D
-    const dRes = await fetch(`${API_BASE}/api/angelD`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      // ---------- Agent R ----------
+      const rPayload = {
         testName,
-        agentR_result: agentR_summary,
-        score_percent: percentScore,
-        score_10: norm10,
-      }),
-    });
-    if (!dRes.ok) throw new Error(`Agent D failed: ${dRes.status}`);
-    dData = await dRes.json();
-    setResult((prev) => ({ ...prev, agentDExplanation: dData.result || safeText(dData) }));
-
-    // Agent C
-    const cRes = await fetch(`${API_BASE}/api/angelC`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        testName,
-        agentR_result: agentR_summary,
-        agentD_result: dData.result || safeText(dData),
+        condition: "Bipolar Disorder",
         score_percent: percentScore,
         score_10: norm10,
         answers: buildAnswersPayload(),
-      }),
-    });
-    if (!cRes.ok) throw new Error(`Agent C failed: ${cRes.status}`);
-    cData = await cRes.json();
-    cSummary = cData.result || cData.Result || safeText(cData);
-    setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
+      };
 
-    // Agent E
-    const eRes = await fetch(`${API_BASE}/api/angelE`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        testName,
-        agentR_result: agentR_summary,
-        agentD_result: dData.result || safeText(dData),
-        agentC_result: cSummary,
-      }),
-    });
-    if (!eRes.ok) throw new Error(`Agent E failed: ${eRes.status}`);
-    eData = await eRes.json();
-    eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
-    setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
+      const rRes = await fetch(`${API_BASE}/api/angelR`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rPayload),
+      });
 
-    // Agent J (Judge)
-    const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        testName,
-        agentR_result: agentR_summary,
-        agentD_result: dData.result || safeText(dData),
-        agentC_result: cSummary,
-        agentE_result: eSummary,
+      if (!rRes.ok) {
+        const txt = await rRes.text();
+        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
+      }
+      const rJson = await rRes.json();
+      agentR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
+      setResult((prev) => ({ ...prev, agentRDiagnosis: agentR_summary }));
+
+      // ---------- Agent D ----------
+      const dRes = await fetch(`${API_BASE}/api/angelD`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          score_percent: percentScore,
+          score_10: norm10,
+        }),
+      });
+
+      if (!dRes.ok) {
+        const txt = await dRes.text();
+        throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
+      }
+      dData = await dRes.json();
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || safeText(dData) }));
+
+      // ---------- Agent C ----------
+      const cRes = await fetch(`${API_BASE}/api/angelC`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          score_percent: percentScore,
+          score_10: norm10,
+          answers: buildAnswersPayload(),
+        }),
+      });
+
+      if (!cRes.ok) {
+        const txt = await cRes.text();
+        throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
+      }
+      cData = await cRes.json();
+      cSummary = cData.result || cData.Result || safeText(cData);
+      setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
+
+      // ---------- Agent E ----------
+      const eRes = await fetch(`${API_BASE}/api/angelE`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentC_result: cSummary,
+        }),
+      });
+
+      if (!eRes.ok) {
+        const txt = await eRes.text();
+        throw new Error(`Agent E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
+      }
+      eData = await eRes.json();
+      eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
+      setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
+
+      // ---------- Agent J (Judge) ----------
+      const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentC_result: cSummary,
+          agentE_result: eSummary,
+          score_percent: percentScore,
+          score_10: norm10,
+        }),
+      });
+
+      if (!jRes.ok) {
+        const txt = await jRes.text();
+        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
+      } else {
+        jData = await jRes.json();
+        setResult((prev) => ({ ...prev, agentJDecision: jData }));
+      }
+
+      // ---------- Save to DB ----------
+      const payloadToSave = {
+        testType: testName,
         score_percent: percentScore,
         score_10: norm10,
-      }),
-    });
+        level,
+        answers: buildAnswersPayload(),
+        agentR_result: agentR_summary || null,
+        agentD_result: dData?.result || null,
+        agentC_result: cSummary || null,
+        agentE_result: eSummary || null,
+        agentJ_result: jData || null,
+        meta: { submittedAt: new Date().toISOString() },
+      };
 
-    if (!jRes.ok) {
-      const txt = await jRes.text();
-      setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} — ${txt}` }));
-    } else {
-      jData = await jRes.json();
-      setResult((prev) => ({ ...prev, agentJDecision: jData }));
+      const saveResp = await sendResultToDB(payloadToSave);
+
+      if (saveResp && saveResp.ok) {
+        setResult((prev) => ({ ...prev, savedId: saveResp.id || saveResp._id || null, savedOk: true }));
+      } else if (saveResp && saveResp.error) {
+        setResult((prev) => ({ ...prev, savedOk: false, savedError: saveResp.error }));
+      } else {
+        setResult((prev) => ({ ...prev, savedOk: false }));
+      }
+    } catch (err) {
+      console.error("Agent chain error:", err);
+      setResult((prev) => ({
+        ...prev,
+        chainError: err.message,
+      }));
+    } finally {
+      setLoading(false);
     }
-
-    // ---------------------------
-    // SEND FINAL RESULT TO DATABASE
-    // ---------------------------
-    const payloadToSave = {
-      testType: testName,
-      score: percentScore,
-      score_10: norm10,
-      level,
-      answers: buildAnswersPayload(),
-      agentR_result: agentR_summary || null,
-      agentD_result: dData?.result || null,
-      agentC_result: cSummary || null,
-      agentE_result: eSummary || null,
-      agentJ_result: jData || null,
-      meta: { submittedAt: new Date().toISOString() },
-    };
-
-    const saveResp = await sendResultToDB(payloadToSave);
-
-    if (saveResp && saveResp.ok) {
-      setResult((prev) => ({ ...prev, savedId: saveResp.id || saveResp._id || null, savedOk: true }));
-    } else if (saveResp && saveResp.error) {
-      setResult((prev) => ({ ...prev, savedOk: false, savedError: saveResp.error }));
-    } else {
-      setResult((prev) => ({ ...prev, savedOk: false }));
-    }
-  } catch (err) {
-    console.error("Agent chain error:", err);
-    setResult((prev) => ({
-      ...prev,
-      chainError: err.message,
-    }));
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <UserWrapper>
@@ -244,7 +292,7 @@ const handleSubmit = async () => {
           <div style={styles.headerContent}>
             <h1 style={styles.mainTitle}>Bipolar Check</h1>
             <div style={styles.testMeta}>
-              <span style={styles.metaBtnOrange}>✔ 20 QUESTIONS</span>
+              <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
             </div>
           </div>
@@ -285,20 +333,20 @@ const handleSubmit = async () => {
                       <button
                         key={j}
                         type="button"
-                        onClick={() => handleSelect(i, j)}
+                        onClick={() => handleSelect(i, j + 1)} // store 1..5
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            handleSelect(i, j);
+                            handleSelect(i, j + 1);
                           }
                         }}
-                        aria-pressed={answers[i] === j}
+                        aria-pressed={answers[i] === j + 1}
                         style={{
                           ...styles.circle,
                           borderColor: color,
-                          backgroundColor: answers[i] === j ? color : "transparent",
+                          backgroundColor: answers[i] === j + 1 ? color : "transparent",
                         }}
-                        aria-label={`answer-${i + 1}-${j}`}
+                        aria-label={`answer-${i + 1}-${j + 1}`}
                       />
                     ))}
                   </div>
@@ -317,14 +365,14 @@ const handleSubmit = async () => {
 
             {result && (
               <div style={styles.resultBox}>
-                {result.score !== null && (
-                  <p style={styles.resultScore}>Your Bipolar Check Score: {result.score}/100</p>
+                {result.scorePercent !== null && (
+                  <p style={styles.resultScore}>Your Bipolar Check Score: {result.scorePercent}/100</p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
 
-                {/* {result.aiDiagnosis && (
+                {/* {result.agentRDiagnosis && (
                   <p style={styles.agentRText}>
-                    <strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}
+                    <strong>Agent R Diagnosis:</strong> {result.agentRDiagnosis}
                   </p>
                 )}
 
@@ -386,6 +434,17 @@ const handleSubmit = async () => {
                     <strong>Chain error:</strong> {result.chainError}
                   </p>
                 )}
+
+                {result.savedOk === true && (
+                  <p style={{ marginTop: "8px", color: "#064e3b" }}>
+                    Results saved (id: {result.savedId || "n/a"})
+                  </p>
+                )}
+                {result.savedOk === false && result.savedError && (
+                  <p style={{ marginTop: "8px", color: "#b91c1c" }}>
+                    Save error: {result.savedError}
+                  </p>
+                )}
               </div>
             )}
           </>
@@ -395,7 +454,7 @@ const handleSubmit = async () => {
   );
 }
 
-/* ------------------- STYLES ------------------- */
+/* ------------------- STYLES (unchanged) ------------------- */
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
