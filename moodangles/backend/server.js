@@ -3,17 +3,20 @@ import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import { spawn } from 'child_process'; 
-
+import resultsRoute from "./routes/results.js";
 
 dotenv.config();
 connectDB();
 
 const app = express();
 
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+
+app.use("/api/results", resultsRoute);
 
 
 // =================== AGENT R INTEGRATION (robust) ===================
