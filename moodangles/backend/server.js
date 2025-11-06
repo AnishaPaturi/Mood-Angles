@@ -9,6 +9,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoute from "./routes/profileRoute.js";
 import resultsRoute from "./routes/results.js";
+import uploadRoute from "./routes/uploadRoute.js";
 
 // ✅ Load environment variables
 dotenv.config();
@@ -28,6 +29,8 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoute);
 app.use("/api/results", resultsRoute);
+app.use("/api/uploads", uploadRoute); // ✅ Your uploads route
+app.use("/uploads", express.static("uploads")); // ✅ Serve static files
 
 // =====================================================
 // =============== AGENT R INTEGRATION =================
@@ -45,7 +48,7 @@ app.post("/api/angelR", (req, res) => {
   });
 
   py.on("error", (err) => {
-    console.error("⚠️ spawn error for agentR:", err);
+    console.error("⚠ spawn error for agentR:", err);
     return res.status(500).json({ error: "agent_r_spawn_error", details: String(err) });
   });
 
@@ -53,7 +56,7 @@ app.post("/api/angelR", (req, res) => {
     py.stdin.write(JSON.stringify(req.body));
     py.stdin.end();
   } catch (e) {
-    console.error("⚠️ Failed to write to Agent R stdin:", e);
+    console.error("⚠ Failed to write to Agent R stdin:", e);
     try { py.kill(); } catch {}
     return res.status(500).json({ error: "agent_r_stdin_error", details: String(e) });
   }
@@ -100,7 +103,7 @@ app.post("/api/angelD", (req, res) => {
   });
 
   py.on("error", (err) => {
-    console.error("⚠️ spawn error for Agent D:", err);
+    console.error("⚠ spawn error for Agent D:", err);
     return res.status(500).json({ error: "agent_d_spawn_error", details: String(err) });
   });
 
@@ -108,7 +111,7 @@ app.post("/api/angelD", (req, res) => {
     py.stdin.write(JSON.stringify(req.body));
     py.stdin.end();
   } catch (e) {
-    console.error("⚠️ Failed to write to Agent D stdin:", e);
+    console.error("⚠ Failed to write to Agent D stdin:", e);
     try { py.kill(); } catch {}
     return res.status(500).json({ error: "agent_d_stdin_error", details: String(e) });
   }
@@ -124,7 +127,6 @@ app.post("/api/angelD", (req, res) => {
 
   py.on("close", (code, signal) => {
     clearTimeout(killTimeout);
-
     if (killedByTimeout)
       return res.status(500).json({ error: "agent_d_timed_out", stdout, stderr });
     if (code !== 0)
@@ -156,7 +158,7 @@ app.post("/api/angelC", (req, res) => {
   });
 
   py.on("error", (err) => {
-    console.error("⚠️ spawn error for agentC:", err);
+    console.error("⚠ spawn error for agentC:", err);
     return res.status(500).json({ error: "agent_c_spawn_error", details: String(err) });
   });
 
@@ -164,7 +166,7 @@ app.post("/api/angelC", (req, res) => {
     py.stdin.write(JSON.stringify(req.body));
     py.stdin.end();
   } catch (e) {
-    console.error("⚠️ Failed to write to Agent C stdin:", e);
+    console.error("⚠ Failed to write to Agent C stdin:", e);
     try { py.kill(); } catch {}
     return res.status(500).json({ error: "agent_c_stdin_error", details: String(e) });
   }
@@ -212,7 +214,7 @@ app.post("/api/angelE", (req, res) => {
   });
 
   py.on("error", err => {
-    console.error("⚠️ spawn error for agentE:", err);
+    console.error("⚠ spawn error for agentE:", err);
     return res.status(500).json({ error: "agent_e_spawn_error", details: String(err) });
   });
 
@@ -220,7 +222,7 @@ app.post("/api/angelE", (req, res) => {
     py.stdin.write(JSON.stringify(req.body));
     py.stdin.end();
   } catch (e) {
-    console.error("⚠️ Failed to write to Agent E stdin:", e);
+    console.error("⚠ Failed to write to Agent E stdin:", e);
     try { py.kill(); } catch {}
     return res.status(500).json({ error: "agent_e_stdin_error", details: String(e) });
   }
@@ -267,7 +269,7 @@ app.post("/api/angelJ", (req, res) => {
   });
 
   py.on("error", (err) => {
-    console.error("⚠️ spawn error for agentJ:", err);
+    console.error("⚠ spawn error for agentJ:", err);
     return res.status(500).json({ error: "agent_j_spawn_error", details: String(err) });
   });
 
@@ -275,7 +277,7 @@ app.post("/api/angelJ", (req, res) => {
     py.stdin.write(JSON.stringify(req.body));
     py.stdin.end();
   } catch (e) {
-    console.error("⚠️ Failed to write to Agent J stdin:", e);
+    console.error("⚠ Failed to write to Agent J stdin:", e);
     try { py.kill(); } catch {}
     return res.status(500).json({ error: "agent_j_stdin_error", details: String(e) });
   }
@@ -306,9 +308,8 @@ app.post("/api/angelJ", (req, res) => {
   });
 });
 
-// ✅ Static uploads
-app.use("/uploads", express.static("uploads"));
-
+// =====================================================
 // ✅ Start server
+// =====================================================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
