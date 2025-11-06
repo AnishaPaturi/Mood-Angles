@@ -386,10 +386,14 @@ export default function PLogin() {
             sessionStorage.setItem("token", token);
             sessionStorage.setItem("psychiatrist", JSON.stringify(psy));
           }
+        // ✅ Store username globally for your app layout
         } else if (data.psyId) {
           // legacy fallback
           if (remember) localStorage.setItem("psychiatristId", data.psyId);
           else sessionStorage.setItem("psychiatristId", data.psyId);
+        }
+        if (psy.firstName) {
+            localStorage.setItem("userName", psy.firstName);
         }
 
         localStorage.setItem("role", "psychiatrist");

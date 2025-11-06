@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import UserWrapper from "../components/UserWrapper";
+import { useNavigate } from "react-router-dom";
 
 const FindTherapist = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [expandedBenefit, setExpandedBenefit] = useState(null);
@@ -12,7 +14,7 @@ const FindTherapist = () => {
       specialty: "Depression & Anxiety",
       location: "Mumbai, India",
       contact: "ananya@example.com",
-      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=80",
       about: "Expert in supporting individuals with anxiety, depression, and life stressors."
     },
     {
@@ -20,40 +22,40 @@ const FindTherapist = () => {
       specialty: "Cognitive Behavioral Therapy (CBT) & Adolescent Mental Health",
       location: "Mumbai, India",
       contact: "aisha.verma.psych@gmail.com",
-      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
-      about: "Expert in supporting individuals with anxiety, depression, and life stressors."
+      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=800&q=80",
+      about: "Expert in CBT and emotional resilience development for teens and young adults."
     },
     {
       name: "Dr. Ethan Rao",
       specialty: "Neuropsychiatry & Mood Disorders",
       location: "Mumbai, India",
       contact: "ethan.rao.mindcare@outlook.com",
-      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
-      about: "Expert in supporting individuals with anxiety, depression, and life stressors."
+      image: "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?auto=format&fit=crop&w=800&q=80",
+      about: "Specializes in neurological-linked mood disorders and clinical psychiatric evaluation."
     },
     {
       name: "Dr. Leena Kapoor",
       specialty: "Depression & Anxiety",
       location: "Mumbai, India",
       contact: "leena.kapoor.healspace@gmail.com",
-      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
-      about: "Expert in supporting individuals with anxiety, depression, and life stressors."
+      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=80",
+      about: "Focuses on emotional well-being and healthier coping strategies for stress."
     },
     {
       name: "Dr. Rajiv Mehta",
       specialty: "ADHD & Child Therapy",
       location: "Bangalore, India",
       contact: "rajiv@example.com",
-      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
-      about: "Specializes in child therapy, ADHD management, and behavioral guidance."
+      image: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=800&q=80",
+      about: "Helps children with ADHD, communication challenges, and emotional regulation."
     },
     {
       name: "Dr. Neha Kapoor",
       specialty: "Cognitive Behavioral Therapy",
       location: "Delhi, India",
       contact: "neha@example.com",
-      image: "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=60",
-      about: "Helps clients restructure negative thought patterns through CBT techniques."
+      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80",
+      about: "Helps clients identify negative thinking patterns & reframe them through CBT."
     }
   ];
 
@@ -70,7 +72,6 @@ const FindTherapist = () => {
     { name: "Sanjay P.", text: "I learned how to deal with my moods and communicate better with loved ones." },
     { name: "Aarav M.", text: "Opening up wasn’t easy, but my therapist made me feel heard for the first time." },
     { name: "Nina S.", text: "Therapy helped me find peace in my own mind — I finally feel lighter and stronger." }
-
   ];
 
   const filteredTherapists = therapists.filter(
@@ -86,6 +87,28 @@ const FindTherapist = () => {
   return (
     <UserWrapper>
       <div className="page-container">
+        {/* ✅ Chatbot Button Added */}
+        <button
+          onClick={() => navigate("/ChatBot")}
+          style={{
+            display: "block",
+            margin: "0 auto 25px auto",
+            padding: "14px 28px",
+            background: "#2563eb",
+            border: "none",
+            color: "white",
+            borderRadius: "12px",
+            fontWeight: "600",
+            cursor: "pointer",
+            fontSize: "1rem",
+            transition: "0.3s"
+          }}
+          onMouseEnter={(e) => (e.target.style.background = "#1e3a8a")}
+          onMouseLeave={(e) => (e.target.style.background = "#2563eb")}
+        >
+          🤖 Speak to our Virtual Mental Health Assistant
+        </button>
+
         <style>{`
           /* General */
           .page-container {
@@ -358,9 +381,8 @@ const FindTherapist = () => {
           }
         `}</style>
 
-        {/* Mega Card */}
+        {/* ✅ Your existing code continues below, unchanged */}
         <div className="mega-card">
-          {/* Hero */}
           <div className="hero">
             <h1>Find a Therapist Near You 🌿</h1>
             <p>Take the first step toward mental wellness and self-care.</p>
@@ -373,7 +395,6 @@ const FindTherapist = () => {
             />
           </div>
 
-          {/* Therapist Cards */}
           <div className="therapist-list">
             {filteredTherapists.length > 0 ? filteredTherapists.map((t, i) => (
               <div className="card-container" key={i}>
@@ -396,7 +417,6 @@ const FindTherapist = () => {
             )}
           </div>
 
-          {/* Why Therapists Section */}
           <div className="benefits-section">
             {benefits.map((b, i) => (
               <div
@@ -410,7 +430,6 @@ const FindTherapist = () => {
             ))}
           </div>
 
-          {/* Testimonials */}
           <div className="testimonials">
             <h2>What People Say About Therapy 💬</h2>
             <div className="testimonial-card">
@@ -423,7 +442,6 @@ const FindTherapist = () => {
             </div>
           </div>
 
-          {/* Newsletter */}
           <div className="newsletter">
             <h2>Subscribe for Mental Health Tips 📰</h2>
             <p>Get weekly articles, self-care tips, and updates straight to your inbox.</p>
