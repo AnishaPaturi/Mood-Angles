@@ -1,252 +1,377 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import UserWrapper from "../components/UserWrapper";
 
 function Profile() {
   const [user, setUser] = useState(null);
-  const [checkinForm, setCheckinForm] = useState({
-    sleepQuality: "",
-    energyLevel: "",
-    physicalDiscomfort: "",
-    mood: "",
-    notes: "",
-  });
+  const [editMode, setEditMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
+  const [profilePic, setProfilePic] = useState(null);
+  const [mood, setMood] = useState("");
+  const [history, setHistory] = useState([]);
 
+  const userId = localStorage.getItem("userId");
+
+  // ✅ Fetch User Data
   useEffect(() => {
-    const email = localStorage.getItem("email");
-    if (!email) return;
-
-    fetch(`http://localhost:5000/api/auth/profile?email=${email}`)
+    if (!userId) return;
+    fetch(`http://localhost:5000/api/profile/${userId}`)
       .then((res) => res.json())
-      .then((data) => setUser(data))
-      .catch((err) => console.error(err));
-  }, []);
+      .then((data) => setUser(data.user))
+      .catch((err) => console.error("Fetch user failed:", err));
 
-  const handleCheckinSubmit = (e) => {
-    e.preventDefault();
-    // Mock submit; in real app, send to API
-    alert("Daily check-in submitted!");
-    setCheckinForm({
-      sleepQuality: "",
-      energyLevel: "",
-      physicalDiscomfort: "",
-      mood: "",
-      notes: "",
-    });
+    // Load previous mood history from localStorage
+    const saved = localStorage.getItem("moodHistory");
+    if (saved) setHistory(JSON.parse(saved));
+  }, [userId]);
+
+  // ✅ Save updated profile
+  const handleProfileUpdate = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/profile/update/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: user.firstName,
+          lastName: user.lastName || "",
+          city: user.city || "",
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("✅ Profile Updated");
+        setUser(data.user);
+        setEditMode(false);
+      } else {
+        alert(data.error || "Update failed");
+      }
+    } catch (err) {
+      console.error("Profile update failed:", err);
+      alert("Server error");
+    }
   };
 
-  if (!user) return <div className="flex justify-center items-center h-screen"><p className="text-lg">Loading profile...</p></div>;
+  // ✅ Upload Profile Picture
+//   const handlePhotoUpload = async () => {
+//     if (!profilePic) return alert("Please select an image first!");
+
+//     const base64 = await convertToBase64(profilePic);
+//     try {
+//       const res = await fetch(`http://localhost:5000/api/profile/uploadPhoto/${userId}`, {
+//         method: "PUT",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ profilePic: base64 }),
+//       });
+
+//       const data = await res.json();
+//  if (res.ok) {
+//   alert("✅ Profile Updated");
+//   setUser(data.user);
+//   localStorage.setItem("firstName", data.user.firstName);
+//   localStorage.setItem("lastName", data.user.lastName || "");
+//   setEditMode(false);
+//   window.dispatchEvent(new Event("storage")); // triggers re-render in wrapper
+// } else {
+//   alert(data.error || "Update failed");
+// }
+
+
+//     } catch (err) {
+//       console.error("Upload failed:", err);
+//     }
+//   };
+const handlePhotoUpload = async () => {
+  if (!profilePic) return alert("Please select an image first!");
+
+  const base64 = await convertToBase64(profilePic);
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/profile/uploadPhoto/${userId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profilePic: base64 }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("✅ Photo updated!");
+
+      // ✅ Update the state with new picture manually
+      setUser((prev) => ({ ...prev, profilePic: base64 }));
+      setProfilePic(null);
+
+      // ✅ Keep the name sync as before
+      localStorage.setItem("firstName", user.firstName);
+      localStorage.setItem("lastName", user.lastName || "");
+      window.dispatchEvent(new Event("storage"));
+    } else {
+      alert(data.error || "Photo upload failed");
+    }
+  } catch (err) {
+    console.error("Upload failed:", err);
+    alert("Upload failed. Check console.");
+  }
+};
+
+
+  // Convert file to base64
+  const convertToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+
+  // ✅ Mood Check-in
+  const handleMoodCheckin = () => {
+    if (!mood) return alert("Please select your mood!");
+    const entry = {
+      date: new Date().toLocaleDateString(),
+      mood,
+    };
+    const updatedHistory = [entry, ...history];
+    setHistory(updatedHistory);
+    localStorage.setItem("moodHistory", JSON.stringify(updatedHistory));
+    alert("✅ Mood check-in saved!");
+    setMood("");
+    setActiveTab("history");
+  };
+
+  if (!user)
+    return (
+      <div style={{ fontSize: 22, textAlign: "center", padding: 60 }}>
+        Loading...
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">My Profile</h1>
-
-        {/* 1. Personal Details */}
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-600">Personal Details</h2>
-          <div className="flex items-center mb-4">
-            <img
-              src={user.profilePic || "https://via.placeholder.com/100"}
-              alt="Profile"
-              className="w-24 h-24 rounded-full mr-4"
-            />
-            <div>
-              <h3 className="text-xl font-bold">{user.firstName} {user.lastName}</h3>
-              <p className="text-gray-600">Email: {user.email}</p>
-              <p className="text-gray-600">Phone: {user.phone}</p>
+    <UserWrapper>
+      <div style={styles.page}>
+        <div style={styles.card}>
+          {/* Header Banner */}
+          <div style={styles.banner}>
+            <div style={styles.avatarBox}>
+              <img
+                src={
+                  profilePic
+                    ? URL.createObjectURL(profilePic)
+                    : user.profilePic || "https://via.placeholder.com/120"
+                }
+                style={styles.avatar}
+                alt="profile"
+              />
+              <div>
+                <h3 style={{ color: "#fff", fontSize: "22px", marginBottom: 5 }}>
+                  {user.firstName} {user.lastName}
+                </h3>
+                <p style={{ color: "#fff", opacity: 0.9 }}>{user.email}</p>
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <p><strong>Gender:</strong> {user.gender}</p>
-            <p><strong>Age:</strong> {user.age}</p>
-            <p><strong>City:</strong> {user.city}</p>
-            <p><strong>Date of Birth:</strong> {user.dob ? new Date(user.dob).toDateString() : "N/A"}</p>
-          </div>
-        </div>
 
-        {/* 2. Medical Overview */}
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-semibold mb-4 text-green-600">Medical Overview</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <p><strong>Blood Type:</strong> {user.medical?.bloodType || "N/A"}</p>
-            <p><strong>Allergies:</strong> {user.medical?.allergies?.join(", ") || "None"}</p>
-            <p><strong>Medications:</strong> {user.medical?.medications?.join(", ") || "N/A"}</p>
-            <p><strong>Primary Diagnosis:</strong> {user.medical?.primaryDiagnosis || "N/A"}</p>
-            <p className="col-span-2"><strong>Last Check-up:</strong> {user.medical?.lastCheckup ? new Date(user.medical.lastCheckup).toDateString() : "N/A"}</p>
-          </div>
-        </div>
-
-        {/* 3. Medical History & Records */}
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-semibold mb-4 text-red-600">Medical History & Records</h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium">Diagnoses</h3>
-              <ul className="list-disc list-inside">
-                {user.history?.diagnoses?.map((d, i) => (
-                  <li key={i}>{d.condition} (on {new Date(d.diagnosedAt).toDateString()})</li>
-                )) || <p>No diagnoses recorded</p>}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-medium">Treatments</h3>
-              <ul className="list-disc list-inside">
-                {user.history?.treatments?.map((t, i) => (
-                  <li key={i}>
-                    {t.treatment} ({t.startDate ? new Date(t.startDate).toDateString() : "?"} -{" "}
-                    {t.endDate ? new Date(t.endDate).toDateString() : "Present"})
-                  </li>
-                )) || <p>No treatments recorded</p>}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-medium">Symptoms</h3>
-              <ul className="list-disc list-inside">
-                {user.history?.symptoms?.map((s, i) => (
-                  <li key={i}>
-                    {s.symptom} — {s.severity} ({new Date(s.reportedAt).toDateString()})
-                  </li>
-                )) || <p>No symptom logs yet</p>}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-medium">Medication History</h3>
-              <ul className="list-disc list-inside">
-                {user.history?.medicationHistory?.map((m, i) => (
-                  <li key={i}>
-                    {m.name} - {m.dosage} ({new Date(m.startDate).toDateString()} -{" "}
-                    {m.endDate ? new Date(m.endDate).toDateString() : "Present"})
-                  </li>
-                )) || <p>No medication history</p>}
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-medium">Documents</h3>
-              <ul className="list-disc list-inside">
-                {user.history?.documents?.map((doc, i) => (
-                  <li key={i}>
-                    <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-blue-500">Document {i + 1}</a>
-                  </li>
-                )) || <p>No documents uploaded</p>}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Daily Wellness Check/Questionnaire */}
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-semibold mb-4 text-purple-600">Daily Wellness Check</h2>
-          <form onSubmit={handleCheckinSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium">How did you sleep last night?</label>
-              <select
-                value={checkinForm.sleepQuality}
-                onChange={(e) => setCheckinForm({ ...checkinForm, sleepQuality: e.target.value })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+          {/* Tabs */}
+          <div style={styles.tabs}>
+            {["profile", "medical", "wellness", "history"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={activeTab === tab ? styles.activeTab : styles.tab}
               >
-                <option value="">Select</option>
-                <option value="Poor">Poor</option>
-                <option value="Fair">Fair</option>
-                <option value="Excellent">Excellent</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium">What is your energy level today? (1-10)</label>
-              <input
-                type="number"
-                min="1"
-                max="10"
-                value={checkinForm.energyLevel}
-                onChange={(e) => setCheckinForm({ ...checkinForm, energyLevel: e.target.value })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Are you experiencing any physical discomfort?</label>
-              <input
-                type="text"
-                value={checkinForm.physicalDiscomfort}
-                onChange={(e) => setCheckinForm({ ...checkinForm, physicalDiscomfort: e.target.value })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Mood Tracker</label>
-              <input
-                type="text"
-                placeholder="e.g., Happy, Sad, Anxious"
-                value={checkinForm.mood}
-                onChange={(e) => setCheckinForm({ ...checkinForm, mood: e.target.value })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Journal/Notes</label>
-              <textarea
-                value={checkinForm.notes}
-                onChange={(e) => setCheckinForm({ ...checkinForm, notes: e.target.value })}
-                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                rows="3"
-              />
-            </div>
-            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-              Submit Check-in
-            </button>
-          </form>
-          <div className="mt-6">
-            <h3 className="text-lg font-medium mb-2">Past Check-ins</h3>
-            <ul className="space-y-2">
-              {user.dailyCheckins?.map((d, i) => (
-                <li key={i} className="border-b pb-2">
-                  {new Date(d.date).toDateString()} — Mood: {d.mood}, Sleep: {d.sleepQuality}, Energy: {d.energyLevel}, Notes: {d.notes}
-                </li>
-              )) || <p>No daily check-ins</p>}
-            </ul>
+                {tab.toUpperCase()}
+              </button>
+            ))}
           </div>
-        </div>
 
-        {/* 5. Analysis & Insights */}
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-semibold mb-4 text-indigo-600">Analysis & Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-lg font-medium">Data Visualization</h3>
-              <p className="text-sm text-gray-600">Placeholder for Mood Trends Chart</p>
-              <div className="bg-gray-200 h-32 flex items-center justify-center rounded">Chart Placeholder</div>
-            </div>
-            <div>
-              <h3 className="text-lg font-medium">Sleep Patterns</h3>
-              <p className="text-sm text-gray-600">Placeholder for Sleep Patterns Chart</p>
-              <div className="bg-gray-200 h-32 flex items-center justify-center rounded">Chart Placeholder</div>
-            </div>
-          </div>
-          <div className="mt-4">
-            <p><strong>Diagnosis Confidence Score:</strong> {user.insights?.diagnosisConfidence || "N/A"}%</p>
-            <p><strong>Recommendations:</strong> {user.insights?.recommendations?.join(", ") || "N/A"}</p>
-            <p><strong>Related Cases:</strong> {user.insights?.relatedCases?.map((c) => c.summary).join("; ") || "N/A"}</p>
-          </div>
-        </div>
-
-        {/* 6. Upcoming Appointments */}
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-semibold mb-4 text-teal-600">Upcoming Appointments</h2>
-          <ul className="space-y-2">
-            {user.appointments?.map((a, i) => (
-              <li key={i} className="flex justify-between items-center border-b pb-2">
-                <div>
-                  {a.date ? new Date(a.date).toDateString() : "TBD"} at {a.time || "N/A"} — {a.purpose || "No purpose"}
-                </div>
-                {a.link && (
-                  <a href={a.link} target="_blank" rel="noreferrer" className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">
-                    Join
-                  </a>
+          {/* Content Section */}
+          <div style={styles.section}>
+            {/* Profile Tab */}
+            {activeTab === "profile" && (
+              <>
+                <label>Profile Picture</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setProfilePic(e.target.files[0])}
+                />
+                {profilePic && (
+                  <button
+                    onClick={handlePhotoUpload}
+                    style={{
+                      ...styles.editBtn,
+                      background: "orange",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    Upload Photo 📷
+                  </button>
                 )}
-              </li>
-            )) || <p>No upcoming appointments</p>}
-          </ul>
+
+                <label>First Name</label>
+                <input
+                  style={styles.input}
+                  disabled={!editMode}
+                  value={user.firstName}
+                  onChange={(e) =>
+                    setUser({ ...user, firstName: e.target.value })
+                  }
+                />
+
+                <label>Last Name</label>
+                <input
+                  style={styles.input}
+                  disabled={!editMode}
+                  value={user.lastName || ""}
+                  onChange={(e) =>
+                    setUser({ ...user, lastName: e.target.value })
+                  }
+                />
+
+                <label>City</label>
+                <input
+                  style={styles.input}
+                  disabled={!editMode}
+                  value={user.city || ""}
+                  onChange={(e) => setUser({ ...user, city: e.target.value })}
+                />
+
+                <label>Phone</label>
+                <input
+                  style={{ ...styles.input, background: "#eee" }}
+                  disabled
+                  value={user.phone}
+                />
+
+                <button
+                  onClick={() =>
+                    editMode ? handleProfileUpdate() : setEditMode(true)
+                  }
+                  style={editMode ? styles.saveBtn : styles.editBtn}
+                >
+                  {editMode ? "Save ✅" : "Edit ✏"}
+                </button>
+              </>
+            )}
+
+            {/* Wellness Tab */}
+            {activeTab === "wellness" && (
+              <div>
+                <h3>🌤️ Daily Mood Check-in</h3>
+                <select
+                  style={styles.input}
+                  value={mood}
+                  onChange={(e) => setMood(e.target.value)}
+                >
+                  <option value="">Select your mood</option>
+                  <option value="Happy 😀">Happy 😀</option>
+                  <option value="Sad 😔">Sad 😔</option>
+                  <option value="Calm 😌">Calm 😌</option>
+                  <option value="Tired 😴">Tired 😴</option>
+                  <option value="Energetic ⚡">Energetic ⚡</option>
+                  <option value="Stressed 😣">Stressed 😣</option>
+                </select>
+                <button style={styles.saveBtn} onClick={handleMoodCheckin}>
+                  Save Check-in ✅
+                </button>
+              </div>
+            )}
+
+            {/* History Tab */}
+            {activeTab === "history" && (
+              <div>
+                <h3>📅 Mood Check-in History</h3>
+                {history.length === 0 ? (
+                  <p>No mood check-ins yet.</p>
+                ) : (
+                  <ul>
+                    {history.map((entry, i) => (
+                      <li key={i}>
+                        {entry.date} — <b>{entry.mood}</b>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {activeTab === "medical" && <p>Medical info coming soon</p>}
+          </div>
         </div>
       </div>
-    </div>
+    </UserWrapper>
   );
 }
+
+const styles = {
+  page: { padding: "30px", background: "#f0f4ff", minHeight: "100vh" },
+  card: {
+    width: "90%",
+    maxWidth: "600px",
+    margin: "0 auto",
+    background: "#fff",
+    borderRadius: "12px",
+    boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
+    overflow: "hidden",
+  },
+  banner: {
+    height: "160px",
+    background: "linear-gradient(45deg,#8e44ad,#6c5ce7)",
+    display: "flex",
+    alignItems: "flex-end",
+    padding: "20px",
+  },
+  avatarBox: { display: "flex", gap: "15px", alignItems: "center" },
+  avatar: {
+    width: "90px",
+    height: "90px",
+    borderRadius: "50%",
+    border: "4px solid white",
+    objectFit: "cover",
+  },
+  tabs: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "8px",
+    padding: "12px",
+  },
+  tab: {
+    padding: "8px 14px",
+    background: "#ddd",
+    borderRadius: "20px",
+    border: "none",
+    cursor: "pointer",
+  },
+  activeTab: {
+    padding: "8px 14px",
+    background: "#6c5ce7",
+    color: "#fff",
+    borderRadius: "20px",
+    border: "none",
+  },
+  section: { padding: "20px" },
+  input: {
+    width: "100%",
+    padding: "10px",
+    margin: "6px 0 12px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+  },
+  editBtn: {
+    background: "#6c5ce7",
+    color: "#fff",
+    padding: "10px",
+    width: "100%",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+  saveBtn: {
+    background: "green",
+    color: "#fff",
+    padding: "10px",
+    width: "100%",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+};
 
 export default Profile;

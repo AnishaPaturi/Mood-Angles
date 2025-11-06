@@ -8,7 +8,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$_])[A-Za-z\d@#$_]{8,}$/;
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$])[A-Za-z\d@#$]{8,}$/;
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,13 +32,14 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok) {
-        // Store JWT token for fetching user info in dashboard
-        localStorage.setItem("userId", data.userId); // or data._id if returned
-        localStorage.setItem("role", "user");
-        localStorage.setItem("firstName", data.firstName || "");
+  localStorage.setItem("userId", data.userId);
+  localStorage.setItem("firstName", data.firstName);
+  localStorage.setItem("role", "user");
 
-        alert("Login successful!");
-        navigate("/UDashboard");
+  alert("Login successful!");
+  navigate("/UDashboard");
+
+
       } else {
         setError(data.msg || data.error || "Invalid email or password");
       }

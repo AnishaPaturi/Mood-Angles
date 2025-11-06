@@ -109,7 +109,7 @@ function UserWrapper({children}) {
           <nav className="nav">
             <a href="/UDashboard">Dashboard</a>
             <a href="/TherapistF">Find a Therapist?</a>
-            <a href="#">Profile</a>
+            <a href="Profile">Profile</a>
             <a href="#">Settings</a>
           </nav>
         </aside>

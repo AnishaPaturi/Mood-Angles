@@ -37,10 +37,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "City is required"],
     },
+    profilePic: {
+  type: String,
+  default: "",
+},
     password: {
       type: String,
       required: [true, "Password is required"],
       minlength: [8, "Password must be at least 8 characters long"],
+    },
+    profilePic: {
+      type: String,
+      default: "",
     },
     terms: {
       type: Boolean,
