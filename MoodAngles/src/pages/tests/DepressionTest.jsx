@@ -2,32 +2,37 @@ import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
 export default function DepressionTest() {
+  const API_BASE = "http://localhost:5000";
+  const testName = "Depression";
+
   const questions = [
-    "I generally feel down and unhappy.",
-    "I have less interest in other people than I used to.",
-    "It takes a lot of effort to start working on something new.",
-    "I don't get as much satisfaction out of things as I used to.",
-    "I have headaches or back pain for no apparent reason.",
-    "I easily get impatient, frustrated, or angry.",
-    "I feel lonely, and that people aren't that interested in me.",
-    "I feel like I have nothing to look forward to.",
-    "I have episodes of crying that are hard to stop.",
-    "I have trouble getting to sleep or I sleep in too late.",
-    "I feel like my life has been a failure or a disappointment.",
-    "I have trouble staying focused on what I'm supposed to be doing.",
-    "I blame myself for my faults and mistakes.",
-    "I feel like I've slowed down; sometimes I don't have the energy to get anything done.",
-    "I have trouble finishing books, movies, or TV shows.",
-    "I put off making decisions more often than I used to.",
-    "When I feel down, friends and family can't cheer me up.",
-    "I think about people being better off without me.",
-    "I'm eating much less (or much more) than normal and it's affecting my weight.",
-    "I have less interest in sex than I used to.",
+    "I often feel sad or down, even when things are going okay.",
+    "I don’t enjoy my usual hobbies or activities as much as I used to.",
+    "It feels hard to get started on new tasks or projects.",
+    "Things that used to make me happy don’t feel the same anymore.",
+    "I sometimes get headaches, stomachaches, or other pains for no clear reason.",
+    "I get irritated or upset more easily than before.",
+    "I feel left out or disconnected from other people.",
+    "It’s hard to feel hopeful about the future.",
+    "I cry more easily than I used to, or feel like I could cry for no reason.",
+    "I have trouble falling asleep, staying asleep, or I sleep much longer than usual.",
+    "I often think I’m not doing as well in life as I should be.",
+    "It’s hard to focus on school, work, or everyday tasks.",
+    "I tend to be very hard on myself when I make mistakes.",
+    "I often feel tired or low on energy, even after resting.",
+    "I lose interest in things like reading, shows, or games halfway through.",
+    "Making simple decisions feels more stressful than it used to.",
+    "When I feel low, it’s hard for others to cheer me up.",
+    "I sometimes feel like I don’t matter or that people wouldn’t miss me if I weren’t around.",
+    "My appetite has changed — I’m eating much more or much less than usual.",
+    "I don’t feel as affectionate or close to others as I used to."
   ];
+
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const handleSelect = (qIndex, value) => {
@@ -36,26 +41,163 @@ export default function DepressionTest() {
     setAnswers(updated);
   };
 
-  const handleSubmit = () => {
+  const buildAnswersPayload = () =>
+    questions.reduce((acc, q, i) => {
+      acc[`Q${i + 1}`] = `${q} → Answer: ${answers[i]}`;
+      return acc;
+    }, {});
+
+  const computeScore = () => {
+    const rawScore = answers.reduce((a, v) => a + v, 0);
+    const maxChoice = colors.length - 1;
+    const maxPossible = questions.length * maxChoice;
+    if (maxPossible === 0) return 0;
+    return Math.round((rawScore / maxPossible) * 100);
+  };
+
+  const interpretLevel = (score) =>
+    score <= 20
+      ? "Minimal or No Depression"
+      : score <= 40
+      ? "Mild Depression (Monitor your mood)"
+      : score <= 65
+      ? "Moderate Depression (Consider talking to someone)"
+      : score <= 85
+      ? "Severe Depression (Seek professional help)"
+      : "Extremely Severe Depression (Immediate support advised)";
+
+  const handleSubmit = async () => {
     if (answers.some((a) => a === null)) {
       setResult({
         score: null,
-        level: "Please answer all questions before submitting!",
+        level: "Please answer all questions before submitting!"
       });
       return;
     }
 
-    const rawScore = answers.reduce((a, v) => a + v, 0);
-    const score = Math.round((rawScore / (questions.length * 4)) * 100);
-
-    let level = "";
-    if (score <= 20) level = "Minimal or No Depression";
-    else if (score <= 40) level = "Mild Depression (Monitor your mood)";
-    else if (score <= 65) level = "Moderate Depression (Consider talking to someone)";
-    else if (score <= 85) level = "Severe Depression (Seek professional help)";
-    else level = "Extremely Severe Depression (Immediate support advised)";
-
+    const score = computeScore();
+    const level = interpretLevel(score);
     setResult({ score, level });
+    setLoading(true);
+
+    let finalSummary = "";
+    let dData = null;
+    let cData = null;
+    let eData = null;
+    let cSummary = "";
+    let eSummary = "";
+
+    try {
+      // ---------- Agent R ----------
+      const payloadR = {
+        condition: testName,
+        testName,
+        score,
+        level,
+        answers: buildAnswersPayload()
+      };
+
+      const rRes = await fetch(`${API_BASE}/api/angelR`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payloadR)
+      });
+      if (!rRes.ok) throw new Error(`Agent R failed: ${rRes.status}`);
+      const rData = await rRes.json();
+      finalSummary = String(rData.result || rData.Result || "").trim();
+      setResult((prev) => ({ ...prev, aiDiagnosis: finalSummary }));
+
+      // ---------- Agent D ----------
+      const dRes = await fetch(`${API_BASE}/api/angelD`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          score,
+          level
+        })
+      });
+      if (!dRes.ok) throw new Error(`Agent D failed: ${dRes.status}`);
+      dData = await dRes.json();
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result }));
+
+      // ---------- Agent C ----------
+      const cRes = await fetch(`${API_BASE}/api/angelC`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
+          score,
+          level,
+          answers: buildAnswersPayload()
+        })
+      });
+      if (!cRes.ok) throw new Error(`Agent C failed: ${cRes.status}`);
+      cData = await cRes.json();
+      cSummary = cData.result || cData.Result;
+      setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
+
+      // ---------- Agent E ----------
+      const eRes = await fetch(`${API_BASE}/api/angelE`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
+          agentC_result: cSummary
+        })
+      });
+      if (!eRes.ok) throw new Error(`Agent E failed: ${eRes.status}`);
+      eData = await eRes.json();
+      eSummary =
+        eData.final_consensus ||
+        eData.result ||
+        `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
+      setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
+
+      // ---------- Agent J ----------
+      const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
+          agentC_result: cSummary,
+          agentE_result: eSummary,
+          score,
+          level
+        })
+      });
+
+      if (!jRes.ok) {
+        const txt = await jRes.text();
+        setResult((prev) => ({
+          ...prev,
+          agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}`
+        }));
+      } else {
+        const jData = await jRes.json();
+        setResult((prev) => ({ ...prev, agentJDecision: jData }));
+      }
+    } catch (err) {
+      console.error("Agent chain error:", err);
+      setResult((prev) => ({
+        ...prev,
+        aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain.",
+        chainError: err.message
+      }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,11 +211,10 @@ export default function DepressionTest() {
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
-
           <div style={styles.headerContent}>
             <h1 style={styles.mainTitle}>Depression Check</h1>
             <div style={styles.testMeta}>
-              <span style={styles.metaBtnOrange}>✔ 20 QUESTIONS</span>
+              <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
             </div>
           </div>
@@ -83,8 +224,8 @@ export default function DepressionTest() {
         <div style={styles.subSection}>
           <h2 style={styles.subTitle}>Are you feeling persistently low or unmotivated?</h2>
           <p style={styles.subDesc}>
-            Depression can affect your thoughts, mood, and overall energy. This self-assessment
-            helps you reflect on your emotional well-being and understand if you may be showing signs of depression.
+            Depression affects thoughts, energy, and daily life. This self-assessment helps reflect
+            on emotional well-being and encourages professional guidance if needed.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -93,17 +234,14 @@ export default function DepressionTest() {
           )}
         </div>
 
-        {/* TEST SECTION */}
         {started && (
           <>
-            {/* SCALE BAR */}
             <div style={styles.scaleBar}>
               <span style={styles.scaleText}>STRONGLY DISAGREE</span>
               <span style={styles.scaleText}>NEUTRAL</span>
               <span style={styles.scaleText}>STRONGLY AGREE</span>
             </div>
 
-            {/* QUESTIONS */}
             <div style={styles.questionList}>
               {questions.map((q, i) => (
                 <div key={i} style={styles.questionBlock}>
@@ -118,8 +256,7 @@ export default function DepressionTest() {
                         style={{
                           ...styles.circle,
                           borderColor: color,
-                          backgroundColor:
-                            answers[i] === j ? color : "transparent",
+                          backgroundColor: answers[i] === j ? color : "transparent"
                         }}
                       />
                     ))}
@@ -128,27 +265,74 @@ export default function DepressionTest() {
                     <span style={styles.labelLeft}>DISAGREE</span>
                     <span style={styles.labelRight}>AGREE</span>
                   </div>
-                  {i < questions.length - 1 && (
-                    <div style={styles.divider}></div>
-                  )}
+                  {i < questions.length - 1 && <div style={styles.divider}></div>}
                 </div>
               ))}
             </div>
 
-            {/* SUBMIT BUTTON */}
-            <button onClick={handleSubmit} style={styles.submitButton}>
-              Submit Test
+            <button onClick={handleSubmit} style={styles.submitButton} disabled={loading}>
+              {loading ? "Analyzing..." : "Submit Test"}
             </button>
 
-            {/* RESULT */}
+            {/* RESULTS */}
             {result && (
               <div style={styles.resultBox}>
                 {result.score !== null && (
-                  <p style={styles.resultScore}>
-                    Your Depression Score: {result.score}/100
-                  </p>
+                  <p style={styles.resultScore}>Your Depression Score: {result.score}/100</p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
+
+                {/* {result.aiDiagnosis && (
+                  <p style={styles.agentRText}>
+                    <strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}
+                  </p>
+                )}
+                {result.agentDExplanation && (
+                  <p style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
+                    <strong>Agent D Summary:</strong> {result.agentDExplanation}
+                  </p>
+                )}
+                {result.agentCComparison && (
+                  <p style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
+                    <strong>Agent C Comparative Summary:</strong> {result.agentCComparison}
+                  </p>
+                )}
+                {result.agentEDebate && (
+                  <p style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
+                    <strong>Agent E Debate Summary:</strong> {result.agentEDebate}
+                  </p>
+                )} */}
+                {result.agentJDecision && (
+                  <div style={{ marginTop: 12, textAlign: "left", color: "#444" }}>
+                    <strong>Agent J (Judge) Decision:</strong>
+                    {typeof result.agentJDecision === "string" ? (
+                      <div style={{ marginTop: 6 }}>{result.agentJDecision}</div>
+                    ) : (
+                      <div style={{ marginTop: 8 }}>
+                        {result.agentJDecision.decision && (
+                          <div>
+                            <strong>Decision:</strong> {result.agentJDecision.decision}
+                          </div>
+                        )}
+                        {result.agentJDecision.confidence && (
+                          <div>
+                            <strong>Confidence:</strong> {result.agentJDecision.confidence}
+                          </div>
+                        )}
+                        {result.agentJDecision.reasoning && (
+                          <div style={{ marginTop: 6 }}>
+                            <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {result.chainError && (
+                  <p style={{ color: "#b91c1c" }}>
+                    <strong>Chain error:</strong> {result.chainError}
+                  </p>
+                )}
               </div>
             )}
           </>

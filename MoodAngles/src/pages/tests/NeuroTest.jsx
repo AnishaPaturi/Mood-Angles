@@ -2,42 +2,84 @@ import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
 export default function NeuroTest() {
+  const API_BASE = "http://localhost:5000";
+  const testName = "Neuroticism Traits";
+
   const questions = [
-    "I get stressed out easily.",
-    "It takes a lot for me to feel embarrassed.",
-    "I have frequent mood swings.",
-    "I’m known as someone who is stable during a crisis.",
-    "I feel calm and upbeat most of the time.",
-    "I’m easily startled.",
-    "It’s easy for other people to get me riled up.",
-    "My worries feel all-consuming.",
-    "There aren’t many things that I’m afraid of.",
-    "Once I get anxious or sad, it’s hard to snap myself out of it.",
-    "I feel blue frequently.",
-    "I spend a lot of time thinking about how things might go wrong.",
-    "I don’t get upset about small things.",
-    "I criticize myself harshly when I make a mistake, even a small one.",
-    "I feel irritable often.",
-    "I often doubt my own ability to navigate challenges.",
-    "I don’t feel threatened easily.",
-    "I tend to make mountains out of molehills.",
-    "Encountering a serious obstacle often makes me want to give up altogether.",
-    "I can generally keep my emotions under control.",
+    "I get stressed or overwhelmed easily.",
+    "It takes a lot for me to feel embarrassed or self-conscious.",
+    "My mood tends to change quickly and often.",
+    "I stay calm and steady when things go wrong.",
+    "I generally feel positive and relaxed most of the time.",
+    "I’m easily startled or on edge in unexpected situations.",
+    "It’s easy for other people’s emotions to affect my own mood.",
+    "When I worry, it can feel hard to stop thinking about it.",
+    "There aren’t many things that make me feel afraid.",
+    "Once I start feeling anxious or sad, it takes time for me to calm down.",
+    "I feel down or low more often than I’d like to.",
+    "I often imagine worst-case scenarios or focus on what might go wrong.",
+    "Small problems rarely upset me for long.",
+    "I can be very self-critical, even over small mistakes.",
+    "I get irritated or frustrated more easily than others.",
+    "I sometimes doubt my ability to handle difficult situations.",
+    "I usually feel secure and not easily threatened by others.",
+    "I tend to overthink or exaggerate small issues.",
+    "When I face major obstacles, I sometimes feel like giving up.",
+    "I can usually keep my emotions steady, even under stress."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+  const [answers, setAnswers] = useState(Array(questions.length).fill(null)); // storing 1..5
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const handleSelect = (qIndex, value) => {
+    if (qIndex < 0 || qIndex >= questions.length) return;
     const updated = [...answers];
-    updated[qIndex] = value; // store 1–5
+    updated[qIndex] = value; // value should be 1..5 (UI uses j+1)
     setAnswers(updated);
   };
 
-  const handleSubmit = () => {
+  const buildAnswersPayload = () =>
+    questions.reduce((acc, q, i) => {
+      acc[`Q${i + 1}`] = `${q} → Answer: ${answers[i]}`;
+      return acc;
+    }, {});
+
+  // compute percent (0..100) when answers are 1..5
+  const computePercent = () => {
+    const raw = answers.reduce((s, v) => s + (typeof v === "number" ? v : 0), 0);
+    const maxRaw = questions.length * 5;
+    if (maxRaw === 0) return 0;
+    return Math.round((raw / maxRaw) * 100);
+  };
+
+  // compute 0..10 normalized with one decimal
+  const computeNormalized10 = () => {
+    const percent = computePercent();
+    const norm10 = Math.round(((percent / 100) * 10) * 10) / 10;
+    return norm10;
+  };
+
+  const interpretLevel = (percent) => {
+    if (percent < 33) return "Low level of Neuroticism";
+    if (percent < 66) return "Moderate level of Neuroticism";
+    return "High level of Neuroticism";
+  };
+
+  const safeText = (x) => {
+    if (x === undefined || x === null) return "";
+    if (typeof x === "string") return x;
+    try {
+      return JSON.stringify(x);
+    } catch {
+      return String(x);
+    }
+  };
+
+  const handleSubmit = async () => {
     if (answers.some((a) => a === null)) {
       setResult({
         score: null,
@@ -46,16 +88,140 @@ export default function NeuroTest() {
       return;
     }
 
-    const totalScore = answers.reduce((a, v) => a + v, 0);
-    const maxScore = questions.length * 5; // since 5 is max value
-    const percentage = (totalScore / maxScore) * 100;
+    setLoading(true);
 
-    let level;
-    if (percentage < 33) level = "Low level of Neuroticism";
-    else if (percentage < 66) level = "Moderate level of Neuroticism";
-    else level = "High level of Neuroticism";
+    const percentScore = computePercent(); // 0..100
+    const normalized10 = computeNormalized10(); // 0..10 one decimal
+    const level = interpretLevel(percentScore);
 
-    setResult({ score: Math.round(percentage), level });
+    // show immediate local result
+    setResult({ scorePercent: percentScore, score10: normalized10, level });
+
+    // agent chain variables
+    let agentR_summary = "";
+    let dData = null;
+    let cData = null;
+    let eData = null;
+    let cSummary = "";
+    let eSummary = "";
+
+    try {
+      // ---------- Agent R ----------
+      const rPayload = {
+        testName,
+        condition: "neuroticism",
+        score_percent: percentScore,
+        score_10: normalized10,
+        answers: buildAnswersPayload(),
+      };
+
+      const rRes = await fetch(`${API_BASE}/api/angelR`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rPayload),
+      });
+
+      if (!rRes.ok) {
+        const txt = await rRes.text();
+        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
+      }
+      const rJson = await rRes.json();
+      agentR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
+      setResult((prev) => ({ ...prev, agentRDiagnosis: agentR_summary }));
+
+      // ---------- Agent D ----------
+      const dRes = await fetch(`${API_BASE}/api/angelD`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          score_percent: percentScore,
+          score_10: normalized10,
+        }),
+      });
+
+      if (!dRes.ok) {
+        const txt = await dRes.text();
+        throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
+      }
+      dData = await dRes.json();
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || safeText(dData) }));
+
+      // ---------- Agent C ----------
+      const cRes = await fetch(`${API_BASE}/api/angelC`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          score_percent: percentScore,
+          score_10: normalized10,
+          answers: buildAnswersPayload(),
+        }),
+      });
+
+      if (!cRes.ok) {
+        const txt = await cRes.text();
+        throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
+      }
+      cData = await cRes.json();
+      cSummary = cData.result || cData.Result || safeText(cData);
+      setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
+
+      // ---------- Agent E (Debate / Consensus) ----------
+      const eRes = await fetch(`${API_BASE}/api/angelE`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentC_result: cSummary,
+        }),
+      });
+
+      if (!eRes.ok) {
+        const txt = await eRes.text();
+        throw new Error(`Agent E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
+      }
+      eData = await eRes.json();
+      eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
+      setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
+
+      // ---------- Agent J (Judge) ----------
+      const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentC_result: cSummary,
+          agentE_result: eSummary,
+          score_percent: percentScore,
+          score_10: normalized10,
+        }),
+      });
+
+      if (!jRes.ok) {
+        const txt = await jRes.text();
+        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
+      } else {
+        const jData = await jRes.json();
+        setResult((prev) => ({ ...prev, agentJDecision: jData }));
+      }
+    } catch (err) {
+      console.error("Agent chain error:", err);
+      setResult((prev) => ({
+        ...prev,
+        chainError: err.message,
+        agentRDiagnosis: prev?.agentRDiagnosis || "⚠️ Could not complete diagnosis chain.",
+      }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,7 +239,7 @@ export default function NeuroTest() {
           <div style={styles.headerContent}>
             <h1 style={styles.mainTitle}>Neuroticism Traits</h1>
             <div style={styles.testMeta}>
-              <span style={styles.metaBtnOrange}>✔ 20 QUESTIONS</span>
+              <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
             </div>
           </div>
@@ -83,10 +249,8 @@ export default function NeuroTest() {
         <div style={styles.subSection}>
           <h2 style={styles.subTitle}>How emotionally stable are you?</h2>
           <p style={styles.subDesc}>
-            Neuroticism—the tendency to experience frequent negative emotions
-            such as anxiety, worry, or frustration—can affect your relationships,
-            productivity, and well-being. Take this test to assess your level of
-            emotional stability.
+            Neuroticism affects how often you experience negative emotions (anxiety, irritability, worry).
+            This quick check assesses emotional stability — consider professional support if results are concerning.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -98,14 +262,12 @@ export default function NeuroTest() {
         {/* TEST SECTION */}
         {started && (
           <>
-            {/* SCALE BAR */}
             <div style={styles.scaleBar}>
               <span style={styles.scaleText}>STRONGLY DISAGREE</span>
               <span style={styles.scaleText}>NEUTRAL</span>
               <span style={styles.scaleText}>STRONGLY AGREE</span>
             </div>
 
-            {/* QUESTIONS */}
             <div style={styles.questionList}>
               {questions.map((q, i) => (
                 <div key={i} style={styles.questionBlock}>
@@ -116,12 +278,13 @@ export default function NeuroTest() {
                     {colors.map((color, j) => (
                       <button
                         key={j}
-                        onClick={() => handleSelect(i, j + 1)} // store 1–5 instead of 0–4
+                        onClick={() => handleSelect(i, j + 1)} // store 1..5
+                        type="button"
+                        aria-pressed={answers[i] === j + 1}
                         style={{
                           ...styles.circle,
                           borderColor: color,
-                          backgroundColor:
-                            answers[i] === j + 1 ? color : "transparent",
+                          backgroundColor: answers[i] === j + 1 ? color : "transparent",
                         }}
                       />
                     ))}
@@ -130,27 +293,66 @@ export default function NeuroTest() {
                     <span style={styles.labelLeft}>DISAGREE</span>
                     <span style={styles.labelRight}>AGREE</span>
                   </div>
-                  {i < questions.length - 1 && (
-                    <div style={styles.divider}></div>
-                  )}
+                  {i < questions.length - 1 && <div style={styles.divider}></div>}
                 </div>
               ))}
             </div>
 
-            {/* SUBMIT BUTTON */}
-            <button onClick={handleSubmit} style={styles.submitButton}>
-              Submit Test
+            <button onClick={handleSubmit} style={styles.submitButton} disabled={loading}>
+              {loading ? "Analyzing..." : "Submit Test"}
             </button>
 
-            {/* RESULTS */}
             {result && (
               <div style={styles.resultBox}>
-                {result.score !== null && (
-                  <p style={styles.resultScore}>
-                    Your Neuroticism Score: {result.score}/100
-                  </p>
+                {result.scorePercent !== null && (
+                  <p style={styles.resultScore}>Your Neuroticism Score: {result.scorePercent}/100</p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
+
+                {/* {result.agentRDiagnosis && (
+                  <p style={{ marginTop: 10 }}><strong>Agent R Diagnosis:</strong> {result.agentRDiagnosis}</p>
+                )}
+
+                {result.agentDExplanation && (
+                  <p style={{ marginTop: 10 }}><strong>Agent D Summary:</strong> {result.agentDExplanation}</p>
+                )}
+
+                {result.agentCComparison && (
+                  <p style={{ marginTop: 10 }}><strong>Agent C Comparative Summary:</strong> {result.agentCComparison}</p>
+                )}
+
+                {result.agentEDebate && (
+                  <p style={{ marginTop: 10 }}><strong>Agent E Debate Summary:</strong> {result.agentEDebate}</p>
+                )} */}
+
+                {result.agentJDecision && (
+                  <div style={{ marginTop: 12, textAlign: "left", color: "#444" }}>
+                    <strong>Agent J (Judge) Decision:</strong>
+                    {typeof result.agentJDecision === "string" ? (
+                      <div style={{ marginTop: 6 }}>{result.agentJDecision}</div>
+                    ) : (
+                      <div style={{ marginTop: 8 }}>
+                        {result.agentJDecision.decision && <div><strong>Decision:</strong> {result.agentJDecision.decision}</div>}
+                        {result.agentJDecision.confidence !== undefined && <div><strong>Confidence:</strong> {String(result.agentJDecision.confidence)}</div>}
+                        {result.agentJDecision.reasoning && <div style={{ marginTop: 6 }}><strong>Reasoning:</strong> {result.agentJDecision.reasoning}</div>}
+                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
+                          <div style={{ marginTop: 6 }}>
+                            <strong>Actions:</strong>
+                            <ul>
+                              {result.agentJDecision.actions.map((a, idx) => <li key={idx}>{a}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {result.chainError && (
+                  <p style={{ marginTop: 10, color: "#b91c1c" }}>
+                    <strong>Chain error:</strong> {result.chainError}
+                  </p>
+                )}
               </div>
             )}
           </>
@@ -160,7 +362,7 @@ export default function NeuroTest() {
   );
 }
 
-/* ------------------- INLINE STYLES ------------------- */
+/* ------------------- STYLES ------------------- */
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
@@ -185,8 +387,7 @@ const styles = {
   headerOverlay: {
     position: "absolute",
     inset: 0,
-    background:
-      "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.3), rgba(0,0,0,0.7))",
+    background: "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.3), rgba(0,0,0,0.7))",
   },
   headerContent: {
     position: "absolute",
@@ -252,7 +453,6 @@ const styles = {
     cursor: "pointer",
     marginTop: "10px",
     boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
-    transition: "all 0.3s ease",
   },
   scaleBar: {
     display: "flex",
@@ -268,30 +468,16 @@ const styles = {
     fontSize: "14px",
     gap: "60px",
   },
-  scaleText: {
-    textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-  },
-  questionList: {
-    marginTop: "20px",
-    width: "90%",
-    marginLeft: "auto",
-    marginRight: "auto",
-  },
-  questionBlock: {
-    marginBottom: "45px",
-  },
+  scaleText: { textShadow: "0 1px 2px rgba(0,0,0,0.2)" },
+  questionList: { marginTop: "20px", width: "90%", marginLeft: "auto", marginRight: "auto" },
+  questionBlock: { marginBottom: "45px" },
   questionText: {
     fontSize: "18px",
     color: "#333",
     marginBottom: "25px",
     fontWeight: "600",
   },
-  circleRow: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "30px",
-    marginBottom: "10px",
-  },
+  circleRow: { display: "flex", justifyContent: "center", gap: "30px", marginBottom: "10px" },
   circle: {
     width: "60px",
     height: "60px",
@@ -300,19 +486,10 @@ const styles = {
     cursor: "pointer",
     transition: "all 0.3s ease",
   },
-  labelRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    width: "320px",
-    margin: "8px auto",
-  },
+  labelRow: { display: "flex", justifyContent: "space-between", width: "320px", margin: "8px auto" },
   labelLeft: { color: "#555", fontSize: "14px", fontWeight: "600" },
   labelRight: { color: "#555", fontSize: "14px", fontWeight: "600" },
-  divider: {
-    borderBottom: "1px solid #e5e7eb",
-    width: "90%",
-    margin: "35px auto",
-  },
+  divider: { borderBottom: "1px solid #e5e7eb", width: "90%", margin: "35px auto" },
   submitButton: {
     display: "block",
     margin: "40px auto 0",
@@ -325,7 +502,6 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
     boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
   },
   resultBox: {
     marginTop: "40px",
