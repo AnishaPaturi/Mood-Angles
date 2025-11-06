@@ -313,6 +313,7 @@ export default function PLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -321,7 +322,7 @@ export default function PLogin() {
 
   // Redirect if already logged in
   useEffect(() => {
-    const psyId = localStorage.getItem("psychiatristId");
+    const psyId = localStorage.getItem("psychiatristId") || localStorage.getItem("token");
     if (psyId) navigate("/psychiatrist-dashboard");
   }, [navigate]);
 
@@ -337,33 +338,60 @@ export default function PLogin() {
     return () => clearInterval(interval);
   }, [fullText]);
 
-  // Tab switch handler
+  const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$_])[A-Za-z\d@#$_]{8,}$/;
+
   const handleSwitch = (tab) => {
     setActiveTab(tab);
     navigate(tab === "signup" ? "/PSignup" : "/PLogin");
   };
 
-  // Login submit handler
+  const handleGoogle = () => {
+    window.location.href = "http://localhost:5000/api/auth/google";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
-
-    try {
-      const res = await fetch(
-        "http://localhost:5000/api/auth/psychiatrist/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), password: password.trim() }),
-        }
+    if (!email || !password) {
+      setError("Please enter email and password.");
+      return;
+    }
+    if (!passwordRegex.test(password)) {
+      setError(
+        "Password must be at least 8 characters, include 1 uppercase letter, 1 digit, and 1 special char (@ # $ _)"
       );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/psychiatrist/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password: password.trim() }),
+      });
 
       const data = await res.json();
 
       if (res.ok) {
-        // Save ID instead of JWT
-        localStorage.setItem("psychiatristId", data.psyId);
+        // store token if provided, else store psy id
+        const token = data.token || data.psyId || data.psychiatristId;
+        const psy = data.user || data.psychiatrist || {};
+
+        if (token) {
+          if (remember) {
+            localStorage.setItem("token", token);
+            localStorage.setItem("psychiatrist", JSON.stringify(psy));
+          } else {
+            sessionStorage.setItem("token", token);
+            sessionStorage.setItem("psychiatrist", JSON.stringify(psy));
+          }
+        } else if (data.psyId) {
+          // legacy fallback
+          if (remember) localStorage.setItem("psychiatristId", data.psyId);
+          else sessionStorage.setItem("psychiatristId", data.psyId);
+        }
+
         localStorage.setItem("role", "psychiatrist");
         alert("Login successful!");
         navigate("/psychiatrist-dashboard");
@@ -386,7 +414,7 @@ export default function PLogin() {
         alignItems: "center",
         minHeight: "100vh",
         backgroundColor: "#c7c7d9",
-        padding: "10px 350px",
+        padding: "10px 200px",
         boxSizing: "border-box",
       }}
     >
@@ -397,9 +425,10 @@ export default function PLogin() {
           background: "#fff",
           borderRadius: "16px",
           overflow: "hidden",
-          maxWidth: "900px",
-          width: "90%",
-          height: "500px",
+          maxWidth: "1200px",      // increased from 900 -> 1200
+          width: "95%",
+          minHeight: "650px",      // increased from 500 -> 650
+          height: "auto",
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
           transition: "all 0.3s ease",
         }}
@@ -409,7 +438,7 @@ export default function PLogin() {
           style={{
             background: "#b3b7f0",
             color: "#fff",
-            flex: 0.9,
+            flex: 1.05,             // increased flex to give balanced left/right space
             padding: "40px",
             display: "flex",
             flexDirection: "column",
@@ -428,8 +457,8 @@ export default function PLogin() {
               fontWeight: "bold",
               fontFamily: "'Roboto', sans-serif",
               lineHeight: 1.5,
-              maxWidth: "220px",
-              minHeight: "60px",
+              maxWidth: "300px",
+              minHeight: "80px",
               whiteSpace: "pre-wrap",
             }}
           >
@@ -440,8 +469,8 @@ export default function PLogin() {
             alt="Decorative stethoscope"
             style={{
               marginTop: "24px",
-              width: "450px",
-              maxWidth: "90%",
+              width: "520px",        // increased image size to match larger card
+              maxWidth: "95%",
               alignSelf: "flex-end",
               borderRadius: "50%",
               transform: "translateX(50%)",
@@ -453,8 +482,8 @@ export default function PLogin() {
         {/* RIGHT PANEL */}
         <div
           style={{
-            flex: 1,
-            padding: "40px",
+            flex: 1.4,             // increased to give more form room
+            padding: "48px",      // slightly more padding for spacious layout
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -514,87 +543,46 @@ export default function PLogin() {
             Login
           </h2>
 
-          <form
-            style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-            onSubmit={handleSubmit}
-          >
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={inputStyle}
-            />
+          <form style={{ display: "flex", flexDirection: "column", gap: "15px" }} onSubmit={handleSubmit}>
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
 
-            {/* Password input with show/hide */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{ ...inputStyle, flex: 1 }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  padding: "6px 10px",
-                  fontSize: "12px",
-                  cursor: "pointer",
-                  borderRadius: "6px",
-                  border: "1px solid #ccc",
-                  background: "#f5f5f5",
-                }}
-              >
+              <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ ...inputStyle, flex: 1 }} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ padding: "6px 10px", fontSize: "12px", cursor: "pointer", borderRadius: "6px", border: "1px solid #ccc", background: "#f5f5f5" }}>
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
 
-            {error && (
-              <div style={{ color: "red", fontSize: "13px", marginTop: "5px" }}>
-                {error}
-              </div>
-            )}
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Remember me
+            </label>
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                ...buttonStyle,
-                background: "#6366f1",
-              }}
-              onMouseEnter={(e) => (e.target.style.background = "#4f46e5")}
-              onMouseLeave={(e) => (e.target.style.background = "#6366f1")}
-            >
+            {error && <div style={{ color: "red", fontSize: "13px", marginTop: "5px" }}>{error}</div>}
+
+            <button type="submit" disabled={loading} style={{ ...buttonStyle, background: "#6366f1" }} onMouseEnter={(e) => (e.target.style.background = "#4f46e5")} onMouseLeave={(e) => (e.target.style.background = "#6366f1")}>
               {loading ? "Logging in..." : "Login"}
             </button>
 
-            <p
-              style={{
-                color: "#555",
-                textAlign: "center",
-                fontSize: "13px",
-                cursor: "pointer",
-                textDecoration: "underline",
-              }}
-              onClick={() => navigate("/forgot-password")}
-            >
+            <div style={{ width: "100%", textAlign: "center", marginTop: 8 }}>
+              <span style={{ color: "#888", fontSize: 13 }}>Or sign in with</span>
+              <div style={{ marginTop: 8 }}>
+                <button type="button" onClick={handleGoogle} style={{ border: "1px solid #e7e7e7", background: "#fff", padding: "8px 12px", borderRadius: 20, display: "inline-flex", gap: 8, alignItems: "center", cursor: "pointer" }}>
+                  <svg width="18" height="18" viewBox="0 0 533.5 544.3">
+                    <path fill="#4285F4" d="M533.5 278.4c0-17.8-1.6-35.4-4.8-52.4H272v99.6h147.2c-6.4 34.8-26.4 64.2-56.3 83.7v69.6h90.9c53.2-49 83.7-121.2 83.7-200.5z" />
+                    <path fill="#34A853" d="M272 544.3c74.8 0 137.6-24.9 183.5-67.6l-90.9-69.6c-25.3 17-57.7 27-92.6 27-71 0-131.2-47.9-152.8-112.6H23.8v70.8C69.6 480.6 163.2 544.3 272 544.3z" />
+                    <path fill="#FBBC05" d="M119.2 325.8c-8.9-26.4-8.9-54.6 0-81l-95.4-70.8C3.5 217.7 0 244.9 0 272c0 27.1 3.5 54.3 23.8 97.9l95.4-70.1z" />
+                    <path fill="#EA4335" d="M272 107.7c39.8 0 75.7 14 104 40.9l78-78C405.3 19.9 346.2 0 272 0 163.2 0 69.6 63.7 23.8 160.5l95.4 70.8C140.8 155.6 201 107.7 272 107.7z" />
+                  </svg>
+                  <span style={{ fontWeight: 600 }}>Sign in with Google</span>
+                </button>
+              </div>
+            </div>
+
+            <p style={{ color: "#555", textAlign: "center", fontSize: "13px", cursor: "pointer", textDecoration: "underline" }} onClick={() => navigate("/forgot-password")}>
               Forgot Password?
             </p>
 
-            <p
-              style={{
-                marginTop: "12px",
-                color: "#6366f1",
-                cursor: "pointer",
-                fontSize: "14px",
-                textAlign: "center",
-              }}
-              onClick={() => navigate("/")}
-            >
+            <p style={{ marginTop: "12px", color: "#6366f1", cursor: "pointer", fontSize: "14px", textAlign: "center" }} onClick={() => navigate("/")}>
               Not a psychiatrist?
             </p>
           </form>
