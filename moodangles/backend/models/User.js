@@ -1,63 +1,20 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
-  {
-    firstName: {
-      type: String,
-      required: [true, "First name is required"],
-      trim: true,
-    },
-    lastName: {
-      type: String,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: [true, "Email is required"],
-      unique: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
-    },
-    phone: {
-      type: String,
-      required: [true, "Phone number is required"],
-      match: [/^\d{10}$/, "Phone number must be 10 digits"],
-    },
-    gender: {
-      type: String,
-      enum: ["male", "female", "other"],
-      required: true,
-    },
-    age: {
-      type: Number,
-      required: true,
-      min: [1, "Age must be positive"],
-    },
-    city: {
-      type: String,
-      required: [true, "City is required"],
-    },
-    profilePic: {
-  type: String,
-  default: "",
-},
-    password: {
-      type: String,
-      required: [true, "Password is required"],
-      minlength: [8, "Password must be at least 8 characters long"],
-    },
-    profilePic: {
-      type: String,
-      default: "",
-    },
-    terms: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
+const userSchema = new mongoose.Schema({
+  firstName: { type: String, required: false },
+  lastName: { type: String, required: false },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phone: {
+    type: String,
+    match: /^[0-9]{10}$/, // 10 digits allowed
+    required: false,
   },
-  { timestamps: true }
-);
+  age: { type: Number, required: false },
+  gender: { type: String, required: false },
+  city: { type: String, required: false },
+  createdAt: { type: Date, default: Date.now },
+});
 
 const User = mongoose.model("User", userSchema);
 export default User;
