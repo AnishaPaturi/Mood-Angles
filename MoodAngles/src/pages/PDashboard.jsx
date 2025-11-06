@@ -1,11 +1,5 @@
 import React from "react";
-
-/**
- * Minimal PDashboard: only the chatbot message + button centered on the page.
- * The button uses safeNavigate("/Chatbot") which:
- *  - prefers injected SPA navigation via window.__navigate (if your App sets it),
- *  - otherwise falls back to history.pushState or window.location.assign.
- */
+import UserWrapper from "../components/UserWrapper"; // ← add this
 
 function safeNavigate(path) {
   try {
@@ -13,48 +7,50 @@ function safeNavigate(path) {
       window.__navigate(path);
       return;
     }
-  } catch (e) {
-    // ignore and fallback
-  }
-
+  } catch (e) {}
   if (typeof window !== "undefined") {
     try {
       const url = new URL(path, window.location.origin);
-      if (url.origin === window.location.origin && window.history && window.history.pushState) {
+      if (
+        url.origin === window.location.origin &&
+        window.history &&
+        window.history.pushState
+      ) {
         window.history.pushState({}, "", url.pathname + url.search + url.hash);
         window.dispatchEvent(new PopStateEvent("popstate"));
         return;
       }
-    } catch (e) {
-      // URL parsing failed; fall back to assign
-    }
+    } catch (e) {}
     window.location.assign(path);
   }
 }
 
 export default function PDashboard() {
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Connecting to Psychiatrist soon...</h2>
-        <p style={styles.sub}>Solve your queries with a chat bot here</p>
+    <UserWrapper> {/* ← WRAP EVERYTHING INSIDE THIS */}
+      <div style={styles.page}>
+        <div style={styles.card}>
+          <h2 style={styles.title}>Connecting to Psychiatrist soon...</h2>
+          <p style={styles.sub}>Solve your queries with a chat bot here</p>
 
-        <button
-          style={styles.button}
-          onClick={() => safeNavigate("/ChatBot")}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "#4f46e5")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "#6366f1")}
-        >
-          Go to Chatbot
-        </button>
+          <button
+            style={styles.button}
+            onClick={() => safeNavigate("/ChatBot")}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#4f46e5")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#6366f1")}
+          >
+            Go to Chatbot
+          </button>
+        </div>
       </div>
-    </div>
+    </UserWrapper>
   );
 }
 
 const styles = {
   page: {
     minHeight: "100vh",
+    width: "100%", 
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -65,11 +61,12 @@ const styles = {
   },
   card: {
     width: "100%",
-    maxWidth: 720,
-    borderRadius: 12,
-    padding: "48px 36px",
+    maxWidth: "100%",
+    minHeight: "60vh", 
+    borderRadius: "14px",
+    padding: "64px 48px", 
     background: "#fff",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+    boxShadow: "0 15px 50px rgba(0,0,0,0.12)",
     textAlign: "center",
   },
   title: {
