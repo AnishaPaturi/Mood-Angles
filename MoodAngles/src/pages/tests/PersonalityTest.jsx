@@ -2,41 +2,84 @@ import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
 export default function PsychopathyTest() {
+  const API_BASE = "http://localhost:5000";
+  const testName = "Psychopathy Test";
+
   const questions = [
-    "I’ve always found it easy to convince people to do favors for me.",
-    "When I know someone is struggling, I think of them often and hope they’re doing OK.",
-    "Other people make so many stupid mistakes compared to me.",
-    "I don’t see a problem with lying if it helps me get what I want.",
-    "If someone told me that I hurt their feelings, I would feel badly.",
-    "In truth, I find most people boring or stupid.",
-    "People often blame me for things that are actually their fault.",
-    "People who refuse to break rules out of principle are foolish; they’ll never get ahead.",
-    "Seeing someone cry has little effect on me, other than maybe irritating me.",
-    "It's fun to antagonize people just to see how upset they get.",
-    "I get uncomfortable at the thought of committing a crime.",
-    "I usually know just what to say to make other people do what I want.",
-    "I'll do whatever it takes to feel a thrill.",
-    "It is important to honor financial obligations.",
-    "Everyone else seems emotional and whiny compared to me.",
-    "Helping other people instead of focusing on myself is usually a waste of time.",
-    "I don’t understand people who are anxious or fearful all the time because nothing really scares me.",
-    "Some people just aren’t meant to succeed in life, and that’s not my problem.",
-    "I wear my heart on my sleeve.",
-    "If a rule or law would get in the way of my goals, I feel justified in breaking it.",
+    "I can be very persuasive when I want something.",
+    "When I know someone is struggling, I genuinely hope they’re doing okay.",
+    "I often notice when others make mistakes and feel I could do better.",
+    "I sometimes bend the truth to get what I need.",
+    "If I hurt someone’s feelings, I usually feel sorry afterward.",
+    "I get impatient when people don’t think as quickly as I do.",
+    "I feel that others sometimes blame me unfairly for things that go wrong.",
+    "I believe following rules too strictly can hold people back.",
+    "When I see someone crying, I feel concerned and want to help.",
+    "I occasionally tease or provoke people just to see their reaction.",
+    "The idea of breaking the law makes me uneasy.",
+    "I’m good at reading people and knowing how to influence them.",
+    "I enjoy excitement and taking risks.",
+    "I believe in keeping my promises and financial commitments.",
+    "I tend to stay calm when others get emotional.",
+    "I think helping others is important, even when there’s nothing in it for me.",
+    "I don’t get frightened easily, even in stressful situations.",
+    "Everyone deserves a fair chance to succeed, regardless of background.",
+    "I’m open about my feelings and show them easily.",
+    "If a rule seems unfair, I think it’s okay to question or challenge it."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+
+  const [answers, setAnswers] = useState(Array(questions.length).fill(null)); // store 1..5
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const handleSelect = (qIndex, value) => {
+    if (qIndex < 0 || qIndex >= questions.length) return;
     const updated = [...answers];
-    updated[qIndex] = value;
+    updated[qIndex] = value; // value expected 1..5
     setAnswers(updated);
   };
 
-  const handleSubmit = () => {
+  const buildAnswersPayload = () =>
+    questions.reduce((acc, q, i) => {
+      acc[`Q${i + 1}`] = `${q} → Answer: ${answers[i]}`;
+      return acc;
+    }, {});
+
+  const computePercent = () => {
+    const raw = answers.reduce((s, v) => s + (typeof v === "number" ? v : 0), 0);
+    const maxRaw = questions.length * 5;
+    if (maxRaw === 0) return 0;
+    return Math.round((raw / maxRaw) * 100);
+  };
+
+  const computeNormalized10 = () => {
+    const percent = computePercent();
+    return Math.round(((percent / 100) * 10) * 10) / 10;
+  };
+
+  const interpretLevel = (percent) => {
+    if (percent <= 19) return "Strong Prosocial Behavior (No Antisocial Tendencies)";
+    if (percent <= 50) return "Healthy Social Functioning (Few Antisocial Tendencies)";
+    if (percent <= 74) return "Moderate Concern (Some Antisocial Tendencies)";
+    if (percent <= 86) return "Significant Behavioral Dysregulation (Some Signs of Psychopathy)";
+    return "Marked Psychopathic Profile (Several Signs of Psychopathy)";
+  };
+
+  const safeText = (x) => {
+    if (x === undefined || x === null) return "";
+    if (typeof x === "string") return x;
+    try {
+      return JSON.stringify(x);
+    } catch {
+      return String(x);
+    }
+  };
+
+  const handleSubmit = async () => {
     if (answers.some((a) => a === null)) {
       setResult({
         score: null,
@@ -45,17 +88,140 @@ export default function PsychopathyTest() {
       return;
     }
 
-    const rawScore = answers.reduce((a, v) => a + v, 0);
-    const score = (rawScore / (questions.length * 4)) * 100; // Scale to 100
+    setLoading(true);
 
-    let level = "";
-    if (score <= 19) level = "Strong Prosocial Behavior (No Antisocial Tendencies)";
-    else if (score <= 50) level = "Healthy Social Functioning (Few Antisocial Tendencies)";
-    else if (score <= 74) level = "Moderate Concern (Some Antisocial Tendencies)";
-    else if (score <= 86) level = "Significant Behavioral Dysregulation (Some Signs of Psychopathy)";
-    else level = "Marked Psychopathic Profile (Several Signs of Psychopathy)";
+    const percentScore = computePercent();
+    const norm10 = computeNormalized10();
+    const level = interpretLevel(percentScore);
 
-    setResult({ score: Math.round(score), level });
+    // show immediate local result
+    setResult({ scorePercent: percentScore, score10: norm10, level });
+
+    // agent chain state
+    let agentR_summary = "";
+    let dData = null;
+    let cData = null;
+    let eData = null;
+    let cSummary = "";
+    let eSummary = "";
+
+    try {
+      // ---------- Agent R ----------
+      const rPayload = {
+        testName,
+        condition: "psychopathy",
+        score_percent: percentScore,
+        score_10: norm10,
+        answers: buildAnswersPayload(),
+      };
+
+      const rRes = await fetch(`${API_BASE}/api/angelR`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rPayload),
+      });
+
+      if (!rRes.ok) {
+        const txt = await rRes.text();
+        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
+      }
+      const rJson = await rRes.json();
+      agentR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
+      setResult((prev) => ({ ...prev, agentRDiagnosis: agentR_summary }));
+
+      // ---------- Agent D ----------
+      const dRes = await fetch(`${API_BASE}/api/angelD`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          score_percent: percentScore,
+          score_10: norm10,
+        }),
+      });
+
+      if (!dRes.ok) {
+        const txt = await dRes.text();
+        throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
+      }
+      dData = await dRes.json();
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || safeText(dData) }));
+
+      // ---------- Agent C ----------
+      const cRes = await fetch(`${API_BASE}/api/angelC`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          score_percent: percentScore,
+          score_10: norm10,
+          answers: buildAnswersPayload(),
+        }),
+      });
+
+      if (!cRes.ok) {
+        const txt = await cRes.text();
+        throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
+      }
+      cData = await cRes.json();
+      cSummary = cData.result || cData.Result || safeText(cData);
+      setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
+
+      // ---------- Agent E ----------
+      const eRes = await fetch(`${API_BASE}/api/angelE`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentC_result: cSummary,
+        }),
+      });
+
+      if (!eRes.ok) {
+        const txt = await eRes.text();
+        throw new Error(`Agent E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
+      }
+      eData = await eRes.json();
+      eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
+      setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
+
+      // ---------- Agent J (Judge) ----------
+      const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentC_result: cSummary,
+          agentE_result: eSummary,
+          score_percent: percentScore,
+          score_10: norm10,
+        }),
+      });
+
+      if (!jRes.ok) {
+        const txt = await jRes.text();
+        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
+      } else {
+        const jData = await jRes.json();
+        setResult((prev) => ({ ...prev, agentJDecision: jData }));
+      }
+    } catch (err) {
+      console.error("Agent chain error:", err);
+      setResult((prev) => ({
+        ...prev,
+        chainError: err.message,
+        agentRDiagnosis: prev?.agentRDiagnosis || "⚠️ Could not complete diagnosis chain.",
+      }));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,7 +238,7 @@ export default function PsychopathyTest() {
           <div style={styles.headerContent}>
             <h1 style={styles.mainTitle}>Psychopathy Test</h1>
             <div style={styles.testMeta}>
-              <span style={styles.metaBtnOrange}>✔ 20 QUESTIONS</span>
+              <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
             </div>
           </div>
@@ -82,7 +248,8 @@ export default function PsychopathyTest() {
         <div style={styles.subSection}>
           <h2 style={styles.subTitle}>Do you show signs of psychopathy?</h2>
           <p style={styles.subDesc}>
-            Cool under pressure, emotionally distant, and hard to read — psychopathy blends confidence with a lack of empathy. Those high in it often manipulate without guilt. Curious how your mind measures up? Take this test to uncover your spot on the psychopathy scale.
+            Cool under pressure, emotionally distant, and hard to read — psychopathy blends confidence with a lack of empathy.
+            Those high in it often manipulate without guilt. This self-check gives a quick indication; it is not a diagnosis.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -110,11 +277,13 @@ export default function PsychopathyTest() {
                     {colors.map((color, j) => (
                       <button
                         key={j}
-                        onClick={() => handleSelect(i, j)}
+                        onClick={() => handleSelect(i, j + 1)}
+                        type="button"
+                        aria-pressed={answers[i] === j + 1}
                         style={{
                           ...styles.circle,
                           borderColor: color,
-                          backgroundColor: answers[i] === j ? color : "transparent",
+                          backgroundColor: answers[i] === j + 1 ? color : "transparent",
                         }}
                       />
                     ))}
@@ -128,16 +297,61 @@ export default function PsychopathyTest() {
               ))}
             </div>
 
-            <button onClick={handleSubmit} style={styles.submitButton}>
-              Submit Test
+            <button onClick={handleSubmit} style={styles.submitButton} disabled={loading}>
+              {loading ? "Analyzing..." : "Submit Test"}
             </button>
 
             {result && (
               <div style={styles.resultBox}>
-                {result.score !== null && (
-                  <p style={styles.resultScore}>Your Score: {result.score} / 100</p>
+                {result.scorePercent !== null && (
+                  <p style={styles.resultScore}>Your Score: {result.scorePercent} / 100</p>
                 )}
                 <p style={styles.resultText}>{result.level}</p>
+
+                {/* {result.agentRDiagnosis && (
+                  <p style={{ marginTop: 10 }}><strong>Agent R Diagnosis:</strong> {result.agentRDiagnosis}</p>
+                )}
+
+                {result.agentDExplanation && (
+                  <p style={{ marginTop: 10 }}><strong>Agent D Summary:</strong> {result.agentDExplanation}</p>
+                )}
+
+                {result.agentCComparison && (
+                  <p style={{ marginTop: 10 }}><strong>Agent C Comparative Summary:</strong> {result.agentCComparison}</p>
+                )}
+
+                {result.agentEDebate && (
+                  <p style={{ marginTop: 10 }}><strong>Agent E Debate Summary:</strong> {result.agentEDebate}</p>
+                )} */}
+
+                {result.agentJDecision && (
+                  <div style={{ marginTop: 12, textAlign: "left", color: "#444" }}>
+                    <strong>Agent J (Judge) Decision:</strong>
+                    {typeof result.agentJDecision === "string" ? (
+                      <div style={{ marginTop: 6 }}>{result.agentJDecision}</div>
+                    ) : (
+                      <div style={{ marginTop: 8 }}>
+                        {result.agentJDecision.decision && <div><strong>Decision:</strong> {result.agentJDecision.decision}</div>}
+                        {result.agentJDecision.confidence !== undefined && <div><strong>Confidence:</strong> {String(result.agentJDecision.confidence)}</div>}
+                        {result.agentJDecision.reasoning && <div style={{ marginTop: 6 }}><strong>Reasoning:</strong> {result.agentJDecision.reasoning}</div>}
+                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
+                          <div style={{ marginTop: 6 }}>
+                            <strong>Actions:</strong>
+                            <ul>
+                              {result.agentJDecision.actions.map((a, idx) => <li key={idx}>{a}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {result.chainError && (
+                  <p style={{ marginTop: 10, color: "#b91c1c" }}>
+                    <strong>Chain error:</strong> {result.chainError}
+                  </p>
+                )}
               </div>
             )}
           </>
