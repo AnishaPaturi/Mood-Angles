@@ -1,21 +1,53 @@
+// import mongoose from "mongoose";
+
+// const userSchema = new mongoose.Schema({
+//   firstName: { type: String, required: false },
+//   lastName: { type: String, required: false },
+//   email: { type: String, required: true, unique: true },
+//   password: { type: String, required: true },
+//   phone: {
+//     type: String,
+//     match: /^[0-9]{10}$/, // 10 digits allowed
+//     required: false,
+//   },
+//   age: { type: Number, required: false },
+//   gender: { type: String, required: false },
+//   city: { type: String, required: false },
+//   createdAt: { type: Date, default: Date.now },
+
+//   // optional additions 👇
+//   resetPasswordToken: { type: String },
+//   resetPasswordExpires: { type: Date },
+// });
+
+// const User = mongoose.model("User", userSchema);
+// export default User;
+
+
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: false },
   lastName: { type: String, required: false },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  password: {
+    type: String,
+    required: function () {
+      // Password required only for manual signup
+      return !this.googleId;
+    },
+  },
+  googleId: { type: String, default: null },
+  profilePhoto: { type: String, default: "" },
   phone: {
     type: String,
-    match: /^[0-9]{10}$/, // 10 digits allowed
+    match: /^[0-9]{10}$/,
     required: false,
   },
   age: { type: Number, required: false },
   gender: { type: String, required: false },
   city: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
-
-  // optional additions 👇
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
 });

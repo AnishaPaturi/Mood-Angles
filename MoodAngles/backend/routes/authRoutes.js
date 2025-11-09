@@ -9,6 +9,7 @@ import {
   loginUser,
   registerPsychiatrist,
   loginPsychiatrist,
+  googleLogin, // ✅ added this import
 } from "../controllers/authController.js";
 
 dotenv.config();
@@ -21,6 +22,11 @@ router.post("/signup", registerUser);
 router.post("/login", loginUser);
 router.post("/psychiatrist/signup", registerPsychiatrist);
 router.post("/psychiatrist/login", loginPsychiatrist);
+
+/* =======================================================
+   🔹 GOOGLE LOGIN ROUTE
+   ======================================================= */
+router.post("/google", googleLogin); // ✅ This line adds the missing route
 
 /* =======================================================
    ✉️  FORGOT PASSWORD (USER)
