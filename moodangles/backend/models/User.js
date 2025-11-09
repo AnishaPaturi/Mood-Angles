@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
   gender: { type: String, required: false },
   city: { type: String, required: false },
   createdAt: { type: Date, default: Date.now },
+
+  // optional additions 👇
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
 });
 
 const User = mongoose.model("User", userSchema);

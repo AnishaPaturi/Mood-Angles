@@ -29,6 +29,7 @@ import TestPage from "./pages/TestPage.jsx";
 import EQTest from "./pages/tests/EQTest.jsx";
 import MentalHealthTodayTest from "./pages/tests/MentalHeathTodayTest.jsx";
 import Settings from "./pages/Settings.jsx";
+import ResetPassword from "./pages/ResetPassword";
 
 // NavigatorInjector: exposes navigate globally for safe navigation in PDashboard, etc.
 function NavigatorInjector({ children }) {
@@ -54,8 +55,6 @@ function App() {
           <Route path="/Dashboard" element={<Dashboard2 />} />
           <Route path="/UDashboard" element={<UDashboard />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-
           {/* Psychiatrist routes */}
           <Route path="/plogin" element={<PLogin />} />
           <Route path="/psignup" element={<PSignup />} />
@@ -77,6 +76,8 @@ function App() {
           <Route path="/test/eq" element={<EQTest />} />
           <Route path="/test/MentalHealth" element={<MentalHealthTodayTest />} />
           <Route path="/Settings" element={<Settings />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* fallback route */}
           <Route path="*" element={<Landing />} />

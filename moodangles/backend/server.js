@@ -10,6 +10,8 @@ import authRoutes from "./routes/authRoutes.js";
 import profileRoute from "./routes/profileRoute.js";
 import resultsRoute from "./routes/results.js";
 import uploadRoute from "./routes/uploadRoute.js";
+import otpRoutes from "./routes/otpRoutes.js";
+
 
 // ✅ Load environment variables
 dotenv.config();
@@ -29,6 +31,7 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoute);
 app.use("/api/results", resultsRoute);
+app.use("/api", otpRoutes);
 app.use("/api/uploads", uploadRoute); // ✅ Your uploads route
 app.use("/uploads", express.static("uploads")); // ✅ Serve static files
 
