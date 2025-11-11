@@ -85,28 +85,73 @@ export default function Help() {
 
   const handleOptionClick = (option) => handleUserMessage(option);
 
-  const computeReply = (text) => {
-    const t = text.toLowerCase();
-    if (/(hi|hello|hey|how are you)/.test(t)) {
+    const computeReply = (text) => {
+    const t = text.toLowerCase().trim();
+
+    // ----- GREETINGS -----
+    if (/(^|\s)(hi|hello|hey|how are you)(\s|$)/.test(t)) {
       return "Hey! 😊 I can help with tests, results, profile, login, or contacting professionals. What would you like to know?";
     }
-    if (t.includes("mood test") || t.includes("take a test") || t.includes("test")) {
-      return <>🧠 Take a test via <Link to="/test" className="faq-link">Mood Test</Link> in your Dashboard.</>;
+
+    // ----- LOGIN / PASSWORD HELP -----
+    if (
+      t.includes("login") ||
+      t.includes("log in") ||
+      t.includes("sign in") ||
+      t.includes("username") ||
+      t.includes("password") ||
+      t.includes("forgot password") ||
+      t.includes("reset password")
+    ) {
+      return (
+        <>🔑 For login issues, you can <Link to="/login" className="faq-link">log in here</Link> or reset your password on the <Link to="/forgot-password" className="faq-link">Forgot Password</Link> page.</>
+      );
     }
+
+    // ----- ACCOUNT SETTINGS / PROFILE -----
+    if (
+      t.includes("profile") ||
+      t.includes("settings") ||
+      t.includes("account") ||
+      t.includes("update my info") ||
+      t.includes("account settings")
+    ) {
+      return (
+        <>⚙️ You can manage your account and profile details at <Link to="/Profile" className="faq-link">Dashboard → Profile</Link>.</>
+      );
+    }
+
+    // ----- MOOD TEST -----
+    if (t.includes("mood test") || t.includes("take a test") || /\btest\b/.test(t)) {
+      return (
+        <>🧠 Take a test via <Link to="/test" className="faq-link">Mood Test</Link> in your Dashboard.</>
+      );
+    }
+
+    // ----- RESULTS -----
     if (t.includes("result") || t.includes("score")) {
-      return <>📊 View your results at <Link to="/Dashboard" className="faq-link">Dashboard → Results</Link>.</>;
+      return (
+        <>📊 View your results at <Link to="/Dashboard" className="faq-link">Dashboard → Results</Link>.</>
+      );
     }
-    if (t.includes("doctor") || t.includes("psychologist") || t.includes("professional") || t.includes("contact")) {
-      return <>💬 Reach professionals via <Link to="/Therapist" className="faq-link">Contact</Link>.</>;
+
+    // ----- CONTACT / PSYCHOLOGIST -----
+    if (
+      t.includes("doctor") ||
+      t.includes("psychologist") ||
+      t.includes("therapist") ||
+      t.includes("professional") ||
+      t.includes("contact")
+    ) {
+      return (
+        <>💬 Reach professionals via <Link to="/TherapistF" className="faq-link">Find a Therapist</Link>.</>
+      );
     }
-    if (t.includes("profile") || t.includes("settings") || t.includes("account")) {
-      return <>⚙️ Update your profile at <Link to="/Profile" className="faq-link">Profile</Link>.</>;
-    }
-    if (t.includes("login") || t.includes("password") || t.includes("username")) {
-      return <>🔑 For login issues, reset your password on the <Link to="/forgot-password" className="faq-link">Forgot Password</Link> page or check your username/email.</>;
-    }
+
+    // ----- FALLBACK -----
     return "❌ Sorry, I can only help with MoodAngels website-related questions.";
   };
+
 
   const css = `
   .help-section {
