@@ -5,15 +5,22 @@ import { Link, useNavigate } from "react-router-dom";
 
 function UserWrapper({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [username, setUsername] = useState("User");
+  const [username, setUsername] = useState(localStorage.getItem("firstName") || "User");
+  const [profilePhoto, setProfilePhoto] = useState(localStorage.getItem("profilePhoto") || null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
 
-  // ✅ Fetch username from localStorage
+  // ✅ Sync username + photo from localStorage (listen for updates)
   useEffect(() => {
-    const storedName = localStorage.getItem("firstName");
-    if (storedName) setUsername(storedName);
+    const syncData = () => {
+      const updatedName = localStorage.getItem("firstName");
+      const updatedPhoto = localStorage.getItem("profilePhoto");
+      if (updatedName) setUsername(updatedName);
+      if (updatedPhoto) setProfilePhoto(updatedPhoto);
+    };
+    window.addEventListener("storage", syncData);
+    return () => window.removeEventListener("storage", syncData);
   }, []);
 
   // ✅ Close dropdown if clicked outside
@@ -26,6 +33,10 @@ function UserWrapper({ children }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // ✅ Simple helper to validate base64 string
+  const isValidImage = (data) =>
+    typeof data === "string" && data.startsWith("data:image/");
 
   const styles = `
     :root {
@@ -135,6 +146,7 @@ function UserWrapper({ children }) {
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      overflow: hidden;
     }
     .userMenu {
       position: absolute;
@@ -195,8 +207,22 @@ function UserWrapper({ children }) {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 title="User Menu"
               >
-                <User color="white" size={22} />
+                {isValidImage(profilePhoto) ? (
+                  <img
+                    src={profilePhoto}
+                    alt="User Avatar"
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <User color="white" size={22} />
+                )}
               </div>
+
               {showUserMenu && (
                 <div className="userMenu">
                   Hello, <b>{username}</b>! <br />

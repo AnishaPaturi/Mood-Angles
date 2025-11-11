@@ -17,6 +17,7 @@ function UDashboard() {
   const [progress, setProgress] = useState(0);
   const [streak, setStreak] = useState(0);
   const [username, setUsername] = useState("User");
+  const [profilePhoto, setProfilePhoto] = useState(null); // ✅ new
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
@@ -29,10 +30,12 @@ function UDashboard() {
     "Keep going, because you did not come this far just to come this far."
   ];
 
-  // ✅ Fetch username if stored
+  // ✅ Fetch username + photo if stored
   useEffect(() => {
     const storedName = localStorage.getItem("firstName");
+    const storedPhoto = localStorage.getItem("profilePhoto");
     if (storedName) setUsername(storedName);
+    if (storedPhoto) setProfilePhoto(storedPhoto);
   }, []);
 
   // ✅ Auto-close dropdown when clicking outside
@@ -54,7 +57,7 @@ function UDashboard() {
     return () => clearInterval(interval);
   }, [quotes.length]);
 
-  // ✅ Dynamic Streak Logic (only updates for the current day)
+  // ✅ Dynamic Streak Logic
   useEffect(() => {
     const today = new Date();
     const todayStr = today.toDateString();
@@ -66,7 +69,6 @@ function UDashboard() {
     } else {
       const lastDate = new Date(lastLogin);
       const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
-
       if (diffDays === 1) {
         savedStreak += 1;
       } else if (diffDays > 1) {
@@ -83,7 +85,7 @@ function UDashboard() {
   }, []);
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // fix Sunday
+  const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
 
   const styles = `
     :root{
@@ -110,7 +112,8 @@ function UDashboard() {
     .header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:var(--card);backdrop-filter:blur(6px);box-shadow:0 4px 18px rgba(20,20,40,0.06);transition:all 300ms ease;position:relative;}
     .toggleBtn{background:transparent;border:0;cursor:pointer;font-size:18px}
     .title{font-size:18px;color:#3b3b4a;font-weight:600}
-    .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(180deg,#b894ff,#9b6bff);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#b894ff,#9b6bff);}
+    .avatar img{width:100%;height:100%;object-fit:cover;}
     .userMenu{position:absolute;right:22px;top:60px;background:white;border-radius:10px;padding:8px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);font-size:14px;color:#333;}
     .content{padding:28px;display:flex;flex-direction:column;gap:28px;align-items:center;}
     .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%}
@@ -152,17 +155,28 @@ function UDashboard() {
             </button>
             <div className="title">Welcome Back 💜</div>
 
-            {/* User Dropdown */}
+            {/* ✅ Avatar with uploaded photo */}
             <div ref={userMenuRef}>
-              <div className="avatar" onClick={() => setShowUserMenu(!showUserMenu)} title="User Menu">
-                <User color="white" size={22} />
+              <div
+                className="avatar"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                title="User Menu"
+              >
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt="User" />
+                ) : (
+                  <User color="white" size={22} />
+                )}
               </div>
               {showUserMenu && (
                 <div className="userMenu">
                   Hello, <b>{username}</b>! <br />
                   <button
                     onClick={() => {
+                      // ✅ preserve photo on logout
+                      const savedPhoto = localStorage.getItem("profilePhoto");
                       localStorage.clear();
+                      if (savedPhoto) localStorage.setItem("profilePhoto", savedPhoto);
                       navigate("/");
                     }}
                     style={{
@@ -183,6 +197,7 @@ function UDashboard() {
             </div>
           </header>
 
+          {/* === Dashboard Body === */}
           <div className="content">
             <div key={quoteIndex} className="quoteCenter">
               “{quotes[quoteIndex]}”
@@ -190,39 +205,14 @@ function UDashboard() {
 
             {/* === Feature Cards === */}
             <div className="grid3">
-              <FeatureCard
-                title="Take a Test"
-                icon={<FileText />}
-                desc="Assess your mood with a quick test."
-                onClick={() => navigate("/test")}
-              />
-              <FeatureCard
-                title="Upload Documents"
-                icon={<Upload />}
-                desc="Keep your important files in one place."
-                onClick={() => navigate("/Upload")}
-              />
-              <FeatureCard
-                title="Talk to Someone"
-                icon={<MessageCircle />}
-                desc="Connect with a counselor instantly."
-                onClick={() => navigate("/Help")}
-              />
+              <FeatureCard title="Take a Test" icon={<FileText />} desc="Assess your mood with a quick test." onClick={() => navigate("/test")} />
+              <FeatureCard title="Upload Documents" icon={<Upload />} desc="Keep your important files in one place." onClick={() => navigate("/Upload")} />
+              <FeatureCard title="Talk to Someone" icon={<MessageCircle />} desc="Connect with a counselor instantly." onClick={() => navigate("/Help")} />
             </div>
 
             <div className="grid2">
-              <FeatureCard
-                title="Community Support"
-                icon={<HeartHandshake />}
-                desc="Join group sessions and support circles."
-                onClick={() => navigate("/Support")}
-              />
-              <FeatureCard
-                title="Resources & Tips"
-                icon={<Info />}
-                desc="Read articles and guides for better mental health."
-                onClick={() => navigate("/articles")}
-              />
+              <FeatureCard title="Community Support" icon={<HeartHandshake />} desc="Join group sessions and support circles." onClick={() => navigate("/Support")} />
+              <FeatureCard title="Resources & Tips" icon={<Info />} desc="Read articles and guides for better mental health." onClick={() => navigate("/articles")} />
             </div>
 
             {/* === Weekly Progress / Streak === */}
@@ -237,13 +227,9 @@ function UDashboard() {
                   : "Start your streak today!"}
               </div>
 
-              {/* ✅ Only highlight today’s day */}
               <div className="streakCalendar">
                 {daysOfWeek.map((day, idx) => (
-                  <div
-                    key={idx}
-                    className={`dayCircle ${idx === todayIndex ? "active" : ""}`}
-                  >
+                  <div key={idx} className={`dayCircle ${idx === todayIndex ? "active" : ""}`}>
                     {day[0]}
                   </div>
                 ))}

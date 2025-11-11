@@ -282,7 +282,7 @@ export default function DepressionTest() {
                 )}
                 <p style={styles.resultText}>{result.level}</p>
 
-                {/* {result.aiDiagnosis && (
+                {result.aiDiagnosis && (
                   <p style={styles.agentRText}>
                     <strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}
                   </p>
@@ -301,7 +301,7 @@ export default function DepressionTest() {
                   <p style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
                     <strong>Agent E Debate Summary:</strong> {result.agentEDebate}
                   </p>
-                )} */}
+                )} 
                 {result.agentJDecision && (
                   <div style={{ marginTop: 12, textAlign: "left", color: "#444" }}>
                     <strong>Agent J (Judge) Decision:</strong>

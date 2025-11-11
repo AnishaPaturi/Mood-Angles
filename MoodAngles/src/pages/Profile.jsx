@@ -24,6 +24,12 @@ function Profile() {
     if (saved) setHistory(JSON.parse(saved));
   }, [userId]);
 
+  // ✅ Load saved photo when returning to page
+  useEffect(() => {
+    const storedPhoto = localStorage.getItem("profilePhoto");
+    if (storedPhoto) setProfilePic(storedPhoto);
+  }, []);
+
   // ✅ Save updated profile
   const handleProfileUpdate = async () => {
     try {
@@ -51,77 +57,44 @@ function Profile() {
     }
   };
 
-  // ✅ Upload Profile Picture
-//   const handlePhotoUpload = async () => {
-//     if (!profilePic) return alert("Please select an image first!");
-
-//     const base64 = await convertToBase64(profilePic);
-//     try {
-//       const res = await fetch(`http://localhost:5000/api/profile/uploadPhoto/${userId}`, {
-//         method: "PUT",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify({ profilePic: base64 }),
-//       });
-
-//       const data = await res.json();
-//  if (res.ok) {
-//   alert("✅ Profile Updated");
-//   setUser(data.user);
-//   localStorage.setItem("firstName", data.user.firstName);
-//   localStorage.setItem("lastName", data.user.lastName || "");
-//   setEditMode(false);
-//   window.dispatchEvent(new Event("storage")); // triggers re-render in wrapper
-// } else {
-//   alert(data.error || "Update failed");
-// }
-
-
-//     } catch (err) {
-//       console.error("Upload failed:", err);
-//     }
-//   };
-const handlePhotoUpload = async () => {
-  if (!profilePic) return alert("Please select an image first!");
-
-  const base64 = await convertToBase64(profilePic);
-
-  try {
-    const res = await fetch(`http://localhost:5000/api/profile/uploadPhoto/${userId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profilePic: base64 }),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      alert("✅ Photo updated!");
-
-      // ✅ Update the state with new picture manually
-      setUser((prev) => ({ ...prev, profilePic: base64 }));
-      setProfilePic(null);
-
-      // ✅ Keep the name sync as before
-      localStorage.setItem("firstName", user.firstName);
-      localStorage.setItem("lastName", user.lastName || "");
-      window.dispatchEvent(new Event("storage"));
-    } else {
-      alert(data.error || "Photo upload failed");
+  // ✅ Fixed + Safe + Compressed Profile Photo Upload
+  const handlePhotoUpload = async (event) => {
+    const file = event?.target?.files?.[0];
+    if (!file) {
+      console.warn("⚠️ No file selected.");
+      return;
     }
-  } catch (err) {
-    console.error("Upload failed:", err);
-    alert("Upload failed. Check console.");
-  }
-};
 
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = () => {
+        // Canvas compression
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-  // Convert file to base64
-  const convertToBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
+        const MAX_WIDTH = 300;
+        const scale = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scale;
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7); // 70% quality
+
+        try {
+          localStorage.setItem("profilePhoto", compressedDataUrl);
+          setProfilePic(compressedDataUrl); // ✅ updates instantly
+          alert("✅ Profile photo updated successfully!");
+        } catch (err) {
+          console.error("Upload failed:", err);
+          alert("⚠️ Upload failed: Image too large even after compression.");
+        }
+      };
+    };
+    reader.readAsDataURL(file);
+  };
 
   // ✅ Mood Check-in
   const handleMoodCheckin = () => {
@@ -154,9 +127,10 @@ const handlePhotoUpload = async () => {
             <div style={styles.avatarBox}>
               <img
                 src={
-                  profilePic
-                    ? URL.createObjectURL(profilePic)
-                    : user.profilePic || "https://via.placeholder.com/120"
+                  localStorage.getItem("profilePhoto") ||
+                  profilePic ||
+                  user?.profilePhoto ||
+                  "https://via.placeholder.com/120"
                 }
                 style={styles.avatar}
                 alt="profile"
@@ -192,20 +166,8 @@ const handlePhotoUpload = async () => {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setProfilePic(e.target.files[0])}
+                  onChange={handlePhotoUpload} // ✅ direct safe handler
                 />
-                {profilePic && (
-                  <button
-                    onClick={handlePhotoUpload}
-                    style={{
-                      ...styles.editBtn,
-                      background: "orange",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    Upload Photo 📷
-                  </button>
-                )}
 
                 <label>First Name</label>
                 <input

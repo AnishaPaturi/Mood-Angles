@@ -1,5 +1,5 @@
 import express from "express";
-import User from "../models/User.js"; // ✅ Ensure this matches your actual filename exactly (User.js or user.js)
+import User from "../models/User.js"; // ✅ Ensure correct path and casing
 
 const router = express.Router();
 
@@ -43,9 +43,10 @@ router.put("/uploadPhoto/:id", async (req, res) => {
       return res.status(400).json({ error: "No image provided" });
     }
 
+    // 🔥 Fix: Update correct field name from schema
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { profilePic },
+      { profilePhoto: profilePic }, // ✅ was profilePic before
       { new: true }
     ).select("-password");
 
