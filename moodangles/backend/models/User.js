@@ -49,6 +49,17 @@ const userSchema = new mongoose.Schema({
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
 
+  // 🌤️ Wellness mood check-ins (new)
+  moodHistory: {
+    type: [
+      {
+        date: { type: String, required: true },
+        mood: { type: String, required: true },
+      },
+    ],
+    default: [],
+  },
+
   // 📅 Timestamps
   createdAt: { type: Date, default: Date.now },
   lastLoginAt: { type: Date },

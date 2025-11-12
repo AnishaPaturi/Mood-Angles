@@ -4,7 +4,6 @@ import cors from "cors";
 import connectDB from "./config/db.js";
 import path from "path";
 import { spawn } from "child_process";
-import connectDB from "./config/db.js";
 
 // ✅ Import routes
 import authRoutes from "./routes/authRoutes.js";
@@ -28,11 +27,6 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 // ✅ Middleware
 app.use(cors());
 app.use(express.json());
-
-// ✅ Import routes
-import authRoutes from "./routes/authRoutes.js";
-import profileRoute from "./routes/profileRoute.js";
-import uploadRoute from "./routes/uploadRoute.js";
 
 // app.use(cors());
 app.use(
