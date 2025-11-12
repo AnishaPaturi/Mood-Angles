@@ -12,5 +12,18 @@
     "nodemailer": "^7.0.10",
     "openapi": "^1.0.0",
     "uuid": "^13.0.0"
-  }
+  },
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "createUser.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
 }
