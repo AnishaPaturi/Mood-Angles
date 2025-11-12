@@ -380,6 +380,7 @@ export default function PsychiatristSignup() {
     age: "",
     experience: "",
     qualification: "",
+    code: "", // ✅ new field
     terms: false,
   });
 
@@ -416,7 +417,6 @@ export default function PsychiatristSignup() {
 
   // Google OAuth redirect (reuses backend endpoint)
   const handleGoogle = () => {
-    // same pattern as user signup (backend should handle)
     window.location.href = "http://localhost:5000/api/auth/google";
   };
 
@@ -425,7 +425,14 @@ export default function PsychiatristSignup() {
     e.preventDefault();
     setError("");
 
-    // Basic validations copied from user signup + psychiatrist specific checks
+    // 🔐 Check Invite Code first
+    if (!formData.code || formData.code.trim() === "") {
+      setError("Invite Code is required to register as a psychiatrist.");
+      return;
+    }
+
+
+    // Basic validations
     if (!passwordRegex.test(formData.password)) {
       setError(
         "Password must be at least 8 chars, include 1 uppercase, 1 digit & 1 special char (@ # $ _)"
@@ -453,6 +460,7 @@ export default function PsychiatristSignup() {
         ...formData,
         age: Number(formData.age),
         experience: Number(formData.experience),
+        code: formData.code.trim(), // ✅ send code
       };
 
       const res = await fetch(
@@ -470,12 +478,15 @@ export default function PsychiatristSignup() {
         alert("Signup successful! Please log in.");
         navigate("/PLogin");
       } else {
-        setError(data.msg || data.error || data.message || "Signup failed. Try again.");
+        setError(
+          data.msg ||
+            data.error ||
+            data.message ||
+            "Invalid or expired invite code. Please check your email and try again."
+        );
       }
     } catch (err) {
       console.error("Signup error:", err);
-      // fallback for local UI testing (keeps experience consistent with user page)
-      // If you don't want fallback navigation, simply remove the next line.
       setError("Server error. Please try again later.");
     }
   };
@@ -618,6 +629,18 @@ export default function PsychiatristSignup() {
               <option value="mphil-counseling-psychology">M.Phil in Counseling Psychology</option>
             </select>
 
+            {/* ✅ NEW FIELD */}
+            <input
+              type="text"
+              name="code"
+              placeholder="Enter your Invite Code (e.g. MA-483219)"
+              value={formData.code}
+              onChange={handleChange}
+              required
+              style={styles.input}
+            />
+
+
             <label style={{ fontSize: "13px", color: "#555", marginTop: 6 }}>
               <input
                 type="checkbox"
@@ -674,7 +697,6 @@ export default function PsychiatristSignup() {
     </div>
   );
 }
-
 // 🎨 Styles (kept exactly as original; only JS logic changed)
 const styles = {
   container: {

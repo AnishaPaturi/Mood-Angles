@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import PAvatar from "../assets/PAvatar.png";
 import UAvatar from "../assets/UAvatar.png";
-import "./Dashboard.css"; // ⬅️ Styles for animations + dots
+import "./Dashboard.css";
 
 export default function Dashboard() {
   return (
@@ -39,7 +39,9 @@ export default function Dashboard() {
             <Link to="/PLogin">
               <button style={styles.tealBtn}>Login</button>
             </Link>
-            <Link to="/PSignup">
+
+            {/* ✅ Fixed: Redirect to /request-invite instead of /PSignup */}
+            <Link to="/request-invite">
               <button style={styles.tealBtn}>Sign Up</button>
             </Link>
           </div>
@@ -57,7 +59,7 @@ const styles = {
     justifyContent: "center",
     alignItems: "center",
     minHeight: "100vh",
-    background: "#ffffff", // ⬅️ WHITE background now
+    background: "#ffffff",
     fontFamily: "Poppins, sans-serif",
     padding: "0px 270px",
     position: "relative",
@@ -67,7 +69,7 @@ const styles = {
   title: {
     fontSize: "40px",
     fontWeight: "700",
-    color: "#000", // darker title since background is white
+    color: "#000",
     marginBottom: "40px",
     opacity: 0,
     animation: "fadeIn 2s ease forwards",
@@ -93,7 +95,6 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    boxSizing: "border-box",
   },
 
   rightSection: {
@@ -103,7 +104,6 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    boxSizing: "border-box",
   },
 
   imageWrapper: {

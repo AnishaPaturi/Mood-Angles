@@ -11,6 +11,8 @@ import profileRoute from "./routes/profileRoute.js";
 import resultsRoute from "./routes/results.js";
 import uploadRoute from "./routes/uploadRoute.js";
 import otpRoutes from "./routes/otpRoutes.js";
+import inviteRoutes from "./routes/inviteRoutes.js";
+
 
 
 // ✅ Load environment variables
@@ -40,6 +42,7 @@ app.use("/api/results", resultsRoute);
 app.use("/api", otpRoutes);
 app.use("/api/uploads", uploadRoute); // ✅ Your uploads route
 app.use("/uploads", express.static("uploads")); // ✅ Serve static files
+app.use("/api/invite", inviteRoutes);
 
 // =====================================================
 // =============== AGENT R INTEGRATION =================
