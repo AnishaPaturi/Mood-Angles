@@ -62,6 +62,19 @@ export default function Signup() {
 
       if (res.ok) {
         alert("Signup successful!");
+
+        // 🧠 Save user info for consistency across login/signup
+        if (data.user) {
+          localStorage.setItem("token", data.token || "");
+          localStorage.setItem("role", data.user.role || "user");
+          localStorage.setItem(
+            "firstName",
+            data.user.firstName || data.user.name || "User"
+          );
+          localStorage.setItem("email", data.user.email || "");
+          localStorage.setItem("userId", data.user._id || "");
+        }
+
         navigate("/UDashboard");
       } else {
         setError(data.msg || data.error || data.message || "Signup failed");
