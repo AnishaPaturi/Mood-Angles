@@ -25,7 +25,7 @@ export default function ForgotPassword() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/send-otp", {
+      const response = await fetch("http://localhost:5000/api/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: contact }),
@@ -45,35 +45,64 @@ export default function ForgotPassword() {
     }
   };
 
-  const handleVerifyOtp = () => {
-    if (enteredOtp === otp) {
+  const handleVerifyOtp = async () => {
+  setError("");
+  try {
+    const response = await fetch("http://localhost:5000/api/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: contact, otp: enteredOtp }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
       setOtpVerified(true);
-      setError("");
       alert("🎉 OTP verified successfully!");
     } else {
-      setError("Invalid OTP. Please try again.");
+      setError(data.message || "Invalid OTP. Please try again.");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    setError("⚠️ Server error while verifying OTP");
+  }
+};
 
-  const handleResetPassword = (e) => {
-    e.preventDefault();
-    setError("");
+const handleResetPassword = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    if (!passwordRegex.test(newPassword)) {
-      setError(
-        "Password must be at least 8 characters, include 1 uppercase letter, 1 digit, and 1 special character (@ # $ _)"
-      );
-      return;
+  if (!passwordRegex.test(newPassword)) {
+    setError(
+      "Password must be at least 8 characters, include 1 uppercase letter, 1 digit, and 1 special character (@ # $ _)"
+    );
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:5000/api/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: contact, newPassword }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      alert("✅ Password reset successful! Redirecting to login...");
+      navigate("/login");
+    } else {
+      setError(data.message || "Error resetting password");
     }
+  } catch (err) {
+    console.error(err);
+    setError("⚠️ Server error while resetting password");
+  }
+};
 
-    if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    alert("Password reset successful! Redirecting to login...");
-    navigate("/login");
-  };
 
   return (
     <div className="forgot-page">

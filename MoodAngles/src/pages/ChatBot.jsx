@@ -54,9 +54,10 @@ export default function MentalHealthChat() {
     setTimeout(() => handleBotReply(userText), 350);
   };
 
-  const handleBotReply = (rawText) => {
-    const text = rawText.toLowerCase();
+    const handleBotReply = (rawText) => {
+    const text = rawText.toLowerCase().trim();
 
+    // 🧠 1. Crisis & self-harm detection (do not alter this priority)
     if (includesAny(text, crisisKeywords)) {
       if (includesAny(text, selfHarmInstructionKeywords)) {
         safePushBotMessage(
@@ -78,30 +79,67 @@ export default function MentalHealthChat() {
       return;
     }
 
-    let reply = "";
+    // 💬 2. Detect overlapping emotional keywords
+    const matched = [];
+    if (includesAny(text, sadnessKeywords)) matched.push("sad");
+    if (includesAny(text, anxietyKeywords)) matched.push("anxious");
+    if (includesAny(text, stressKeywords)) matched.push("stressed");
+    if (includesAny(text, sleepKeywords)) matched.push("sleep");
+    if (includesAny(text, lonelinessKeywords)) matched.push("lonely");
+    if (includesAny(text, angerKeywords)) matched.push("angry");
+    if (includesAny(text, motivationKeywords)) matched.push("unmotivated");
 
-    if (includesAny(text, sadnessKeywords)) {
-      reply = "💛 It's okay to feel sad. I'm here. Tell me what’s making you feel this way?";
-    } else if (includesAny(text, anxietyKeywords)) {
-      reply = "🌿 Let’s breathe together... In 4, hold 2, out 6. You're safe now.";
-    } else if (includesAny(text, stressKeywords)) {
-      reply = "☁️ You're carrying a lot. Would you like a 60-second grounding exercise?";
-    } else if (includesAny(text, sleepKeywords)) {
-      reply = "🌙 Trouble sleeping can be draining. Want a calming bedtime routine suggestion?";
-    } else if (includesAny(text, lonelinessKeywords)) {
-      reply = "💌 You deserve connection. I'm here with you right now. Want to talk about what feels lonely?";
-    } else if (includesAny(text, angerKeywords)) {
-      reply = "🔥 Anger is valid. Would letting it out through music or walking help?";
-    } else if (includesAny(text, relationshipKeywords)) {
-      reply = "💔 Relationships are powerful. Want to talk about what happened?";
-    } else if (includesAny(text, motivationKeywords)) {
-      reply = "✨ One tiny step can restart momentum. What's one small thing you could do in the next 15 minutes?";
-    } else {
-      reply = "🌸 I'm listening. Tell me more about what's going on inside your heart.";
+    // 🌤 3. Multi-emotion response
+    if (matched.length > 1) {
+      safePushBotMessage(
+        `💛 I'm hearing a mix of feelings — ${matched.join(" and ")}. It's okay to feel more than one thing at once. Let's take it one breath at a time.`
+      );
+      return;
     }
+
+    // 🌻 4. Specific positive / motivational fallback detection
+   if (
+    text.includes("positive") ||
+    text.includes("inspire") ||
+    text.includes("motivate") ||
+    text.includes("hope") ||
+    text.includes("happy")
+  ) {
+    const positiveReplies = [
+      "🌻 Here's something gentle: even the smallest sunrise can chase away the darkest night. You’ve survived 100% of your worst days — that’s strength. 💫",
+      "🌞 Remember: you are allowed to start again, as many times as you need. The world still has soft mornings waiting for you. ☕",
+      "🌈 You don’t have to be perfect to be amazing. Even resting is an act of courage. 💖",
+      "🌷 Hey, breathe. You made it here today, and that already matters more than you think. 🌤"
+    ];
+    const reply = positiveReplies[Math.floor(Math.random() * positiveReplies.length)];
+    safePushBotMessage(reply);
+    return;
+  }
+
+
+    // 💛 5. Single-emotion branches
+    let reply = "";
+    if (matched.includes("sad"))
+      reply = "💛 It's okay to feel sad. I'm here. Tell me what’s making you feel this way?";
+    else if (matched.includes("anxious"))
+      reply = "🌿 Let’s breathe together... In 4, hold 2, out 6. You're safe now.";
+    else if (matched.includes("stressed"))
+      reply = "☁️ You're carrying a lot. Would you like a 60-second grounding exercise?";
+    else if (matched.includes("sleep"))
+      reply = "🌙 Trouble sleeping can be draining. Want a calming bedtime routine suggestion?";
+    else if (matched.includes("lonely"))
+      reply = "💌 You deserve connection. I'm here with you right now. Want to talk about what feels lonely?";
+    else if (matched.includes("angry"))
+      reply = "🔥 Anger is valid. Would letting it out through music or walking help?";
+    else if (matched.includes("unmotivated"))
+      reply = "✨ One tiny step can restart momentum. What's one small thing you could do in the next 15 minutes?";
+    else
+      // 🌸 6. Gentle default fallback
+      reply = "🌸 I'm here and listening. Tell me what's been weighing on your heart today?";
 
     safePushBotMessage(reply);
   };
+
 
   const styles = `
     @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap');

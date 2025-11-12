@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -10,7 +13,7 @@ export default function Login() {
 
   const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@#$])[A-Za-z\d@#$]{8,}$/;
 
-
+  // 🔹 Normal email-password login
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -32,20 +35,44 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok) {
-  localStorage.setItem("userId", data.userId);
-  localStorage.setItem("firstName", data.firstName);
-  localStorage.setItem("role", "user");
-
-  alert("Login successful!");
-  navigate("/UDashboard");
-
-
+        localStorage.setItem("userId", data.userId);
+        localStorage.setItem("firstName", data.firstName);
+        localStorage.setItem("role", "user");
+        alert("Login successful!");
+        navigate("/UDashboard");
       } else {
         setError(data.msg || data.error || "Invalid email or password");
       }
     } catch (err) {
       console.warn("Backend unavailable — navigating for UI testing");
       navigate("/UDashboard");
+    }
+  };
+
+  // 🔹 Google Login handler
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      if (!credentialResponse.credential) {
+        setError("No credential from Google — try again.");
+        return;
+      }
+
+      const decoded = jwtDecode(credentialResponse.credential);
+      console.log("Decoded Google Token:", decoded);
+
+      // Send decoded data to your backend for verification
+      const res = await axios.post("http://localhost:5000/api/auth/google", {
+        credential: credentialResponse.credential,
+      });
+
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.user.role || "user");
+      localStorage.setItem("firstName", res.data.user.name);
+      navigate("/UDashboard");
+    } catch (err) {
+      console.error("Google login failed:", err);
+      setError("Google login failed. Check console for details.");
     }
   };
 
@@ -125,17 +152,6 @@ export default function Login() {
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
-
-              <span className="pw-info" tabIndex={0} aria-label="password rules">
-                ⓘ
-                <span className="tooltip">
-                  Password rules:
-                  <br />• Minimum 8 characters
-                  <br />• At least 1 uppercase letter
-                  <br />• At least 1 digit
-                  <br />• One special char: <b>@ # $ _</b>
-                </span>
-              </span>
             </div>
 
             <div className="row between">
@@ -163,6 +179,14 @@ export default function Login() {
               LOGIN
             </button>
 
+            {/* 🔹 Google Login Button */}
+            <div style={{ marginTop: "18px", textAlign: "center" }}>
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => setError("Google Sign-In Failed")}
+              />
+            </div>
+
             <p
               style={{
                 marginTop: "12px",
@@ -180,6 +204,7 @@ export default function Login() {
     </div>
   );
 }
+
 const css = `
 :root {
   --pink1:#ff7eb3;
@@ -189,7 +214,6 @@ const css = `
   --white:#ffffff;
   --dark:#222326;
 }
-
 .login-page {
   display: flex;
   justify-content: center;
@@ -201,7 +225,6 @@ const css = `
   padding: 10px 150px;
   box-sizing: border-box;
 }
-
 .card {
   width: var(--cardW);
   max-width: 95%;
@@ -213,8 +236,6 @@ const css = `
   overflow: hidden;
   position: relative;
 }
-
-/* LEFT PANEL */
 .left {
   width: 40%;
   position: relative;
@@ -226,14 +247,12 @@ const css = `
   color: white;
   background: linear-gradient(135deg, var(--pink1), var(--pink2));
 }
-
 .left-decor {
   position: absolute;
   border-radius: 18px;
   filter: blur(0.2px);
   opacity: 0.9;
 }
-
 .left-decor.deco1 {
   width: 240px;
   height: 240px;
@@ -258,7 +277,6 @@ const css = `
   transform: rotate(-10deg);
   background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
 }
-
 .brand {
   position: relative;
   z-index: 2;
@@ -269,8 +287,6 @@ const css = `
   font-size: 34px;
   letter-spacing: 1px;
 }
-
-/* notch with buttons */
 .notch {
   position: absolute;
   right: -58px;
@@ -301,8 +317,6 @@ const css = `
   border-radius: 18px;
   box-shadow: 0 6px 12px rgba(255,110,150,0.12);
 }
-
-/* RIGHT PANEL */
 .right {
   width: 60%;
   background: var(--white);
@@ -312,8 +326,6 @@ const css = `
   align-items: center;
   gap: 12px;
 }
-
-/* form */
 .form {
   width: 86%;
   display: flex;
@@ -321,7 +333,6 @@ const css = `
   gap: 12px;
   align-items: stretch;
 }
-
 .inputRow {
   position: relative;
   display: flex;
@@ -344,8 +355,6 @@ const css = `
   color: #333;
   background: transparent;
 }
-
-/* password tooltip */
 .pw-info {
   margin-left: 8px;
   font-size: 13px;
@@ -371,8 +380,6 @@ const css = `
 .pw-info:focus .tooltip {
   display: block;
 }
-
-/* button + error */
 .primary {
   margin-top: 8px;
   background: linear-gradient(90deg, var(--pink1), var(--pink2));
@@ -393,8 +400,6 @@ const css = `
   border-radius: 6px;
   font-size: 13px;
 }
-
-/* Responsive */
 @media (max-width:880px) {
   .card { flex-direction: column; height: auto; }
   .left { width: 100%; height: 220px; }

@@ -9,36 +9,33 @@ import {
   Info,
   User
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
-function UDashboard() {
+
+function UserWrapper2({children}) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [streak, setStreak] = useState(0);
   const [username, setUsername] = useState("User");
-  const [profilePhoto, setProfilePhoto] = useState(null); // ✅ new
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
   const navigate = useNavigate();
-
-  const quotes = [
-    "Every day may not be good, but there is something good in every day.",
-    "Your present circumstances don’t determine where you can go; they merely determine where you start.",
-    "Believe you can and you're halfway there.",
-    "Happiness is not something ready made. It comes from your own actions.",
-    "Keep going, because you did not come this far just to come this far."
-  ];
-
-  // ✅ Fetch username + photo if stored
+  // Fetch user info from backend
   useEffect(() => {
-    const storedName = localStorage.getItem("firstName");
-    const storedPhoto = localStorage.getItem("profilePhoto");
-    if (storedName) setUsername(storedName);
-    if (storedPhoto) setProfilePhoto(storedPhoto);
+    const fetchUser = async () => {
+      try {
+        const storedName = localStorage.getItem("userName"); // or "username" if you store it that way
+        if (storedName) setUsername(storedName);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchUser();
   }, []);
 
-  // ✅ Auto-close dropdown when clicking outside
+  // Auto-close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -49,43 +46,9 @@ function UDashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ Rotate motivational quotes every few seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setQuoteIndex((prev) => (prev + 1) % quotes.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [quotes.length]);
+  // Cycle quotes
 
-  // ✅ Dynamic Streak Logic
-  useEffect(() => {
-    const today = new Date();
-    const todayStr = today.toDateString();
-    const lastLogin = localStorage.getItem("lastLoginDate");
-    let savedStreak = parseInt(localStorage.getItem("moodStreak")) || 0;
-
-    if (!lastLogin) {
-      savedStreak = 1;
-    } else {
-      const lastDate = new Date(lastLogin);
-      const diffDays = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
-      if (diffDays === 1) {
-        savedStreak += 1;
-      } else if (diffDays > 1) {
-        savedStreak = 1;
-      }
-    }
-
-    localStorage.setItem("moodStreak", savedStreak);
-    localStorage.setItem("lastLoginDate", todayStr);
-    setStreak(savedStreak);
-
-    const calcProgress = Math.min((savedStreak / 7) * 100, 100);
-    setProgress(calcProgress);
-  }, []);
-
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  // Weekly progress and streat
 
   const styles = `
     :root{
@@ -110,25 +73,30 @@ function UDashboard() {
     .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:auto;transition:margin-left 300ms ease-in-out;margin-left:260px;}
     .main.expanded{margin-left:0}
     .header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:var(--card);backdrop-filter:blur(6px);box-shadow:0 4px 18px rgba(20,20,40,0.06);transition:all 300ms ease;position:relative;}
+    .header.full{width:100%}
     .toggleBtn{background:transparent;border:0;cursor:pointer;font-size:18px}
     .title{font-size:18px;color:#3b3b4a;font-weight:600}
-    .avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#b894ff,#9b6bff);}
-    .avatar img{width:100%;height:100%;object-fit:cover;}
+    .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(180deg,#b894ff,#9b6bff);display:flex;align-items:center;justify-content:center;cursor:pointer;}
     .userMenu{position:absolute;right:22px;top:60px;background:white;border-radius:10px;padding:8px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);font-size:14px;color:#333;}
     .content{padding:28px;display:flex;flex-direction:column;gap:28px;align-items:center;}
     .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;width:100%}
     .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;width:100%}
     .card{background:var(--card);padding:20px;border-radius:16px;box-shadow:0 8px 30px rgba(20,20,40,0.06);text-align:center;transition:transform 250ms ease,box-shadow 250ms ease}
     .card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(20,20,40,0.09)}
+    .card .icon{width:48px;height:48px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center}
+    .card h3{margin:6px 0 8px;font-size:16px;color:#3b3b4a}
+    .card p{margin:0;color:#6b6b76;font-size:14px}
     .quoteCenter{max-width:700px;margin:40px auto;padding:20px 32px;font-style:italic;color:#342f3f;text-align:center;min-height:70px;display:flex;align-items:center;justify-content:center;animation:fadeQuote 1s ease;font-size:18px}
     @keyframes fadeQuote{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .progressWrap{padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0.9));border-radius:14px;width:100%;text-align:center;}
-    .progressBar{height:12px;background:#eee;border-radius:999px;overflow:hidden;margin-top:8px;}
+    .progressWrap{padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,255,255,0.9));border-radius:14px;width:100%;}
+    .progressBar{height:12px;background:#eee;border-radius:999px;overflow:hidden}
     .progressFill{height:100%;background:linear-gradient(90deg,var(--accent),#c084fc);width:0;border-radius:999px;transition:width 1.2s ease-in-out}
+    .progressMeta{margin-top:8px;font-size:13px;color:#6b6b76}
     .streakCalendar{display:flex;justify-content:center;gap:12px;margin-top:14px}
     .dayCircle{width:28px;height:28px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555;transition:all 0.3s ease}
-    .dayCircle.active{background:#ff69b4;color:#fff;box-shadow:0 4px 10px rgba(255,105,180,0.3)}
+    .dayCircle.active{background:var(--accent);color:#fff;box-shadow:0 4px 10px rgba(123,97,255,0.3)}
     .footer{padding:16px;text-align:center;color:#6b6b76;font-size:13px;background:transparent}
+    @media(max-width:960px){.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.main{margin-left:0}}
   `;
 
   return (
@@ -136,47 +104,39 @@ function UDashboard() {
       <style>{styles}</style>
       <div className="bg-animated" />
       <div className="layout">
-        {/* === Sidebar === */}
         <aside className={`sidebar ${sidebarOpen ? "" : "closed"}`}>
           <div className="brand">MoodAngels</div>
           <nav className="nav">
-            <a href="/UDashboard">Dashboard</a>
-            <a href="/TherapistF">Find a Therapist?</a>
-            <a href="/Profile">Profile</a>
-            <a href="/settings">Settings</a>
+            <a href="/PDashboard">Dashboard</a>
+            <a href="Profile">Profile</a>
+            <a href="#">Settings</a>
           </nav>
         </aside>
 
-        {/* === Main Content === */}
         <div className={`main ${sidebarOpen ? "" : "expanded"}`}>
-          <header className="header">
-            <button className="toggleBtn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <header className={`header ${sidebarOpen ? "" : "full"}`}>
+            <button
+              className="toggleBtn"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
               {sidebarOpen ? <X /> : <Menu />}
             </button>
-            <div className="title">Welcome Back 💜</div>
+            <div className="title">MoodAngels</div>
 
-            {/* ✅ Avatar with uploaded photo */}
-            <div ref={userMenuRef}>
+            <div ref={userMenuRef} className="relative">
               <div
                 className="avatar"
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 title="User Menu"
               >
-                {profilePhoto ? (
-                  <img src={profilePhoto} alt="User" />
-                ) : (
-                  <User color="white" size={22} />
-                )}
+                <User color="white" size={22} />
               </div>
               {showUserMenu && (
                 <div className="userMenu">
-                  Hello, <b>{username}</b>! <br />
+                  Hello<br />
                   <button
                     onClick={() => {
-                      // ✅ preserve photo on logout
-                      const savedPhoto = localStorage.getItem("profilePhoto");
                       localStorage.clear();
-                      if (savedPhoto) localStorage.setItem("profilePhoto", savedPhoto);
                       navigate("/");
                     }}
                     style={{
@@ -197,44 +157,9 @@ function UDashboard() {
             </div>
           </header>
 
-          {/* === Dashboard Body === */}
+          {/* ✅ This is where each page’s content will render */}
           <div className="content">
-            <div key={quoteIndex} className="quoteCenter">
-              “{quotes[quoteIndex]}”
-            </div>
-
-            {/* === Feature Cards === */}
-            <div className="grid3">
-              <FeatureCard title="Take a Test" icon={<FileText />} desc="Assess your mood with a quick test." onClick={() => navigate("/test")} />
-              <FeatureCard title="Upload Documents" icon={<Upload />} desc="Keep your important files in one place." onClick={() => navigate("/Upload")} />
-              <FeatureCard title="Talk to Someone" icon={<MessageCircle />} desc="Connect with a counselor instantly." onClick={() => navigate("/Help")} />
-            </div>
-
-            <div className="grid2">
-              <FeatureCard title="Community Support" icon={<HeartHandshake />} desc="Join group sessions and support circles." onClick={() => navigate("/Support")} />
-              <FeatureCard title="Resources & Tips" icon={<Info />} desc="Read articles and guides for better mental health." onClick={() => navigate("/articles")} />
-            </div>
-
-            {/* === Weekly Progress / Streak === */}
-            <div className="progressWrap">
-              <h4 style={{ marginBottom: 8, color: "#3b3b4a" }}>Your Weekly Progress</h4>
-              <div className="progressBar">
-                <div className="progressFill" style={{ width: progress + "%" }} />
-              </div>
-              <div style={{ marginTop: 8, fontSize: "14px", color: "#555" }}>
-                {streak > 0
-                  ? `You’ve logged in ${streak} day${streak > 1 ? "s" : ""} in a row ✨`
-                  : "Start your streak today!"}
-              </div>
-
-              <div className="streakCalendar">
-                {daysOfWeek.map((day, idx) => (
-                  <div key={idx} className={`dayCircle ${idx === todayIndex ? "active" : ""}`}>
-                    {day[0]}
-                  </div>
-                ))}
-              </div>
-            </div>
+            {children}
           </div>
 
           <div className="footer">
@@ -246,14 +171,4 @@ function UDashboard() {
   );
 }
 
-function FeatureCard({ title, icon, desc, onClick }) {
-  return (
-    <div className="card" onClick={onClick} style={{ cursor: onClick ? "pointer" : "default" }}>
-      <div className="icon">{React.cloneElement(icon, { size: 28, color: "#6b46ff" })}</div>
-      <h3>{title}</h3>
-      <p>{desc}</p>
-    </div>
-  );
-}
-
-export default UDashboard;
+export default UserWrapper2;
