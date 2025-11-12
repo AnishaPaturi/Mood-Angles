@@ -1,249 +1,246 @@
 import React, { useState, useEffect, useRef } from "react";
-import UserWrapper from "../components/UserWrapper";
 
 export default function MentalHealthChat() {
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hey, I’m Luna. How are you feeling today?" },
+    {
+      sender: "bot",
+      text: "Hey there, I’m Luna. I’m here to listen — how are you really feeling today?",
+    },
   ]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [expectingDetail, setExpectingDetail] = useState(false);
-  const [emotions, setEmotions] = useState([]);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages]);
 
-  const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-  const crisisKeywords = [
-    "suicide","kill myself","want to die","end my life","hang myself",
-    "hurt myself","overdose","self harm","cut myself","cutting"
-  ];
-  const selfHarmInstructionKeywords = [
-    "how to die","ways to die","how to kill myself","how to overdose","how to hang myself"
-  ];
-  const profanity = ["shit", "fuck", "bitch", "bullshit", "damn", "crap"];
-  const sadness = ["sad","down","depress","cry","hopeless","unhappy"];
-  const anxiety = ["anxious","anxiety","panic","panic attack","worry","nervous"];
-  const stress = ["stress","pressured","overwhelmed","burnout"];
-  const sleep = ["sleep","tired","insomnia","restless"];
-  const loneliness = ["lonely","alone","isolated"];
-  const anger = ["angry","mad","rage","furious","annoyed"];
-  const motivation = ["unmotivated","stuck","hopeless","no energy"];
-  const badDay = ["my day is bad","bad day","rough day","terrible day","awful day"];
-  const offTopic = [
-    "weather","code","program","movie","sports","football","cricket","news",
-    "president","prime minister","math","python","javascript","react","html"
-  ];
-
-  const includesAny = (text, list) => list.some((kw) => text.toLowerCase().includes(kw));
-
-  const pushBot = async (text, delayTime = 1000) => {
-    setIsTyping(true);
-    await delay(delayTime);
-    setIsTyping(false);
-    setMessages((p) => [...p, { sender: "bot", text }]);
-  };
-
-  const handleSend = async (e) => {
+  const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
-    const userText = input.trim();
-    setMessages((p) => [...p, { sender: "user", text: userText }]);
+
+    const userMsg = { sender: "user", text: input.trim() };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    await delay(400);
-    handleBotReply(userText);
+    setTimeout(() => handleBotReply(input.trim().toLowerCase()), 600);
   };
 
-  const handleBotReply = async (rawText) => {
-    const text = rawText.toLowerCase();
+  const handleBotReply = (text) => {
+    let reply = "";
 
-    if (includesAny(text, crisisKeywords)) {
-      if (includesAny(text, selfHarmInstructionKeywords)) {
-        await pushBot("I’m really sorry you’re feeling this way, but I can’t share anything that could harm you. If you’re in danger, please call your local emergency number (like 112 in India).");
-        await pushBot("You can also reach out to these helplines:\n- KIRAN: 1800-599-0019\n- TeleMANAS: 14416\n- International: befrienders.org");
-        return;
-      }
-      await pushBot("That sounds really serious. I care about your safety. Would you like me to share some trusted helpline numbers?");
-      return;
+    // --- Vulgar language handling ---
+    if (/(fuck|shit|bitch|bullshit|damn|crap)/.test(text)) {
+      reply =
+        "I understand that you’re feeling emotional and going through a lot right now. But can we please avoid using rude language here? I want this to be a safe, peaceful space for you to open up. I’m here to help you — you can let it out, just gently. 💛";
     }
 
-    if (includesAny(text, profanity)) {
-      await pushBot("Hey, I get that you’re upset, but let’s keep our chat kind. I’m here for you — we can talk about what’s bothering you, okay?");
-      return;
+    // --- Emotion-based replies ---
+    else if (/(sad|depress|unhappy|down)/.test(text)) {
+      reply =
+        "It’s okay to feel sad sometimes. You don’t have to hide it — everyone has days that feel too heavy. I’m here to listen if you’d like to talk about what’s been on your mind. 💛";
+    } else if (/(anxiety|anxious|panic|worry|nervous)/.test(text)) {
+      reply =
+        "That sounds really tough. Take a slow, deep breath with me... inhale for 4, hold for 2, exhale for 6. You’re safe here — you’re not alone. 🌿";
+    } else if (/(stress|pressure|tired|burnout)/.test(text)) {
+      reply =
+        "Seems like you’ve been holding a lot inside. You deserve a moment to just breathe and rest. Maybe take a sip of water or step away from the noise for a minute. ☁️";
+    } else if (/(sleep|insomnia|rest)/.test(text)) {
+      reply =
+        "It’s hard when your mind won’t slow down enough to rest. Maybe dim the lights, play something soft, or just focus on breathing for a few moments. 🌙";
+    } else if (/(lonely|alone|isolate)/.test(text)) {
+      reply =
+        "Feeling lonely can hurt deeply. But please know — I’m right here with you, listening. Even small connections count, and you’re not invisible. 💌";
+    } else if (/(angry|frustrate|mad)/.test(text)) {
+      reply =
+        "I get it. Anger can feel intense and messy, but it’s okay to feel it. You can talk to me about what caused it — sometimes putting it into words helps release some of that weight. 🔥";
+    } else if (/(self[-\s]?care|mindful|meditate)/.test(text)) {
+      reply =
+        "That’s wonderful to hear. Self-care isn’t selfish — it’s how we rebuild ourselves. Even small acts like stretching, breathing, or journaling can calm your mind. 🕯️";
+    } else if (/(love|relationship|heartbreak)/.test(text)) {
+      reply =
+        "Heartbreak hurts more than most things, doesn’t it? You gave love your best — that’s something to be proud of. It’ll take time, but you’ll feel light again. 💔";
+    } else if (/(motivate|hopeless|stuck)/.test(text)) {
+      reply =
+        "When motivation fades, even small things feel huge. That’s okay — progress isn’t about speed. What’s one tiny thing you could do right now to feel a bit better? 🌤️";
+    } else if (/(happy|joy|excite|grateful)/.test(text)) {
+      reply =
+        "I’m so glad to hear that! Moments of happiness are precious. Hold onto that feeling and let it brighten your day. Remember, I’m here whenever you want to share more. 🌈";
     }
 
-    if (includesAny(text, offTopic)) {
-      await pushBot("That’s not really something I can help with — I’m here to talk about you, your feelings, and what’s been on your mind lately.");
-      return;
+    // --- Off-topic replies ---
+    else if (
+      /(weather|movie|sports|react|python|code|github|ai|html|javascript|math|game|instagram|youtube|tiktok|login|signup|result)/.test(text)){
+      reply =
+        "Hmm... that sounds interesting, but it’s not really something I can help with. I’m here mainly to talk about how you’re feeling — your emotions, stress, or anything on your mind. 💬";
     }
 
-    if (includesAny(text, badDay)) {
-      setExpectingDetail(true);
-      await pushBot("I’m sorry your day’s been rough. Want to tell me what made it so hard? I’m listening.");
-      return;
+    // --- Default supportive fallback ---
+    else {
+      reply =
+        "I hear you. That sounds like a lot to hold inside. You can talk to me about it — I’ll listen without judgment. Sometimes letting it out is the first step to feeling lighter. 💛";
     }
 
-    if (expectingDetail) {
-      setExpectingDetail(false);
-      await pushBot("That sounds really heavy. I can see why that would get to you. I’m glad you decided to share it — sometimes that’s the first step to feeling a bit lighter.");
-      return;
-    }
-
-    const matched = [];
-    if (includesAny(text, sadness)) matched.push("sad");
-    if (includesAny(text, anxiety)) matched.push("anxious");
-    if (includesAny(text, stress)) matched.push("stressed");
-    if (includesAny(text, sleep)) matched.push("tired");
-    if (includesAny(text, loneliness)) matched.push("lonely");
-    if (includesAny(text, anger)) matched.push("angry");
-    if (includesAny(text, motivation)) matched.push("unmotivated");
-
-    if (matched.length) setEmotions((p) => [...p, ...matched]);
-
-    if (matched.includes("sad")) await pushBot("That sounds really hard. It’s okay to feel that way sometimes. I’m here to listen if you want to share more.");
-    else if (matched.includes("anxious")) await pushBot("Anxiety can feel really uncomfortable. Try to take a slow, steady breath with me — in for 4, hold for 2, out for 6.");
-    else if (matched.includes("stressed")) await pushBot("You’ve been carrying a lot, haven’t you? It’s okay to pause and breathe for a moment.");
-    else if (matched.includes("tired")) await pushBot("Rest is important. You deserve it. Have you had any chance to take a break?");
-    else if (matched.includes("lonely")) await pushBot("Feeling alone can be tough. I’m here with you right now. You’re not by yourself in this moment.");
-    else if (matched.includes("angry")) await pushBot("Anger usually hides something deeper — maybe hurt or frustration. Do you want to talk about what’s behind it?");
-    else if (matched.includes("unmotivated")) await pushBot("That stuck feeling can be heavy. Maybe start small — even one tiny thing can make a difference. Want to think of one together?");
-    else await pushBot("I’m listening. Tell me what’s been on your mind — I’ll do my best to understand.");
-
-    const recent = [...emotions, ...matched];
-    const count = recent.filter((e) => e === "anxious").length;
-    if (count >= 3) {
-      await pushBot("I’ve noticed you’ve mentioned feeling anxious a few times. Would you like to try a short breathing exercise together?");
-    }
+    setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
   };
 
-  // ------------------ Dreamy UI Styles ------------------
   const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap');
-  .chat-page {
-    display:flex;justify-content:center;align-items:center;
-    height:calc(100vh - 70px);
-    background:linear-gradient(145deg,#f9e1f0,#e5d4ff,#d1e3ff);
-    background-size:400% 400%;
-    animation:dreamFlow 10s ease infinite;
-    font-family:'Quicksand',sans-serif;
-  }
-  @keyframes dreamFlow {
-    0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}
-  }
-  .chat-box {
-    width:420px;max-width:90%;height:80vh;
-    background:rgba(255,255,255,0.7);
-    backdrop-filter:blur(20px);
-    border-radius:25px;
-    box-shadow:0 10px 40px rgba(0,0,0,0.1);
-    display:flex;flex-direction:column;overflow:hidden;
-  }
-  .chat-header {
-    background:linear-gradient(90deg,#a78bfa,#f0abfc);
-    color:white;text-align:center;padding:16px;
-    font-weight:600;font-size:1.1rem;
-    box-shadow:0 2px 8px rgba(0,0,0,0.1);
-  }
-  .chat-body {
-    flex:1;padding:20px;overflow-y:auto;
-    display:flex;flex-direction:column;gap:12px;
-  }
-  .message {
-    display:flex;align-items:flex-end;gap:8px;
-    animation:fadeIn 0.3s ease;
-  }
-  @keyframes fadeIn {
-    from{opacity:0;transform:translateY(8px)}
-    to{opacity:1;transform:translateY(0)}
-  }
-  .bubble {
-    max-width:75%;padding:12px 16px;
-    border-radius:18px;font-size:0.95rem;
-    line-height:1.45;white-space:pre-wrap;
-  }
-  .bot .bubble {
-    background:#fff;color:#1e293b;
-    border-bottom-left-radius:6px;
-  }
-  .user .bubble {
-    background:linear-gradient(135deg,#a78bfa,#f0abfc);
-    color:white;border-bottom-right-radius:6px;
-    align-self:flex-end;
-  }
-  .avatar {
-    width:34px;height:34px;border-radius:50%;
-    background:linear-gradient(135deg,#a78bfa,#f0abfc);
-    display:flex;justify-content:center;align-items:center;
-    color:white;font-weight:600;font-size:0.9rem;
-    box-shadow:0 0 6px rgba(0,0,0,0.1);
-  }
-  .typing {
-    display:flex;align-items:center;gap:8px;
-    margin-left:4px;
-  }
-  .dot {
-    width:8px;height:8px;border-radius:50%;
-    background:#94a3b8;animation:blink 1.4s infinite both;
-  }
-  .dot:nth-child(2){animation-delay:0.2s}
-  .dot:nth-child(3){animation-delay:0.4s}
-  @keyframes blink {
-    0%,80%,100%{opacity:0}40%{opacity:1}
-  }
-  .chat-input {
-    display:flex;padding:10px;
-    background:rgba(255,255,255,0.6);
-    border-top:1px solid rgba(0,0,0,0.08);
-  }
-  .chat-input input {
-    flex:1;background:#f1f5f9;
-    border-radius:25px;padding:12px 16px;
-    border:none;outline:none;font-size:1rem;
-  }
-  .chat-input button {
-    background:linear-gradient(135deg,#a78bfa,#f0abfc);
-    border:none;color:white;
-    border-radius:50%;width:44px;height:44px;
-    margin-left:8px;cursor:pointer;font-weight:bold;
-  }`;
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap');
+    .chat-page {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(145deg, #f9e1f0, #e5d4ff, #d1e3ff);
+      background-size: 400% 400%;
+      animation: dreamyFlow 10s ease infinite;
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    @keyframes dreamyFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .chat-box {
+      width: 420px;
+      height: 80vh;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chat-header {
+      background: linear-gradient(90deg, #a88beb, #f8ceec);
+      color: white;
+      text-align: center;
+      padding: 16px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: transparent;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .user-msg {
+      align-self: flex-end;
+      background: #c8f7c5;
+      color: #333;
+      border-bottom-right-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .bot-msg {
+      align-self: flex-start;
+      background: #fff;
+      border-bottom-left-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 12px;
+      background: rgba(255,255,255,0.8);
+      border-top: 1px solid rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .chat-input input {
+      flex: 1;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 25px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      outline: none;
+      color: #333;
+      transition: all 0.3s ease;
+    }
+
+    .chat-input input:focus {
+      background: #fff;
+      box-shadow: 0 0 8px rgba(168, 139, 235, 0.3);
+    }
+
+    .chat-input button {
+      margin-left: 10px;
+      border: none;
+      border-radius: 50%;
+      width: 46px;
+      height: 46px;
+      background: linear-gradient(135deg, #a88beb, #f8ceec);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    .chat-input button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 12px rgba(168, 139, 235, 0.5);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c7b7f3;
+      border-radius: 10px;
+    }
+  `;
 
   return (
-    <UserWrapper>
+    <div className="chat-page">
       <style>{styles}</style>
-      <div className="chat-page">
-        <div className="chat-box">
-          <div className="chat-header">Luna — here to listen 💬</div>
-          <div className="chat-body">
-            {messages.map((msg, i) => (
-              <div key={i} className={`message ${msg.sender}`}>
-                {msg.sender === "bot" && <div className="avatar">L</div>}
-                <div className="bubble">{msg.text}</div>
-              </div>
-            ))}
-            {isTyping && (
-              <div className="typing">
-                <div className="avatar">L</div>
-                <div className="dot"></div>
-                <div className="dot"></div>
-                <div className="dot"></div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-          <form className="chat-input" onSubmit={handleSend}>
-            <input
-              type="text"
-              placeholder="Type something..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-            />
-            <button type="submit">➤</button>
-          </form>
+      <div className="chat-box">
+        <div className="chat-header">💬 Luna — Your Calm Space</div>
+
+        <div className="chat-body">
+          {messages.map((msg, i) => (
+            <div key={i} className={`message ${msg.sender === "user" ? "user-msg" : "bot-msg"}`}>
+              {msg.text}
+            </div>
+          ))}
+          <div ref={chatEndRef} />
         </div>
+
+        <form className="chat-input" onSubmit={handleSend}>
+          <input
+            type="text"
+            placeholder="Type how you feel..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+          <button type="submit">➤</button>
+        </form>
       </div>
-    </UserWrapper>
+    </div>
   );
 }
