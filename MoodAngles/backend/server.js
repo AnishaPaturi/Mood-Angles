@@ -12,6 +12,9 @@ import resultsRoute from "./routes/results.js";
 import uploadRoute from "./routes/uploadRoute.js";
 import otpRoutes from "./routes/otpRoutes.js";
 import inviteRoutes from "./routes/inviteRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
+
+
 
 // ✅ Load environment variables
 dotenv.config();
@@ -27,6 +30,7 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 // ✅ Middleware
 app.use(cors());
 app.use(express.json());
+app.use("/api/feedback", feedbackRoutes);
 
 // app.use(cors());
 app.use(

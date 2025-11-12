@@ -4,17 +4,40 @@ import { Plus, Minus } from "lucide-react";
 function Support() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [openFAQ, setOpenFAQ] = useState(null);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  // ✅ Updated working handleSubmit (connects to backend)
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setFormData({ name: "", email: "", message: "" });
-    setTimeout(() => setSubmitted(false), 3000);
+    setLoading(true);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setSubmitted(true);
+        setFormData({ name: "", email: "", message: "" });
+        setTimeout(() => setSubmitted(false), 3000);
+      } else {
+        alert(data.error || "Failed to send feedback. Please try again later.");
+      }
+    } catch (error) {
+      console.error("❌ Feedback submission error:", error);
+      alert("⚠️ Unable to send feedback. Please check your connection or try again later.");
+    }
+
+    setLoading(false);
   };
 
   const faqs = [
@@ -115,6 +138,12 @@ function Support() {
     .submit-btn:hover {
       background-color: #6b21a8;
       box-shadow: 0 6px 14px rgba(126, 34, 206, 0.4);
+    }
+
+    .submit-btn:disabled {
+      background-color: #9b6dce;
+      cursor: not-allowed;
+      opacity: 0.7;
     }
 
     .faq-section {
@@ -237,17 +266,23 @@ function Support() {
         <p>Need help, guidance, or just someone to listen? We’re here for you. Reach out anytime and we’ll do our best to assist.</p>
       </div>
 
+      {/* Feedback Form */}
       <div className="feedback-card">
         <h2>Feedback</h2>
         <form onSubmit={handleSubmit}>
           <input type="text" name="name" placeholder="Your Name" value={formData.name} onChange={handleChange} required />
           <input type="email" name="email" placeholder="Your Email" value={formData.email} onChange={handleChange} required />
           <textarea name="message" rows="4" placeholder="Type your message..." value={formData.message} onChange={handleChange} required></textarea>
+
           {submitted && <p className="success-msg">✅ Message Sent Successfully!</p>}
-          <button type="submit" className="submit-btn">Send Message</button>
+
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading ? "Sending..." : "Send Message"}
+          </button>
         </form>
       </div>
 
+      {/* FAQ Section */}
       <div className="faq-section">
         <h2>Frequently Asked Questions</h2>
         {faqs.map((faq, i) => (
@@ -263,17 +298,14 @@ function Support() {
         ))}
       </div>
 
+      {/* Community Section */}
       <div className="community-section">
         <h2>Join Our Community 🌐</h2>
         <p>Connect with others, share experiences, or seek help through our safe and supportive spaces.</p>
         <div className="community-links">
           <a href="https://discord.gg/4gKsmdYz" target="_blank" rel="noopener noreferrer">Discord</a>
-          <a href="https://discord.com/channels/1435685956484337676/1435687137776242921"
-          target="_blank"
-          rel="noopener noreferrer">Forum</a>
-          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=moodangles05@gmail.com"
-          target="_blank"
-          rel="noopener noreferrer">Email Us</a>
+          <a href="https://discord.com/channels/1435685956484337676/1435687137776242921" target="_blank" rel="noopener noreferrer">Forum</a>
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=moodangles05@gmail.com" target="_blank" rel="noopener noreferrer">Email Us</a>
         </div>
       </div>
 
