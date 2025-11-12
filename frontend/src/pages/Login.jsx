@@ -38,7 +38,13 @@ export default function Login() {
         // ✅ Correct way to store user info
         localStorage.setItem("token", data.token || "");
         localStorage.setItem("userId", data.user._id);
-        localStorage.setItem("firstName", data.user.firstName || "User");
+
+        // 🧠 Fix name mismatch here:
+        localStorage.setItem(
+          "firstName",
+          data.user.firstName || data.user.name || "User"
+        );
+
         localStorage.setItem("email", data.user.email || "");
         localStorage.setItem("profilePhoto", data.user.profilePhoto || "");
         localStorage.setItem("role", data.user.role || "user");
