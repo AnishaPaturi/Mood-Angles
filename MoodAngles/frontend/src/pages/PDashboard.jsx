@@ -2,42 +2,113 @@ import React, { useEffect, useState } from "react";
 import UserWrapper2 from "../components/UserWrapper2";
 
 export default function PDashboard() {
-  const [stats, setStats] = useState({
-    totalPatients: 0,
-    totalCases: 0,
-    todaysAppointments: 0,
-  });
-
+  const [stats, setStats] = useState(null);
   const [todayList, setTodayList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Create dynamic dashboard data
+  // ✅ Fetch dashboard data dynamically
   useEffect(() => {
-    const randomPatients = Math.floor(Math.random() * 40) + 20;
-    const randomCases = Math.floor(Math.random() * 80) + 30;
-    const randomAppointments = Math.floor(Math.random() * 8) + 2;
+    async function fetchData() {
+      try {
+        setLoading(true);
+        setError(null);
 
-    setStats({
-      totalPatients: randomPatients,
-      totalCases: randomCases,
-      todaysAppointments: randomAppointments,
-    });
+        // Mock API or real API endpoint
+        // Example: const res = await fetch("/api/doctor/dashboard");
+        // const data = await res.json();
 
-    const names = ["Aarav", "Vihaan", "Advika", "Isha", "Rohan", "Saanvi", "Meera", "Kabir", "Riya", "Krishna"];
-    const reasons = ["Anxiety", "Stress", "Check-up", "Therapy Follow-up", "New Consultation", "Medication Review"];
+        // Mock dynamic data (replace with actual API)
+        const mockData = await new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              totalPatients: 54,
+              totalCases: 112,
+              todaysAppointments: [
+                { name: "Aarav", time: "9:00 AM", reason: "Anxiety" },
+                { name: "Saanvi", time: "10:30 AM", reason: "Therapy Follow-up" },
+                { name: "Rohan", time: "12:00 PM", reason: "Medication Review" },
+              ],
+            });
+          }, 1000);
+        });
 
-    const appointments = Array.from({ length: randomAppointments }).map(() => ({
-      name: names[Math.floor(Math.random() * names.length)],
-      time: `${Math.floor(Math.random() * 8) + 9}:00 AM`,
-      reason: reasons[Math.floor(Math.random() * reasons.length)],
-    }));
+        setStats({
+          totalPatients: mockData.totalPatients,
+          totalCases: mockData.totalCases,
+          todaysAppointments: mockData.todaysAppointments.length,
+        });
 
-    setTodayList(appointments);
+        setTodayList(mockData.todaysAppointments);
+      } catch (err) {
+        console.error("Error loading dashboard:", err);
+        setError("Failed to load dashboard data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
   }, []);
 
+  // ✅ Loading State
+  if (loading) {
+    return (
+      <UserWrapper2>
+        <div className="loadingScreen">
+          <div className="spinner"></div>
+          <p>Loading your dashboard...</p>
+          <style>{`
+            .loadingScreen {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 80vh;
+              color: #334155;
+              font-family: 'Inter', sans-serif;
+            }
+            .spinner {
+              width: 40px;
+              height: 40px;
+              border: 4px solid #e2e8f0;
+              border-top-color: #2563eb;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      </UserWrapper2>
+    );
+  }
+
+  // ✅ Error State
+  if (error) {
+    return (
+      <UserWrapper2>
+        <div className="errorBox">
+          <h3>⚠️ {error}</h3>
+        </div>
+        <style>{`
+          .errorBox {
+            text-align: center;
+            color: #dc2626;
+            margin-top: 60px;
+            font-family: 'Inter', sans-serif;
+          }
+        `}</style>
+      </UserWrapper2>
+    );
+  }
+
+  // ✅ Main Dashboard
   return (
     <UserWrapper2>
       <div className="dashContainer">
-        <h1 className="heading">Welcome, Doctor 👋</h1>
+        <h1 className="heading">Welcome back, Doctor 👩‍⚕️</h1>
 
         {/* Stats Cards */}
         <div className="statsRow">
@@ -86,7 +157,7 @@ export default function PDashboard() {
         </div>
       </div>
 
-      {/* CSS */}
+      {/* ✅ Styles */}
       <style>{`
         .dashContainer {
           padding: 40px;
