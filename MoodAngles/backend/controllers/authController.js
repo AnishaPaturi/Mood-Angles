@@ -51,6 +51,7 @@ export const registerUser = async (req, res) => {
 };
 
 // Login User
+// Login User
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -59,17 +60,30 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email: cleanEmail });
     if (!user) return res.status(400).json({ msg: "Invalid email or password." });
 
-    if (!user.password) return res.status(400).json({ msg: "Account registered via Google. Please use Google login." });
+    if (!user.password)
+      return res
+        .status(400)
+        .json({ msg: "Account registered via Google. Please use Google login." });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid email or password." });
 
-    const token = jwt.sign({ id: user._id, role: "user" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: user._id, role: "user" }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
+    // ✅ Return full, consistent user info
     return res.status(200).json({
       msg: "Login successful",
       token,
-      user: { id: user._id, name: user.firstName, email: user.email },
+      user: {
+        _id: user._id,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email,
+        profilePhoto: user.profilePhoto || "",
+        role: user.role || "user",
+      },
     });
   } catch (err) {
     console.error("loginUser error:", err);
