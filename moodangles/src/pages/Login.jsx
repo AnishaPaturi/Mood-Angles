@@ -34,17 +34,22 @@ export default function Login() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        localStorage.setItem("userId", data.userId);
-        localStorage.setItem("firstName", data.firstName);
-        localStorage.setItem("role", "user");
-        alert("Login successful!");
+      if (res.ok && data.user) {
+        // ✅ Correct way to store user info
+        localStorage.setItem("token", data.token || "");
+        localStorage.setItem("userId", data.user._id);
+        localStorage.setItem("firstName", data.user.firstName || "User");
+        localStorage.setItem("email", data.user.email || "");
+        localStorage.setItem("profilePhoto", data.user.profilePhoto || "");
+        localStorage.setItem("role", data.user.role || "user");
+
+        alert(`Welcome back, ${data.user.firstName || "User"}!`);
         navigate("/UDashboard");
       } else {
         setError(data.msg || data.error || "Invalid email or password");
       }
     } catch (err) {
-      console.warn("Backend unavailable — navigating for UI testing");
+      console.warn("⚠️ Backend unavailable — navigating for UI testing:", err);
       navigate("/UDashboard");
     }
   };
@@ -60,15 +65,19 @@ export default function Login() {
       const decoded = jwtDecode(credentialResponse.credential);
       console.log("Decoded Google Token:", decoded);
 
-      // Send decoded data to your backend for verification
       const res = await axios.post("http://localhost:5000/api/auth/google", {
         credential: credentialResponse.credential,
       });
 
+      if (res.data?.user) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("userId", res.data.user._id || "");
+        localStorage.setItem("firstName", res.data.user.firstName || res.data.user.name || "User");
+        localStorage.setItem("email", res.data.user.email || "");
+        localStorage.setItem("profilePhoto", res.data.user.profilePhoto || "");
+        localStorage.setItem("role", res.data.user.role || "user");
+      }
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.user.role || "user");
-      localStorage.setItem("firstName", res.data.user.name);
       navigate("/UDashboard");
     } catch (err) {
       console.error("Google login failed:", err);
@@ -204,6 +213,7 @@ export default function Login() {
     </div>
   );
 }
+
 
 const css = `
 :root {

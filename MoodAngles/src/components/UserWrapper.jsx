@@ -5,7 +5,12 @@ import { Link, useNavigate } from "react-router-dom";
 
 function UserWrapper({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [username, setUsername] = useState(localStorage.getItem("firstName") || "User");
+  const [username, setUsername] = useState(
+    localStorage.getItem("firstName") ||
+      localStorage.getItem("fullName") ||
+      localStorage.getItem("email")?.split("@")[0] ||
+      "User"
+  );
   const [profilePhoto, setProfilePhoto] = useState(localStorage.getItem("profilePhoto") || null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
@@ -13,27 +18,31 @@ function UserWrapper({ children }) {
 
   // ✅ Sync username + photo from localStorage (listen for updates)
   useEffect(() => {
-  const syncData = () => {
-    const updatedName = localStorage.getItem("firstName");
-    const updatedPhoto = localStorage.getItem("profilePhoto");
-    if (updatedName) setUsername(updatedName);
-    if (updatedPhoto) setProfilePhoto(updatedPhoto);
-  };
+    const syncData = () => {
+      const updatedName =
+        localStorage.getItem("firstName") ||
+        localStorage.getItem("fullName") ||
+        localStorage.getItem("email")?.split("@")[0] ||
+        "User";
+      const updatedPhoto = localStorage.getItem("profilePhoto");
+      if (updatedName) setUsername(updatedName);
+      if (updatedPhoto) setProfilePhoto(updatedPhoto);
+    };
 
-  // ✅ Listen to manual trigger (same-tab updates)
-  window.addEventListener("storage", syncData);
+    // ✅ Listen to manual trigger (same-tab updates)
+    window.addEventListener("storage", syncData);
 
-  // ✅ Trigger once on mount (for fresh load)
-  syncData();
+    // ✅ Trigger once on mount (for fresh load)
+    syncData();
 
-  // ✅ Also trigger manually after upload events
-  window.addEventListener("profilePhotoUpdated", syncData);
+    // ✅ Also trigger manually after upload events
+    window.addEventListener("profilePhotoUpdated", syncData);
 
-  return () => {
-    window.removeEventListener("storage", syncData);
-    window.removeEventListener("profilePhotoUpdated", syncData);
-  };
-}, []);
+    return () => {
+      window.removeEventListener("storage", syncData);
+      window.removeEventListener("profilePhotoUpdated", syncData);
+    };
+  }, []);
 
   // ✅ Close dropdown if clicked outside
   useEffect(() => {
