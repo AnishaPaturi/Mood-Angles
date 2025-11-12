@@ -17,3 +17,5 @@ router.post("/psychiatrist/signup", registerPsychiatrist);
 router.post("/psychiatrist/login", loginPsychiatrist);
 
 export default router;
+
+
