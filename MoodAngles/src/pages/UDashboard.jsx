@@ -211,8 +211,8 @@ function UDashboard() {
             </div>
 
             <div className="grid2">
-              <FeatureCard title="Community Support" icon={<HeartHandshake />} desc="Join group sessions and support circles." onClick={() => navigate("/Support")} />
               <FeatureCard title="Resources & Tips" icon={<Info />} desc="Read articles and guides for better mental health." onClick={() => navigate("/articles")} />
+              <FeatureCard title="Community Support" icon={<HeartHandshake />} desc="Join group sessions and support circles." onClick={() => navigate("/Support")} />
             </div>
 
             {/* === Weekly Progress / Streak === */}
