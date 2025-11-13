@@ -86,14 +86,14 @@ export default function MentalHealthTodayTest() {
     setLoading(true);
     const normalizedScore = computeNormalized10();
     const level = interpretLevel(normalizedScore);
-    // also provide percent for agents (0-100)
+    // also provide percent for Angels (0-100)
     const percentScore = Math.round((normalizedScore / 10) * 100);
 
     // show immediate local result
     setResult({ score: normalizedScore, level });
 
-    // agent chain variables
-    let agentR_summary = "";
+    // Angel chain variables
+    let AngelR_summary = "";
     let dData = null;
     let cData = null;
     let eData = null;
@@ -101,7 +101,7 @@ export default function MentalHealthTodayTest() {
     let eSummary = "";
 
     try {
-      // ---------- Agent R ----------
+      // ---------- Angel R ----------
       const rPayload = {
         condition: testName,
         testName,
@@ -118,20 +118,20 @@ export default function MentalHealthTodayTest() {
 
       if (!rRes.ok) {
         const txt = await rRes.text();
-        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
+        throw new Error(`Angel R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
       }
       const rJson = await rRes.json();
-      agentR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
-      setResult((prev) => ({ ...prev, aiDiagnosis: agentR_summary }));
+      AngelR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
+      setResult((prev) => ({ ...prev, aiDiagnosis: AngelR_summary }));
 
-      // ---------- Agent D ----------
+      // ---------- Angel D ----------
       const dRes = await fetch(`${API_BASE}/api/angelD`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: agentR_summary,
+          AngelR_result: AngelR_summary,
           score_percent: percentScore,
           normalized_score: normalizedScore
         })
@@ -139,20 +139,20 @@ export default function MentalHealthTodayTest() {
 
       if (!dRes.ok) {
         const txt = await dRes.text();
-        throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
+        throw new Error(`Angel D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
       }
       dData = await dRes.json();
-      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || safeText(dData) }));
+      setResult((prev) => ({ ...prev, AngelDExplanation: dData.result || dData.Result || safeText(dData) }));
 
-      // ---------- Agent C ----------
+      // ---------- Angel C ----------
       const cRes = await fetch(`${API_BASE}/api/angelC`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: agentR_summary,
-          agentD_result: dData.result || dData.Result || safeText(dData),
+          AngelR_result: AngelR_summary,
+          AngelD_result: dData.result || dData.Result || safeText(dData),
           score_percent: percentScore,
           normalized_score: normalizedScore,
           answers: buildAnswersPayload()
@@ -161,47 +161,47 @@ export default function MentalHealthTodayTest() {
 
       if (!cRes.ok) {
         const txt = await cRes.text();
-        throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
+        throw new Error(`Angel C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
       }
       cData = await cRes.json();
       cSummary = cData.result || cData.Result || safeText(cData);
-      setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
+      setResult((prev) => ({ ...prev, AngelCComparison: cSummary }));
 
-      // ---------- Agent E (Debate/Consensus) ----------
+      // ---------- Angel E (Debate/Consensus) ----------
       const eRes = await fetch(`${API_BASE}/api/angelE`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: agentR_summary,
-          agentD_result: dData.result || dData.Result || safeText(dData),
-          agentC_result: cSummary
+          AngelR_result: AngelR_summary,
+          AngelD_result: dData.result || dData.Result || safeText(dData),
+          AngelC_result: cSummary
         })
       });
 
       if (!eRes.ok) {
         const txt = await eRes.text();
-        throw new Error(`Agent E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
+        throw new Error(`Angel E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
       }
       eData = await eRes.json();
       eSummary =
         eData.final_consensus ||
         eData.result ||
         `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
-      setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
+      setResult((prev) => ({ ...prev, AngelEDebate: eSummary }));
 
-      // ---------- Agent J (Judge) ----------
+      // ---------- Angel J (Judge) ----------
       const jRes = await fetch(`${API_BASE}/api/angelJ`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: agentR_summary,
-          agentD_result: dData.result || dData.Result || safeText(dData),
-          agentC_result: cSummary,
-          agentE_result: eSummary,
+          AngelR_result: AngelR_summary,
+          AngelD_result: dData.result || dData.Result || safeText(dData),
+          AngelC_result: cSummary,
+          AngelE_result: eSummary,
           score_percent: percentScore,
           normalized_score: normalizedScore
         })
@@ -209,13 +209,13 @@ export default function MentalHealthTodayTest() {
 
       if (!jRes.ok) {
         const txt = await jRes.text();
-        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
+        setResult((prev) => ({ ...prev, AngelJDecision: `⚠️ Angel J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
       } else {
         const jData = await jRes.json();
-        setResult((prev) => ({ ...prev, agentJDecision: jData }));
+        setResult((prev) => ({ ...prev, AngelJDecision: jData }));
       }
     } catch (err) {
-      console.error("Agent chain error:", err);
+      console.error("Angel chain error:", err);
       setResult((prev) => ({
         ...prev,
         chainError: err.message,
@@ -315,52 +315,52 @@ export default function MentalHealthTodayTest() {
                 {/* <p style={styles.resultText}>{result.level}</p> */}
 
                 {/* {result.aiDiagnosis && (
-                  <p style={styles.agentRText}><strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}</p>
+                  <p style={styles.AngelRText}><strong>Angel R Diagnosis:</strong> {result.aiDiagnosis}</p>
                 )}
 
-                {result.agentDExplanation && (
-                  <p style={{ marginTop: 10 }}><strong>Agent D Summary:</strong> {result.agentDExplanation}</p>
+                {result.AngelDExplanation && (
+                  <p style={{ marginTop: 10 }}><strong>Angel D Summary:</strong> {result.AngelDExplanation}</p>
                 )}
 
-                {result.agentCComparison && (
-                  <p style={{ marginTop: 10 }}><strong>Agent C Comparative Summary:</strong> {result.agentCComparison}</p>
+                {result.AngelCComparison && (
+                  <p style={{ marginTop: 10 }}><strong>Angel C Comparative Summary:</strong> {result.AngelCComparison}</p>
                 )}
 
-                {result.agentEDebate && (
-                  <p style={{ marginTop: 10 }}><strong>Agent E Debate Summary:</strong> {result.agentEDebate}</p>
+                {result.AngelEDebate && (
+                  <p style={{ marginTop: 10 }}><strong>Angel E Debate Summary:</strong> {result.AngelEDebate}</p>
                 )} */}
 
-                {result.agentJDecision && (
+                {result.AngelJDecision && (
                   <div style={{ marginTop: "12px", textAlign: "left", color: "#444" }}>
-                    <strong>Agent J (Judge) Decision:</strong>
-                    {typeof result.agentJDecision === "string" ? (
-                      <div style={{ marginTop: "6px" }}>{result.agentJDecision}</div>
+                    <strong>Angel J (Judge) Decision:</strong>
+                    {typeof result.AngelJDecision === "string" ? (
+                      <div style={{ marginTop: "6px" }}>{result.AngelJDecision}</div>
                     ) : (
                       <div style={{ marginTop: "8px" }}>
-                        {result.agentJDecision.decision && (
+                        {result.AngelJDecision.decision && (
                           <div>
-                            <strong>Decision:</strong> {result.agentJDecision.decision}
+                            <strong>Decision:</strong> {result.AngelJDecision.decision}
                           </div>
                         )}
 
-                        {result.agentJDecision.confidence !== undefined && (
+                        {result.AngelJDecision.confidence !== undefined && (
                           <div>
-                            <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
+                            <strong>Confidence:</strong> {String(result.AngelJDecision.confidence)}
                           </div>
                         )}
 
-                        {result.agentJDecision.reasoning && (
+                        {result.AngelJDecision.reasoning && (
                           <div style={{ marginTop: "6px" }}>
-                            <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
+                            <strong>Reasoning:</strong> {result.AngelJDecision.reasoning}
                           </div>
                         )}
 
-                        {Array.isArray(result.agentJDecision.actions) &&
-                          result.agentJDecision.actions.length > 0 && (
+                        {Array.isArray(result.AngelJDecision.actions) &&
+                          result.AngelJDecision.actions.length > 0 && (
                             <div style={{ marginTop: "6px" }}>
                               <strong>Actions:</strong>
                               <ul style={{ marginTop: "6px" }}>
-                                {result.agentJDecision.actions.map((a, idx) => (
+                                {result.AngelJDecision.actions.map((a, idx) => (
                                   <li key={idx}>{a}</li>
                                 ))}
                               </ul>
@@ -368,9 +368,9 @@ export default function MentalHealthTodayTest() {
                           )}
 
                         {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
-                        {result.agentJDecision.final_call && (
+                        {result.AngelJDecision.final_call && (
                           <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
-                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
+                            <strong>Final Judgment:</strong> {result.AngelJDecision.final_call}
                           </div>
                         )}
                       </div>
@@ -580,7 +580,7 @@ const styles = {
     fontWeight: "600",
     color: "#7b61ff"
   },
-  agentRText: {
+  AngelRText: {
     marginTop: 12,
     fontSize: 16,
     color: "#444"

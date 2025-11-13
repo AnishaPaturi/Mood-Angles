@@ -65,7 +65,7 @@ export default function AutismTest() {
       ? "Moderate chance of Autistic Traits"
       : "High chance of Autistic Traits";
 
-  // ---- Submit & Call Agents (R → D → C → E → J) ----
+  // ---- Submit & Call Angels (R → D → C → E → J) ----
   const handleSubmit = async () => {
     if (answers.some((a) => a === null)) {
       setResult({
@@ -90,7 +90,7 @@ export default function AutismTest() {
     let eSummary = "";
 
     try {
-      // ---------- Agent R ----------
+      // ---------- Angel R ----------
       const payloadR = {
         condition: testName,
         testName,
@@ -107,20 +107,20 @@ export default function AutismTest() {
 
       if (!rRes.ok) {
         const errText = await rRes.text();
-        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${errText}`);
+        throw new Error(`Angel R failed: ${rRes.status} ${rRes.statusText} — ${errText}`);
       }
       const rData = await rRes.json();
       finalSummary = String(rData.result || rData.Result || "").trim();
       setResult((prev) => ({ ...prev, aiDiagnosis: finalSummary }));
 
-      // ---------- Agent D ----------
+      // ---------- Angel D ----------
       const dRes = await fetch(`${API_BASE}/api/angelD`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: finalSummary,
+          AngelR_result: finalSummary,
           score,
           level
         })
@@ -128,20 +128,20 @@ export default function AutismTest() {
 
       if (!dRes.ok) {
         const txt = await dRes.text();
-        throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
+        throw new Error(`Angel D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
       }
       dData = await dRes.json();
-      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || String(dData) }));
+      setResult((prev) => ({ ...prev, AngelDExplanation: dData.result || dData.Result || String(dData) }));
 
-      // ---------- Agent C ----------
+      // ---------- Angel C ----------
       const cRes = await fetch(`${API_BASE}/api/angelC`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: finalSummary,
-          agentD_result: dData.result || dData.Result || String(dData),
+          AngelR_result: finalSummary,
+          AngelD_result: dData.result || dData.Result || String(dData),
           score,
           level,
           answers: buildAnswersPayload()
@@ -150,37 +150,37 @@ export default function AutismTest() {
 
       if (!cRes.ok) {
         const txt = await cRes.text();
-        throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
+        throw new Error(`Angel C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
       }
       cData = await cRes.json();
       cSummary = cData.result || cData.Result || String(cData).trim();
-      setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
+      setResult((prev) => ({ ...prev, AngelCComparison: cSummary }));
 
-      // ---------- Agent E (Debate & Consensus) ----------
+      // ---------- Angel E (Debate & Consensus) ----------
       const eRes = await fetch(`${API_BASE}/api/angelE`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: finalSummary,
-          agentD_result: dData.result || dData.Result || String(dData),
-          agentC_result: cSummary
+          AngelR_result: finalSummary,
+          AngelD_result: dData.result || dData.Result || String(dData),
+          AngelC_result: cSummary
         })
       });
 
       if (!eRes.ok) {
         const txt = await eRes.text();
-        throw new Error(`Agent E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
+        throw new Error(`Angel E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
       }
       eData = await eRes.json();
       eSummary =
         eData.final_consensus ||
         eData.result ||
         `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
-      setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
+      setResult((prev) => ({ ...prev, AngelEDebate: eSummary }));
 
-      // ---------- Agent J (Judge) ----------
+      // ---------- Angel J (Judge) ----------
       try {
         const jRes = await fetch(`${API_BASE}/api/angelJ`, {
           method: "POST",
@@ -188,10 +188,10 @@ export default function AutismTest() {
           body: JSON.stringify({
             condition: testName,
             testName,
-            agentR_result: finalSummary,
-            agentD_result: dData.result || dData.Result || String(dData),
-            agentC_result: cSummary,
-            agentE_result: eSummary,
+            AngelR_result: finalSummary,
+            AngelD_result: dData.result || dData.Result || String(dData),
+            AngelC_result: cSummary,
+            AngelE_result: eSummary,
             score,
             level
           })
@@ -201,19 +201,19 @@ export default function AutismTest() {
           const txt = await jRes.text();
           setResult((prev) => ({
             ...prev,
-            agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}`
+            AngelJDecision: `⚠️ Angel J failed: ${jRes.status} ${jRes.statusText} — ${txt}`
           }));
         } else {
           const jData = await jRes.json();
           // store decision object or string
-          setResult((prev) => ({ ...prev, agentJDecision: jData }));
+          setResult((prev) => ({ ...prev, AngelJDecision: jData }));
         }
       } catch (err) {
-        console.error("Agent J connection error:", err);
-        setResult((prev) => ({ ...prev, agentJDecision: "⚠️ Could not connect to Agent J backend." }));
+        console.error("Angel J connection error:", err);
+        setResult((prev) => ({ ...prev, AngelJDecision: "⚠️ Could not connect to Angel J backend." }));
       }
     } catch (err) {
-      console.error("Agent chain error:", err);
+      console.error("Angel chain error:", err);
       setResult((prev) => ({
         ...prev,
         aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain.",
@@ -306,60 +306,60 @@ export default function AutismTest() {
                 {/* <p style={styles.resultText}>{result.level}</p> */}
 
                 {/* {result.aiDiagnosis && (
-                  <p style={styles.agentRText}>
-                    <strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}
+                  <p style={styles.AngelRText}>
+                    <strong>Angel R Diagnosis:</strong> {result.aiDiagnosis}
                   </p>
                 )}
 
-                {result.agentDExplanation && (
+                {result.AngelDExplanation && (
                   <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Agent D Summary:</strong> {result.agentDExplanation}
+                    <strong>Angel D Summary:</strong> {result.AngelDExplanation}
                   </p>
                 )}
 
-                {result.agentCComparison && (
+                {result.AngelCComparison && (
                   <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Agent C Comparative Summary:</strong> {result.agentCComparison}
+                    <strong>Angel C Comparative Summary:</strong> {result.AngelCComparison}
                   </p>
                 )}
 
-                {result.agentEDebate && (
+                {result.AngelEDebate && (
                   <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Agent E Debate Summary:</strong> {result.agentEDebate}
+                    <strong>Angel E Debate Summary:</strong> {result.AngelEDebate}
                   </p>
                 )} */}
 
-                {result.agentJDecision && (
+                {result.AngelJDecision && (
                   <div style={{ marginTop: "12px", textAlign: "left", color: "#444" }}>
-                    <strong>Agent J (Judge) Decision:</strong>
-                    {typeof result.agentJDecision === "string" ? (
-                      <div style={{ marginTop: "6px" }}>{result.agentJDecision}</div>
+                    <strong>Angel J (Judge) Decision:</strong>
+                    {typeof result.AngelJDecision === "string" ? (
+                      <div style={{ marginTop: "6px" }}>{result.AngelJDecision}</div>
                     ) : (
                       <div style={{ marginTop: "8px" }}>
-                        {result.agentJDecision.decision && (
+                        {result.AngelJDecision.decision && (
                           <div>
-                            <strong>Decision:</strong> {result.agentJDecision.decision}
+                            <strong>Decision:</strong> {result.AngelJDecision.decision}
                           </div>
                         )}
 
-                        {result.agentJDecision.confidence !== undefined && (
+                        {result.AngelJDecision.confidence !== undefined && (
                           <div>
-                            <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
+                            <strong>Confidence:</strong> {String(result.AngelJDecision.confidence)}
                           </div>
                         )}
 
-                        {result.agentJDecision.reasoning && (
+                        {result.AngelJDecision.reasoning && (
                           <div style={{ marginTop: "6px" }}>
-                            <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
+                            <strong>Reasoning:</strong> {result.AngelJDecision.reasoning}
                           </div>
                         )}
 
-                        {Array.isArray(result.agentJDecision.actions) &&
-                          result.agentJDecision.actions.length > 0 && (
+                        {Array.isArray(result.AngelJDecision.actions) &&
+                          result.AngelJDecision.actions.length > 0 && (
                             <div style={{ marginTop: "6px" }}>
                               <strong>Actions:</strong>
                               <ul style={{ marginTop: "6px" }}>
-                                {result.agentJDecision.actions.map((a, idx) => (
+                                {result.AngelJDecision.actions.map((a, idx) => (
                                   <li key={idx}>{a}</li>
                                 ))}
                               </ul>
@@ -367,9 +367,9 @@ export default function AutismTest() {
                           )}
 
                         {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
-                        {result.agentJDecision.final_call && (
+                        {result.AngelJDecision.final_call && (
                           <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
-                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
+                            <strong>Final Judgment:</strong> {result.AngelJDecision.final_call}
                           </div>
                         )}
                       </div>
@@ -513,5 +513,5 @@ const styles = {
   resultBox: { marginTop: "40px", backgroundColor: "#f3f4f6", borderRadius: "12px", padding: "25px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", width: "80%", marginLeft: "auto", marginRight: "auto" },
   resultScore: { fontSize: "20px", fontWeight: "700", color: "#333", marginBottom: "8px" },
   resultText: { fontSize: "18px", fontWeight: "600", color: "#7b61ff" },
-  agentRText: { marginTop: "12px", fontSize: "16px", color: "#444", lineHeight: "1.6" }
+  AngelRText: { marginTop: "12px", fontSize: "16px", color: "#444", lineHeight: "1.6" }
 };

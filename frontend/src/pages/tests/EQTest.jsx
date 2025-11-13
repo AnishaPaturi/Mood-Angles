@@ -96,7 +96,7 @@ export default function EmotionalIntelligenceTest() {
     let eSummary = "";
 
     try {
-      // ---------- Agent R ----------
+      // ---------- Angel R ----------
       const payloadR = {
         condition: testName,
         testName,
@@ -113,13 +113,13 @@ export default function EmotionalIntelligenceTest() {
 
       if (!rRes.ok) {
         const txt = await rRes.text();
-        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
+        throw new Error(`Angel R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
       }
       const rData = await rRes.json();
       finalSummary = String(rData.result || rData.Result || safeText(rData)).trim();
       setResult((prev) => ({ ...prev, aiDiagnosis: finalSummary }));
 
-      // ---------- Agent D ----------
+      // ---------- Angel D ----------
       const dRes = await fetch(`${API_BASE}/api/angelD`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -134,12 +134,12 @@ export default function EmotionalIntelligenceTest() {
 
       if (!dRes.ok) {
         const txt = await dRes.text();
-        throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
+        throw new Error(`Angel D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
       }
       dData = await dRes.json();
       setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || safeText(dData) }));
 
-      // ---------- Agent C ----------
+      // ---------- Angel C ----------
       const cRes = await fetch(`${API_BASE}/api/angelC`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,13 +156,13 @@ export default function EmotionalIntelligenceTest() {
 
       if (!cRes.ok) {
         const txt = await cRes.text();
-        throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
+        throw new Error(`Angel C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
       }
       cData = await cRes.json();
       cSummary = cData.result || cData.Result || safeText(cData);
       setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
 
-      // ---------- Agent E (Debate/Consensus) ----------
+      // ---------- Angel E (Debate/Consensus) ----------
       const eRes = await fetch(`${API_BASE}/api/angelE`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -177,13 +177,13 @@ export default function EmotionalIntelligenceTest() {
 
       if (!eRes.ok) {
         const txt = await eRes.text();
-        throw new Error(`Agent E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
+        throw new Error(`Angel E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
       }
       eData = await eRes.json();
       eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
       setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
 
-      // ---------- Agent J (Judge) ----------
+      // ---------- Angel J (Judge) ----------
       const jRes = await fetch(`${API_BASE}/api/angelJ`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -201,13 +201,13 @@ export default function EmotionalIntelligenceTest() {
 
       if (!jRes.ok) {
         const txt = await jRes.text();
-        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
+        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Angel J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
       } else {
         const jData = await jRes.json();
         setResult((prev) => ({ ...prev, agentJDecision: jData }));
       }
     } catch (err) {
-      console.error("Agent chain error:", err);
+      console.error("Angel chain error:", err);
       setResult((prev) => ({
         ...prev,
         chainError: err.message,
@@ -303,31 +303,31 @@ export default function EmotionalIntelligenceTest() {
 
                 {/* {result.aiDiagnosis && (
                   <p style={styles.agentRText}>
-                    <strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}
+                    <strong>Angel R Diagnosis:</strong> {result.aiDiagnosis}
                   </p>
                 )}
 
                 {result.agentDExplanation && (
                   <p style={{ marginTop: 10, fontSize: 16 }}>
-                    <strong>Agent D Summary:</strong> {result.agentDExplanation}
+                    <strong>Angel D Summary:</strong> {result.agentDExplanation}
                   </p>
                 )}
 
                 {result.agentCComparison && (
                   <p style={{ marginTop: 10, fontSize: 16 }}>
-                    <strong>Agent C Comparative Summary:</strong> {result.agentCComparison}
+                    <strong>Angel C Comparative Summary:</strong> {result.agentCComparison}
                   </p>
                 )}
 
                 {result.agentEDebate && (
                   <p style={{ marginTop: 10, fontSize: 16 }}>
-                    <strong>Agent E Debate Summary:</strong> {result.agentEDebate}
+                    <strong>Angel E Debate Summary:</strong> {result.agentEDebate}
                   </p>
                 )} */}
 
                 {result.agentJDecision && (
                   <div style={{ marginTop: "12px", textAlign: "left", color: "#444" }}>
-                    <strong>Agent J (Judge) Decision:</strong>
+                    <strong>Angel J (Judge) Decision:</strong>
                     {typeof result.agentJDecision === "string" ? (
                       <div style={{ marginTop: "6px" }}>{result.agentJDecision}</div>
                     ) : (
