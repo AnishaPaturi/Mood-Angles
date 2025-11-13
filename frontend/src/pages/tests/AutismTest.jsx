@@ -303,7 +303,7 @@ export default function AutismTest() {
             {result && (
               <div style={styles.resultBox}>
                 {result.score !== null && <p style={styles.resultScore}>Your Autism Traits Score: {result.score}/100</p>}
-                <p style={styles.resultText}>{result.level}</p>
+                {/* <p style={styles.resultText}>{result.level}</p> */}
 
                 {/* {result.aiDiagnosis && (
                   <p style={styles.agentRText}>
@@ -336,21 +336,47 @@ export default function AutismTest() {
                       <div style={{ marginTop: "6px" }}>{result.agentJDecision}</div>
                     ) : (
                       <div style={{ marginTop: "8px" }}>
-                        {result.agentJDecision.decision && <div><strong>Decision:</strong> {result.agentJDecision.decision}</div>}
-                        {result.agentJDecision.confidence !== undefined && <div><strong>Confidence:</strong> {String(result.agentJDecision.confidence)}</div>}
-                        {result.agentJDecision.reasoning && <div style={{ marginTop: "6px" }}><strong>Reasoning:</strong> {result.agentJDecision.reasoning}</div>}
-                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
+                        {result.agentJDecision.decision && (
+                          <div>
+                            <strong>Decision:</strong> {result.agentJDecision.decision}
+                          </div>
+                        )}
+
+                        {result.agentJDecision.confidence !== undefined && (
+                          <div>
+                            <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
+                          </div>
+                        )}
+
+                        {result.agentJDecision.reasoning && (
                           <div style={{ marginTop: "6px" }}>
-                            <strong>Actions:</strong>
-                            <ul style={{ marginTop: "6px" }}>
-                              {result.agentJDecision.actions.map((a, idx) => <li key={idx}>{a}</li>)}
-                            </ul>
+                            <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
+                          </div>
+                        )}
+
+                        {Array.isArray(result.agentJDecision.actions) &&
+                          result.agentJDecision.actions.length > 0 && (
+                            <div style={{ marginTop: "6px" }}>
+                              <strong>Actions:</strong>
+                              <ul style={{ marginTop: "6px" }}>
+                                {result.agentJDecision.actions.map((a, idx) => (
+                                  <li key={idx}>{a}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                        {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
+                        {result.agentJDecision.final_call && (
+                          <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
+                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
                           </div>
                         )}
                       </div>
                     )}
                   </div>
                 )}
+
 
                 {result.chainError && (
                   <p style={{ marginTop: "10px", color: "#b91c1c" }}>
