@@ -1,43 +1,41 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function MentalHealthTodayTest() {
+export default function DepressionTest() {
   const API_BASE = "http://localhost:5000";
-  const testName = "Mental Health Today";
+  const testName = "Depression";
 
- 
+  
   const questions = [
-    "I often feel overwhelmed by my emotions.",
-    "I can usually handle the amount of stress in my life.",
-    "I sometimes notice physical signs of anxiety, such as tense muscles or sweaty palms.",
-    "I have close, supportive relationships with people I care about.",
-    "I regret some of my past decisions and think about them often.",
-    "I tend to be very self-critical or hard on myself.",
-    "I still struggle with painful experiences or losses from the past.",
-    "I can recognize and express my emotions in a healthy way.",
-    "I believe the people close to me will support me if I open up to them.",
-    "I sometimes engage in habits that make it harder to function at my best.",
-    "When I feel strong emotions, I usually understand what triggered them.",
-    "My mood stays fairly steady from day to day.",
-    "I often avoid or put off important tasks, even when I know I shouldn’t.",
-    "I feel sad or down more often than I’d like to.",
-    "I have a sense of meaning or purpose in my life.",
-    "I sometimes feel lonely or disconnected from others.",
-    "I get frustrated, upset, or angry easily.",
-    "My sleep or appetite has changed compared to when I felt at my best.",
-    "I can recover from challenges or setbacks without too much difficulty.",
-    "Most days, I manage my time and responsibilities fairly well."
+    "I often feel sad or down, even when things are going okay.",
+    "I don’t enjoy my usual hobbies or activities as much as I used to.",
+    "It feels hard to get started on new tasks or projects.",
+    "Things that used to make me happy don’t feel the same anymore.",
+    "I sometimes get headaches, stomachaches, or other pains for no clear reason.",
+    "I get irritated or upset more easily than before.",
+    "I feel left out or disconnected from other people.",
+    "It’s hard to feel hopeful about the future.",
+    "I cry more easily than I used to, or feel like I could cry for no reason.",
+    "I have trouble falling asleep, staying asleep, or I sleep much longer than usual.",
+    "I often think I’m not doing as well in life as I should be.",
+    "It’s hard to focus on school, work, or everyday tasks.",
+    "I tend to be very hard on myself when I make mistakes.",
+    "I often feel tired or low on energy, even after resting.",
+    "I lose interest in things like reading, shows, or games halfway through.",
+    "Making simple decisions feels more stressful than it used to.",
+    "When I feel low, it’s hard for others to cheer me up.",
+    "I sometimes feel like I don’t matter or that people wouldn’t miss me if I weren’t around.",
+    "My appetite has changed — I’m eating much more or much less than usual.",
+    "I don’t feel as affectionate or close to others as I used to."
   ];
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
     const updated = [...answers];
     updated[qIndex] = value;
     setAnswers(updated);
@@ -49,30 +47,24 @@ export default function MentalHealthTodayTest() {
       return acc;
     }, {});
 
-  // compute normalized 0-10 score (answers are 0..4)
-  const computeNormalized10 = () => {
-    const raw = answers.reduce((s, v) => s + (typeof v === "number" ? v : 0), 0);
-    const maxRaw = questions.length * 4; // each item max 4
-    if (maxRaw === 0) return 0;
-    const normalized = (raw / maxRaw) * 10;
-    return Math.round(normalized * 10) / 10; // one decimal
+  const computeScore = () => {
+    const rawScore = answers.reduce((a, v) => a + v, 0);
+    const maxChoice = colors.length - 1;
+    const maxPossible = questions.length * maxChoice;
+    if (maxPossible === 0) return 0;
+    return Math.round((rawScore / maxPossible) * 100);
   };
 
-  const interpretLevel = (norm10) => {
-    if (norm10 < 3.3) return "You appear to be coping well overall.";
-    if (norm10 < 6.6) return "You show some signs of emotional distress — consider healthy coping strategies.";
-    return "You may be experiencing significant stress or emotional challenges. Seeking professional help could be beneficial.";
-  };
-
-  const safeText = (x) => {
-    if (x === undefined || x === null) return "";
-    if (typeof x === "string") return x;
-    try {
-      return JSON.stringify(x);
-    } catch {
-      return String(x);
-    }
-  };
+  const interpretLevel = (score) =>
+    score <= 20
+      ? "Minimal or No Depression"
+      : score <= 40
+      ? "Mild Depression (Monitor your mood)"
+      : score <= 65
+      ? "Moderate Depression (Consider talking to someone)"
+      : score <= 85
+      ? "Severe Depression (Seek professional help)"
+      : "Extremely Severe Depression (Immediate support advised)";
 
   const handleSubmit = async () => {
     if (answers.some((a) => a === null)) {
@@ -83,17 +75,12 @@ export default function MentalHealthTodayTest() {
       return;
     }
 
+    const score = computeScore();
+    const level = interpretLevel(score);
+    setResult({ score, level });
     setLoading(true);
-    const normalizedScore = computeNormalized10();
-    const level = interpretLevel(normalizedScore);
-    // also provide percent for agents (0-100)
-    const percentScore = Math.round((normalizedScore / 10) * 100);
 
-    // show immediate local result
-    setResult({ score: normalizedScore, level });
-
-    // agent chain variables
-    let agentR_summary = "";
+    let finalSummary = "";
     let dData = null;
     let cData = null;
     let eData = null;
@@ -102,27 +89,23 @@ export default function MentalHealthTodayTest() {
 
     try {
       // ---------- Agent R ----------
-      const rPayload = {
+      const payloadR = {
         condition: testName,
         testName,
-        score_percent: percentScore,
-        normalized_score: normalizedScore,
+        score,
+        level,
         answers: buildAnswersPayload()
       };
 
       const rRes = await fetch(`${API_BASE}/api/angelR`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(rPayload)
+        body: JSON.stringify(payloadR)
       });
-
-      if (!rRes.ok) {
-        const txt = await rRes.text();
-        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
-      }
-      const rJson = await rRes.json();
-      agentR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
-      setResult((prev) => ({ ...prev, aiDiagnosis: agentR_summary }));
+      if (!rRes.ok) throw new Error(`Agent R failed: ${rRes.status}`);
+      const rData = await rRes.json();
+      finalSummary = String(rData.result || rData.Result || "").trim();
+      setResult((prev) => ({ ...prev, aiDiagnosis: finalSummary }));
 
       // ---------- Agent D ----------
       const dRes = await fetch(`${API_BASE}/api/angelD`, {
@@ -131,18 +114,14 @@ export default function MentalHealthTodayTest() {
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: agentR_summary,
-          score_percent: percentScore,
-          normalized_score: normalizedScore
+          agentR_result: finalSummary,
+          score,
+          level
         })
       });
-
-      if (!dRes.ok) {
-        const txt = await dRes.text();
-        throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
-      }
+      if (!dRes.ok) throw new Error(`Agent D failed: ${dRes.status}`);
       dData = await dRes.json();
-      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || safeText(dData) }));
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result }));
 
       // ---------- Agent C ----------
       const cRes = await fetch(`${API_BASE}/api/angelC`, {
@@ -151,39 +130,31 @@ export default function MentalHealthTodayTest() {
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: agentR_summary,
-          agentD_result: dData.result || dData.Result || safeText(dData),
-          score_percent: percentScore,
-          normalized_score: normalizedScore,
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
+          score,
+          level,
           answers: buildAnswersPayload()
         })
       });
-
-      if (!cRes.ok) {
-        const txt = await cRes.text();
-        throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
-      }
+      if (!cRes.ok) throw new Error(`Agent C failed: ${cRes.status}`);
       cData = await cRes.json();
-      cSummary = cData.result || cData.Result || safeText(cData);
+      cSummary = cData.result || cData.Result;
       setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
 
-      // ---------- Agent E (Debate/Consensus) ----------
+      // ---------- Agent E ----------
       const eRes = await fetch(`${API_BASE}/api/angelE`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: agentR_summary,
-          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
           agentC_result: cSummary
         })
       });
-
-      if (!eRes.ok) {
-        const txt = await eRes.text();
-        throw new Error(`Agent E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
-      }
+      if (!eRes.ok) throw new Error(`Agent E failed: ${eRes.status}`);
       eData = await eRes.json();
       eSummary =
         eData.final_consensus ||
@@ -191,25 +162,28 @@ export default function MentalHealthTodayTest() {
         `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
       setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
 
-      // ---------- Agent J (Judge) ----------
+      // ---------- Agent J ----------
       const jRes = await fetch(`${API_BASE}/api/angelJ`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: agentR_summary,
-          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result,
           agentC_result: cSummary,
           agentE_result: eSummary,
-          score_percent: percentScore,
-          normalized_score: normalizedScore
+          score,
+          level
         })
       });
 
       if (!jRes.ok) {
         const txt = await jRes.text();
-        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
+        setResult((prev) => ({
+          ...prev,
+          agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}`
+        }));
       } else {
         const jData = await jRes.json();
         setResult((prev) => ({ ...prev, agentJDecision: jData }));
@@ -218,8 +192,8 @@ export default function MentalHealthTodayTest() {
       console.error("Agent chain error:", err);
       setResult((prev) => ({
         ...prev,
-        chainError: err.message,
-        aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain."
+        aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain.",
+        chainError: err.message
       }));
     } finally {
       setLoading(false);
@@ -232,14 +206,13 @@ export default function MentalHealthTodayTest() {
         {/* HEADER SECTION */}
         <div style={styles.headerContainer}>
           <img
-            src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1500&q=80"
-            alt="Mental Health Test Header"
+            src="https://images.pexels.com/photos/8978173/pexels-photo-8978173.jpeg"
+            alt="Depression Test Header"
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
-
           <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>Your Mental Health Today</h1>
+            <h1 style={styles.mainTitle}>Depression Check</h1>
             <div style={styles.testMeta}>
               <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
@@ -247,30 +220,28 @@ export default function MentalHealthTodayTest() {
           </div>
         </div>
 
-        {/* SUBSECTION */}
+        {/* INTRO SECTION */}
         <div style={styles.subSection}>
-          <h2 style={styles.subTitle}>How well do you cope?</h2>
+          <h2 style={styles.subTitle}>Are you feeling persistently low or unmotivated?</h2>
           <p style={styles.subDesc}>
-            This quick check helps you see how you're coping day to day. If results are concerning, consider reaching out to a clinician.
+            Depression affects thoughts, energy, and daily life. This self-assessment helps reflect
+            on emotional well-being and encourages professional guidance if needed.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
-              🚀 Start Test
+              🧠 Start Test
             </button>
           )}
         </div>
 
-        {/* TEST SECTION */}
         {started && (
           <>
-            {/* SCALE BAR */}
             <div style={styles.scaleBar}>
               <span style={styles.scaleText}>STRONGLY DISAGREE</span>
               <span style={styles.scaleText}>NEUTRAL</span>
               <span style={styles.scaleText}>STRONGLY AGREE</span>
             </div>
 
-            {/* QUESTIONS */}
             <div style={styles.questionList}>
               {questions.map((q, i) => (
                 <div key={i} style={styles.questionBlock}>
@@ -282,8 +253,6 @@ export default function MentalHealthTodayTest() {
                       <button
                         key={j}
                         onClick={() => handleSelect(i, j)}
-                        type="button"
-                        aria-pressed={answers[i] === j}
                         style={{
                           ...styles.circle,
                           borderColor: color,
@@ -301,7 +270,6 @@ export default function MentalHealthTodayTest() {
               ))}
             </div>
 
-            {/* SUBMIT */}
             <button onClick={handleSubmit} style={styles.submitButton} disabled={loading}>
               {loading ? "Analyzing..." : "Submit Test"}
             </button>
@@ -310,42 +278,71 @@ export default function MentalHealthTodayTest() {
             {result && (
               <div style={styles.resultBox}>
                 {result.score !== null && (
-                  <p style={styles.resultScore}>Your Coping Score: {result.score} / 10</p>
+                  <p style={styles.resultScore}>Your Depression Score: {result.score}/100</p>
                 )}
-                <p style={styles.resultText}>{result.level}</p>
+                {/* <p style={styles.resultText}>{result.level}</p> */}
 
-                {/* {result.aiDiagnosis && (
-                  <p style={styles.agentRText}><strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}</p>
+                {result.aiDiagnosis && (
+                  <p style={styles.agentRText}>
+                    <strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}
+                  </p>
                 )}
-
                 {result.agentDExplanation && (
-                  <p style={{ marginTop: 10 }}><strong>Agent D Summary:</strong> {result.agentDExplanation}</p>
+                  <p style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
+                    <strong>Agent D Summary:</strong> {result.agentDExplanation}
+                  </p>
                 )}
-
                 {result.agentCComparison && (
-                  <p style={{ marginTop: 10 }}><strong>Agent C Comparative Summary:</strong> {result.agentCComparison}</p>
+                  <p style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
+                    <strong>Agent C Comparative Summary:</strong> {result.agentCComparison}
+                  </p>
                 )}
-
                 {result.agentEDebate && (
-                  <p style={{ marginTop: 10 }}><strong>Agent E Debate Summary:</strong> {result.agentEDebate}</p>
-                )} */}
-
+                  <p style={{ marginTop: 10, fontSize: 16, color: "#444" }}>
+                    <strong>Agent E Debate Summary:</strong> {result.agentEDebate}
+                  </p>
+                )} 
                 {result.agentJDecision && (
-                  <div style={{ marginTop: 12, textAlign: "left", color: "#444" }}>
+                  <div style={{ marginTop: "12px", textAlign: "left", color: "#444" }}>
                     <strong>Agent J (Judge) Decision:</strong>
                     {typeof result.agentJDecision === "string" ? (
-                      <div style={{ marginTop: 6 }}>{result.agentJDecision}</div>
+                      <div style={{ marginTop: "6px" }}>{result.agentJDecision}</div>
                     ) : (
-                      <div style={{ marginTop: 8 }}>
-                        {result.agentJDecision.decision && <div><strong>Decision:</strong> {result.agentJDecision.decision}</div>}
-                        {result.agentJDecision.confidence !== undefined && <div><strong>Confidence:</strong> {String(result.agentJDecision.confidence)}</div>}
-                        {result.agentJDecision.reasoning && <div style={{ marginTop: 6 }}><strong>Reasoning:</strong> {result.agentJDecision.reasoning}</div>}
-                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
-                          <div style={{ marginTop: 6 }}>
-                            <strong>Actions:</strong>
-                            <ul>
-                              {result.agentJDecision.actions.map((a, idx) => <li key={idx}>{a}</li>)}
-                            </ul>
+                      <div style={{ marginTop: "8px" }}>
+                        {result.agentJDecision.decision && (
+                          <div>
+                            <strong>Decision:</strong> {result.agentJDecision.decision}
+                          </div>
+                        )}
+
+                        {result.agentJDecision.confidence !== undefined && (
+                          <div>
+                            <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
+                          </div>
+                        )}
+
+                        {result.agentJDecision.reasoning && (
+                          <div style={{ marginTop: "6px" }}>
+                            <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
+                          </div>
+                        )}
+
+                        {Array.isArray(result.agentJDecision.actions) &&
+                          result.agentJDecision.actions.length > 0 && (
+                            <div style={{ marginTop: "6px" }}>
+                              <strong>Actions:</strong>
+                              <ul style={{ marginTop: "6px" }}>
+                                {result.agentJDecision.actions.map((a, idx) => (
+                                  <li key={idx}>{a}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                        {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
+                        {result.agentJDecision.final_call && (
+                          <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
+                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
                           </div>
                         )}
                       </div>
@@ -354,7 +351,7 @@ export default function MentalHealthTodayTest() {
                 )}
 
                 {result.chainError && (
-                  <p style={{ marginTop: 10, color: "#b91c1c" }}>
+                  <p style={{ color: "#b91c1c" }}>
                     <strong>Chain error:</strong> {result.chainError}
                   </p>
                 )}
@@ -367,7 +364,7 @@ export default function MentalHealthTodayTest() {
   );
 }
 
-/* ------------------- INLINE STYLES ------------------- */
+/* ------------------- STYLES ------------------- */
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
@@ -376,41 +373,44 @@ const styles = {
     margin: "0",
     padding: "0 0 60px",
     fontFamily: "'Poppins', sans-serif",
-    textAlign: "center"
+    textAlign: "center",
   },
+
+  /* HEADER */
   headerContainer: {
     position: "relative",
     textAlign: "center",
     color: "#fff",
-    overflow: "hidden"
+    overflow: "hidden",
   },
   headerBg: {
     width: "100%",
     height: "450px",
-    objectFit: "cover"
+    objectFit: "cover",
   },
   headerOverlay: {
     position: "absolute",
     inset: 0,
-    background: "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.3), rgba(0,0,0,0.7))"
+    background:
+      "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.3), rgba(0,0,0,0.7))",
   },
   headerContent: {
     position: "absolute",
     top: "50%",
     left: "50%",
-    transform: "translate(-50%, -50%)"
+    transform: "translate(-50%, -50%)",
   },
   mainTitle: {
     fontSize: "68px",
     fontWeight: "900",
     marginBottom: "25px",
     letterSpacing: "1px",
-    textShadow: "2px 4px 10px rgba(0,0,0,0.6)"
+    textShadow: "2px 4px 10px rgba(0,0,0,0.6)",
   },
   testMeta: {
     display: "flex",
     justifyContent: "center",
-    gap: "18px"
+    gap: "18px",
   },
   metaBtnOrange: {
     background: "rgba(249,115,22,0.9)",
@@ -419,7 +419,6 @@ const styles = {
     borderRadius: "25px",
     fontWeight: "600",
     fontSize: "14px",
-    backdropFilter: "blur(6px)"
   },
   metaBtnPink: {
     background: "rgba(236,72,153,0.9)",
@@ -428,27 +427,28 @@ const styles = {
     borderRadius: "25px",
     fontWeight: "600",
     fontSize: "14px",
-    backdropFilter: "blur(6px)"
   },
+
+  /* INTRO SECTION */
   subSection: {
-    background: "linear-gradient(180deg, #243cc9, #4169e1)",
+    background: "linear-gradient(180deg, #2563eb, #3b82f6)",
     color: "#fff",
     padding: "40px 20px 60px",
-    clipPath: "ellipse(120% 65% at 50% 25%)"
+    clipPath: "ellipse(120% 65% at 50% 25%)",
   },
   subTitle: {
     fontSize: "32px",
     fontWeight: "700",
-    marginBottom: "12px"
+    marginBottom: "12px",
   },
   subDesc: {
     fontSize: "16px",
     lineHeight: "1.7",
     maxWidth: "700px",
-    margin: "0 auto 20px"
+    margin: "0 auto 20px",
   },
   startButton: {
-    background: "#7b61ff",
+    background: "#f59e0b",
     color: "#fff",
     border: "none",
     borderRadius: "30px",
@@ -457,9 +457,10 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
     marginTop: "10px",
-    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
-    transition: "all 0.3s ease"
+    boxShadow: "0 6px 14px rgba(245,158,11,0.3)",
   },
+
+  /* SCALE BAR */
   scaleBar: {
     display: "flex",
     justifyContent: "center",
@@ -472,31 +473,33 @@ const styles = {
     width: "90%",
     fontWeight: "600",
     fontSize: "14px",
-    gap: "60px"
+    gap: "60px",
   },
   scaleText: {
-    textShadow: "0 1px 2px rgba(0,0,0,0.2)"
+    textShadow: "0 1px 2px rgba(0,0,0,0.2)",
   },
+
+  /* QUESTIONS */
   questionList: {
     marginTop: "20px",
     width: "90%",
     marginLeft: "auto",
-    marginRight: "auto"
+    marginRight: "auto",
   },
   questionBlock: {
-    marginBottom: "45px"
+    marginBottom: "45px",
   },
   questionText: {
     fontSize: "18px",
     color: "#333",
     marginBottom: "25px",
-    fontWeight: "600"
+    fontWeight: "600",
   },
   circleRow: {
     display: "flex",
     justifyContent: "center",
     gap: "30px",
-    marginBottom: "10px"
+    marginBottom: "10px",
   },
   circle: {
     width: "60px",
@@ -504,25 +507,27 @@ const styles = {
     borderRadius: "50%",
     border: "3px solid #ccc",
     cursor: "pointer",
-    transition: "all 0.3s ease"
+    transition: "all 0.3s ease",
   },
   labelRow: {
     display: "flex",
     justifyContent: "space-between",
     width: "320px",
-    margin: "8px auto"
+    margin: "8px auto",
   },
   labelLeft: { color: "#555", fontSize: "14px", fontWeight: "600" },
   labelRight: { color: "#555", fontSize: "14px", fontWeight: "600" },
   divider: {
     borderBottom: "1px solid #e5e7eb",
     width: "90%",
-    margin: "35px auto"
+    margin: "35px auto",
   },
+
+  /* SUBMIT & RESULT */
   submitButton: {
     display: "block",
     margin: "40px auto 0",
-    backgroundColor: "#7b61ff",
+    backgroundColor: "#2563eb",
     color: "#fff",
     border: "none",
     borderRadius: "10px",
@@ -530,8 +535,7 @@ const styles = {
     fontSize: "16px",
     fontWeight: "600",
     cursor: "pointer",
-    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease"
+    boxShadow: "0 6px 14px rgba(37,99,235,0.3)",
   },
   resultBox: {
     marginTop: "40px",
@@ -541,22 +545,17 @@ const styles = {
     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
     width: "80%",
     marginLeft: "auto",
-    marginRight: "auto"
+    marginRight: "auto",
   },
   resultScore: {
     fontSize: "20px",
     fontWeight: "700",
     color: "#333",
-    marginBottom: "8px"
+    marginBottom: "8px",
   },
   resultText: {
     fontSize: "18px",
     fontWeight: "600",
-    color: "#7b61ff"
+    color: "#2563eb",
   },
-  agentRText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#444"
-  }
 };

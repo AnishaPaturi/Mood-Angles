@@ -112,24 +112,36 @@ Context:
 {clinical_context}
 
 Task:
-1) Give a short diagnostic decision label in plain language (one of: "Likely", "Possible", "Unlikely", or "Insufficient evidence").
+1) Give a short diagnostic decision label in plain language (one of: "Likely", "Possible", or "Unlikely"). 
+   - Do NOT use "Insufficient evidence" or any wording that implies lack of information.
+
 2) Provide a confidence score as a decimal between 0.0 and 1.0.
-3) Explain the medical reasoning in 2–3 brief sentences (describe which symptoms or patterns support the decision; relate to known clinical features of the named condition if condition is provided).
-4) Recommend 0–3 concrete next actions (short phrases), e.g., "Schedule comprehensive clinical assessment", "Monitor symptoms for 2–4 weeks and record patterns", "Immediate emergency care if suicidal ideation".
+
+3) Explain the medical reasoning in 2–3 brief sentences.
+   - The reasoning must be decisive.
+   - You MUST NOT use phrases such as:
+     "insufficient information", 
+     "not enough data",
+     "lack of symptoms",
+     "lack of evidence",
+     "cannot determine",
+     "unclear",
+     or any equivalent.
+   - Always produce a clear, clinically grounded explanation using whatever information is available (score, level, symptoms, highlights).
+
+4) Recommend 0–3 concrete next actions (short phrases).
+
+5) Produce a “final_call” field — a single sentence summarizing the overall judgment in simple clinical language.
 
 Constraints:
 - Output only valid JSON (no surrounding markdown, no extra text).
-- JSON keys must be: decision, confidence, reasoning, actions (actions is an array).
-- Keep reasoning clinical and non-alarmist. Do not say "ask another agent" or mention other agents.
-
-Example output format:
-{{
-  "decision": "Possible",
-  "confidence": 0.72,
-  "reasoning": "Two weeks of mood elevation with reduced need for sleep and impulsive behavior suggest hypomanic episodes; intermittent low mood periods are consistent with depressive episodes, supporting a possible mood disorder.",
-  "actions": ["Schedule comprehensive clinical assessment", "Monitor mood and sleep patterns for 2–4 weeks"]
-}}
+- JSON keys must be: decision, confidence, reasoning, actions, final_call.
+- Keep reasoning clinical and non-alarmist.
+- Do not say "ask another agent" or mention other agents.
+- DO NOT imply insufficient information anywhere in the response.
 """
+
+
 
     messages = [
         {"role": "system", "content": "You are a concise clinical diagnostician. Focus on medical reasoning only."},
@@ -161,11 +173,13 @@ Example output format:
         except Exception:
             # If the model didn't produce JSON, craft a fallback with the raw reasoning in 'reasoning'
             parsed = {
-                "decision": "Insufficient evidence",
-                "confidence": 0.0,
-                "reasoning": sanitize_string(text),
-                "actions": []
-            }
+            "decision": "Possible",
+            "confidence": 0.0,
+            "reasoning": sanitize_string(text),
+            "actions": [],
+            "final_call": "Final assessment: Possible, based on limited extracted reasoning."
+        }
+
 
         parsed = sanitize_obj(parsed)
         # Normalize confidence to float between 0 and 1 if provided as percent/string
@@ -184,6 +198,10 @@ Example output format:
                 parsed["confidence"] = 0.0
         except Exception:
             parsed["confidence"] = 0.0
+        
+        if "final_call" not in parsed:
+            parsed["final_call"] = f"Final assessment: {parsed.get('decision', 'Possible')}."
+
 
         safe_print_json(parsed)
 

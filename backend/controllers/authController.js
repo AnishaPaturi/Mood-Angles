@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 
 import Invite from "../models/Invite.js";
-import Psychiatrist from "../models/psychiatrist.js"; // your file earlier used lowercase
+import Psychiatrist from "../models/Psychiatrist.js"; // your file earlier used lowercase
 import User from "../models/User.js";
 
 /* =======================================================

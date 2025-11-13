@@ -1,32 +1,32 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function AnxietyTest() {
+export default function AutismTest() {
   const API_BASE = "http://localhost:5000";
-  const testName = "Anxiety (GAD)";
+  const testName = "Autism Traits";
 
- 
+  
   const questions = [
-    "I often feel tense, nervous, or on edge — even when there’s no clear reason.",
-    "I worry a lot about different things, even small ones that others might not think about.",
-    "I find it hard to control or stop my worrying once it starts.",
-    "I often feel restless, like I can’t sit still or relax fully.",
-    "I get tired easily because my mind is constantly racing with worries.",
-    "I notice physical tension in my body, such as tight shoulders or jaw clenching.",
-    "I sometimes experience a pounding heart, sweating, or trembling when I feel anxious.",
-    "I often overthink past situations or replay conversations in my head.",
-    "I have trouble falling asleep or staying asleep because my thoughts keep me awake.",
-    "I feel easily startled or jumpy when something unexpected happens.",
-    "I find it difficult to concentrate when I’m worried about something else.",
-    "I tend to imagine the worst possible outcomes, even in ordinary situations.",
-    "I feel like I have to be constantly prepared for something bad to happen.",
-    "I sometimes feel lightheaded, dizzy, or short of breath when I’m anxious.",
-    "I get irritable or snappy when I’m feeling tense or under stress.",
-    "I worry that I might lose control or embarrass myself in front of others.",
-    "I find it hard to enjoy life because I’m always thinking about what could go wrong.",
-    "I sometimes feel detached or spaced out when I’m overwhelmed by anxiety.",
-    "I notice that my anxiety gets in the way of work, relationships, or daily tasks.",
-    "Even on calm days, I feel a sense of unease, like something bad could happen soon."
+    "I often notice patterns or details that other people don’t see.",
+    "I prefer to follow familiar routines and can get stressed when they change unexpectedly.",
+    "I sometimes struggle to understand social cues, like tone of voice or body language.",
+    "People have told me that I sound blunt or rude, even when I don’t mean to be.",
+    "I have specific interests or hobbies that I can focus on for long periods of time.",
+    "I’m very sensitive to physical sensations, such as certain fabrics, lights, or textures.",
+    "Making or maintaining eye contact can feel uncomfortable for me.",
+    "I find casual small talk or social chitchat difficult or tiring.",
+    "I tend to interpret things very literally and sometimes miss hidden meanings or jokes.",
+    "In group conversations, I’m often unsure when it’s my turn to speak.",
+    "Repetitive movements or routines, like pacing or tapping, help me stay calm when I’m stressed.",
+    "When my usual schedule or environment changes, I can feel anxious or upset.",
+    "I enjoy collecting or memorizing information about specific topics or categories.",
+    "I sometimes copy other people’s behavior or expressions to fit in socially.",
+    "It can be difficult for me to guess what others are thinking or feeling unless they say it directly.",
+    "I can talk about my favorite interests or topics for a very long time.",
+    "I sometimes miss when people use sarcasm, irony, or subtle humor.",
+    "Certain everyday sounds, lights, or textures that don’t bother others can feel overwhelming to me.",
+    "It can be hard to follow conversations when several people are talking at once.",
+    "I find it challenging to imagine situations or experiences that I haven’t personally encountered."
   ];
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
@@ -59,15 +59,11 @@ export default function AnxietyTest() {
   };
 
   const interpretLevel = (score) =>
-    score <= 19
-      ? "Low chance"
-      : score <= 50
-      ? "Moderate chance"
-      : score <= 74
-      ? "Some concern (monitor symptoms)"
-      : score <= 86
-      ? "Significant concern"
-      : "High likelihood";
+    score < 25
+      ? "Low chance of Autistic Traits"
+      : score < 55
+      ? "Moderate chance of Autistic Traits"
+      : "High chance of Autistic Traits";
 
   // ---- Submit & Call Agents (R → D → C → E → J) ----
   const handleSubmit = async () => {
@@ -209,6 +205,7 @@ export default function AnxietyTest() {
           }));
         } else {
           const jData = await jRes.json();
+          // store decision object or string
           setResult((prev) => ({ ...prev, agentJDecision: jData }));
         }
       } catch (err) {
@@ -230,17 +227,16 @@ export default function AnxietyTest() {
   return (
     <UserWrapper>
       <div style={styles.container}>
-        {/* HEADER SECTION */}
         <div style={styles.headerContainer}>
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm9zTAsgnraDUhTdbVTmv3qE_klqTQbh4Zvw&s"
-            alt="GAD Test Header"
+            src="https://sentis.com.au/wp-content/uploads/2023/09/kys-story-news-e1694063308229.webp"
+            alt="Autism Test Header"
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
 
           <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>Generalized Anxiety Disorder</h1>
+            <h1 style={styles.mainTitle}>Autism Traits</h1>
             <div style={styles.testMeta}>
               <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
@@ -248,13 +244,11 @@ export default function AnxietyTest() {
           </div>
         </div>
 
-        {/* SUBSECTION */}
         <div style={styles.subSection}>
-          <h2 style={styles.subTitle}>Are your worries taking over?</h2>
+          <h2 style={styles.subTitle}>Could you be on the autism spectrum?</h2>
           <p style={styles.subDesc}>
-            Worry is normal, but when it becomes persistent and causes physical or functional
-            problems it may indicate generalized anxiety. This quick test helps flag possible
-            symptoms — not a diagnosis.
+            Autism can include social differences, restricted/repetitive behavior, and sensory sensitivities.
+            This test is a screening tool — not a diagnosis. If results show concern, consider professional evaluation.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -263,17 +257,14 @@ export default function AnxietyTest() {
           )}
         </div>
 
-        {/* TEST SECTION */}
         {started && (
           <>
-            {/* SCALE BAR */}
             <div style={styles.scaleBar}>
               <span style={styles.scaleText}>STRONGLY DISAGREE</span>
               <span style={styles.scaleText}>NEUTRAL</span>
               <span style={styles.scaleText}>STRONGLY AGREE</span>
             </div>
 
-            {/* QUESTIONS */}
             <div style={styles.questionList}>
               {questions.map((q, i) => (
                 <div key={i} style={styles.questionBlock}>
@@ -300,23 +291,19 @@ export default function AnxietyTest() {
                     <span style={styles.labelLeft}>DISAGREE</span>
                     <span style={styles.labelRight}>AGREE</span>
                   </div>
-                  {i < questions.length - 1 && <div style={styles.divider}></div>}
+                  {i < questions.length - 1 && <div style={styles.divider} />}
                 </div>
               ))}
             </div>
 
-            {/* SUBMIT BUTTON */}
             <button onClick={handleSubmit} style={styles.submitButton} disabled={loading}>
               {loading ? "Analyzing..." : "Submit Test"}
             </button>
 
-            {/* RESULTS */}
             {result && (
               <div style={styles.resultBox}>
-                {result.score !== null && (
-                  <p style={styles.resultScore}>Your Anxiety Score: {result.score}/100</p>
-                )}
-                <p style={styles.resultText}>{result.level}</p>
+                {result.score !== null && <p style={styles.resultScore}>Your Autism Traits Score: {result.score}/100</p>}
+                {/* <p style={styles.resultText}>{result.level}</p> */}
 
                 {/* {result.aiDiagnosis && (
                   <p style={styles.agentRText}>
@@ -342,7 +329,6 @@ export default function AnxietyTest() {
                   </p>
                 )} */}
 
-                {/* Agent J output render */}
                 {result.agentJDecision && (
                   <div style={{ marginTop: "12px", textAlign: "left", color: "#444" }}>
                     <strong>Agent J (Judge) Decision:</strong>
@@ -355,24 +341,35 @@ export default function AnxietyTest() {
                             <strong>Decision:</strong> {result.agentJDecision.decision}
                           </div>
                         )}
+
                         {result.agentJDecision.confidence !== undefined && (
                           <div>
                             <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
                           </div>
                         )}
+
                         {result.agentJDecision.reasoning && (
                           <div style={{ marginTop: "6px" }}>
                             <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
                           </div>
                         )}
-                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
-                          <div style={{ marginTop: "6px" }}>
-                            <strong>Actions:</strong>
-                            <ul style={{ marginTop: "6px" }}>
-                              {result.agentJDecision.actions.map((a, idx) => (
-                                <li key={idx}>{a}</li>
-                              ))}
-                            </ul>
+
+                        {Array.isArray(result.agentJDecision.actions) &&
+                          result.agentJDecision.actions.length > 0 && (
+                            <div style={{ marginTop: "6px" }}>
+                              <strong>Actions:</strong>
+                              <ul style={{ marginTop: "6px" }}>
+                                {result.agentJDecision.actions.map((a, idx) => (
+                                  <li key={idx}>{a}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                        {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
+                        {result.agentJDecision.final_call && (
+                          <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
+                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
                           </div>
                         )}
                       </div>
@@ -380,7 +377,7 @@ export default function AnxietyTest() {
                   </div>
                 )}
 
-                {/* show chain error when present for debugging */}
+
                 {result.chainError && (
                   <p style={{ marginTop: "10px", color: "#b91c1c" }}>
                     <strong>Chain error:</strong> {result.chainError}
@@ -395,7 +392,7 @@ export default function AnxietyTest() {
   );
 }
 
-/* ------------------- INLINE STYLES ------------------- */
+/* ------------------- STYLES ------------------- */
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
@@ -459,7 +456,7 @@ const styles = {
     backdropFilter: "blur(6px)"
   },
   subSection: {
-    background: "linear-gradient(180deg, #243cc9, #4169e1)",
+    background: "linear-gradient(180deg, #f97316, #f59e0b)",
     color: "#fff",
     padding: "40px 20px 60px",
     clipPath: "ellipse(120% 65% at 50% 25%)"
@@ -502,90 +499,19 @@ const styles = {
     fontSize: "14px",
     gap: "60px"
   },
-  scaleText: {
-    textShadow: "0 1px 2px rgba(0,0,0,0.2)"
-  },
-  questionList: {
-    marginTop: "20px",
-    width: "90%",
-    marginLeft: "auto",
-    marginRight: "auto"
-  },
-  questionBlock: {
-    marginBottom: "45px"
-  },
-  questionText: {
-    fontSize: "18px",
-    color: "#333",
-    marginBottom: "25px",
-    fontWeight: "600"
-  },
-  circleRow: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "30px",
-    marginBottom: "10px"
-  },
-  circle: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    border: "3px solid #ccc",
-    cursor: "pointer",
-    transition: "all 0.3s ease"
-  },
-  labelRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    width: "320px",
-    margin: "8px auto"
-  },
+  scaleText: { textShadow: "0 1px 2px rgba(0,0,0,0.2)" },
+  questionList: { marginTop: "20px", width: "90%", marginLeft: "auto", marginRight: "auto" },
+  questionBlock: { marginBottom: "45px" },
+  questionText: { fontSize: "18px", color: "#333", marginBottom: "25px", fontWeight: "600" },
+  circleRow: { display: "flex", justifyContent: "center", gap: "30px", marginBottom: "10px" },
+  circle: { width: "60px", height: "60px", borderRadius: "50%", border: "3px solid #ccc", cursor: "pointer", transition: "all 0.3s ease" },
+  labelRow: { display: "flex", justifyContent: "space-between", width: "320px", margin: "8px auto" },
   labelLeft: { color: "#555", fontSize: "14px", fontWeight: "600" },
   labelRight: { color: "#555", fontSize: "14px", fontWeight: "600" },
-  divider: {
-    borderBottom: "1px solid #e5e7eb",
-    width: "90%",
-    margin: "35px auto"
-  },
-  submitButton: {
-    display: "block",
-    margin: "40px auto 0",
-    backgroundColor: "#7b61ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    padding: "14px 40px",
-    fontSize: "16px",
-    fontWeight: "600",
-    cursor: "pointer",
-    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease"
-  },
-  resultBox: {
-    marginTop: "40px",
-    backgroundColor: "#f3f4f6",
-    borderRadius: "12px",
-    padding: "25px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    width: "80%",
-    marginLeft: "auto",
-    marginRight: "auto"
-  },
-  resultScore: {
-    fontSize: "20px",
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: "8px"
-  },
-  resultText: {
-    fontSize: "18px",
-    fontWeight: "600",
-    color: "#7b61ff"
-  },
-  agentRText: {
-    marginTop: "12px",
-    fontSize: "16px",
-    color: "#444",
-    lineHeight: "1.6"
-  }
+  divider: { borderBottom: "1px solid #e5e7eb", width: "90%", margin: "35px auto" },
+  submitButton: { display: "block", margin: "40px auto 0", backgroundColor: "#7b61ff", color: "#fff", border: "none", borderRadius: "10px", padding: "14px 40px", fontSize: "16px", fontWeight: "600", cursor: "pointer", boxShadow: "0 6px 14px rgba(123,97,255,0.3)", transition: "transform 0.2s ease, box-shadow 0.2s ease" },
+  resultBox: { marginTop: "40px", backgroundColor: "#f3f4f6", borderRadius: "12px", padding: "25px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", width: "80%", marginLeft: "auto", marginRight: "auto" },
+  resultScore: { fontSize: "20px", fontWeight: "700", color: "#333", marginBottom: "8px" },
+  resultText: { fontSize: "18px", fontWeight: "600", color: "#7b61ff" },
+  agentRText: { marginTop: "12px", fontSize: "16px", color: "#444", lineHeight: "1.6" }
 };

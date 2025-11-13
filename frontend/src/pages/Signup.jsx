@@ -85,32 +85,44 @@ export default function Signup() {
     }
   };
 
-  /* ==========================================================
-     🔹 GOOGLE SIGNUP / LOGIN
-  ========================================================== */
-  const handleGoogleSignup = async (credentialResponse) => {
-    try {
-      if (!credentialResponse.credential) {
-        setError("No credential from Google — try again.");
-        return;
-      }
+ /* ==========================================================
+   🔹 GOOGLE SIGNUP / LOGIN (FIXED)
+========================================================== */
+const handleGoogleSignup = async (credentialResponse) => {
+  try {
+    const token = credentialResponse.credential;
 
-      const decoded = jwtDecode(credentialResponse.credential);
-      console.log("Decoded Google Token:", decoded);
-
-      const res = await axios.post("http://localhost:5000/api/auth/google", {
-        credential: credentialResponse.credential,
-      });
-
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.user.role || "user");
-      localStorage.setItem("firstName", res.data.user.firstName);
-      navigate("/UDashboard");
-    } catch (err) {
-      console.error("Google signup failed:", err);
-      setError("Google signup failed. Check console for details.");
+    if (!token) {
+      setError("No credential received from Google.");
+      return;
     }
-  };
+
+    // 🚫 DO NOT DECODE THE TOKEN
+    // const decoded = jwtDecode(token);
+    // console.log("Decoded Google Token:", decoded);
+
+    // ⭐ Correct backend call
+    const res = await axios.post("http://localhost:5000/api/auth/google", {
+      token: token, // MUST match backend
+    });
+
+    // ⭐ Store user data
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("role", res.data.user.role || "user");
+    localStorage.setItem(
+      "firstName",
+      res.data.user.firstName || res.data.user.name || "User"
+    );
+    localStorage.setItem("email", res.data.user.email || "");
+    localStorage.setItem("userId", res.data.user._id || "");
+    localStorage.setItem("profilePhoto", res.data.user.profilePhoto || "");
+
+    navigate("/UDashboard");
+  } catch (err) {
+    console.error("Google signup failed:", err);
+    setError("Google signup failed. Check console for details.");
+  }
+};
 
   return (
     <div className="login-page">

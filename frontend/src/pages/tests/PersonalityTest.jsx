@@ -1,35 +1,35 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function NeuroTest() {
+export default function PsychopathyTest() {
   const API_BASE = "http://localhost:5000";
-  const testName = "Neuroticism Traits";
+  const testName = "Psychopathy Test";
 
   
   const questions = [
-    "I get stressed or overwhelmed easily.",
-    "It takes a lot for me to feel embarrassed or self-conscious.",
-    "My mood tends to change quickly and often.",
-    "I stay calm and steady when things go wrong.",
-    "I generally feel positive and relaxed most of the time.",
-    "I’m easily startled or on edge in unexpected situations.",
-    "It’s easy for other people’s emotions to affect my own mood.",
-    "When I worry, it can feel hard to stop thinking about it.",
-    "There aren’t many things that make me feel afraid.",
-    "Once I start feeling anxious or sad, it takes time for me to calm down.",
-    "I feel down or low more often than I’d like to.",
-    "I often imagine worst-case scenarios or focus on what might go wrong.",
-    "Small problems rarely upset me for long.",
-    "I can be very self-critical, even over small mistakes.",
-    "I get irritated or frustrated more easily than others.",
-    "I sometimes doubt my ability to handle difficult situations.",
-    "I usually feel secure and not easily threatened by others.",
-    "I tend to overthink or exaggerate small issues.",
-    "When I face major obstacles, I sometimes feel like giving up.",
-    "I can usually keep my emotions steady, even under stress."
+    "I can be very persuasive when I want something.",
+    "When I know someone is struggling, I genuinely hope they’re doing okay.",
+    "I often notice when others make mistakes and feel I could do better.",
+    "I sometimes bend the truth to get what I need.",
+    "If I hurt someone’s feelings, I usually feel sorry afterward.",
+    "I get impatient when people don’t think as quickly as I do.",
+    "I feel that others sometimes blame me unfairly for things that go wrong.",
+    "I believe following rules too strictly can hold people back.",
+    "When I see someone crying, I feel concerned and want to help.",
+    "I occasionally tease or provoke people just to see their reaction.",
+    "The idea of breaking the law makes me uneasy.",
+    "I’m good at reading people and knowing how to influence them.",
+    "I enjoy excitement and taking risks.",
+    "I believe in keeping my promises and financial commitments.",
+    "I tend to stay calm when others get emotional.",
+    "I think helping others is important, even when there’s nothing in it for me.",
+    "I don’t get frightened easily, even in stressful situations.",
+    "Everyone deserves a fair chance to succeed, regardless of background.",
+    "I’m open about my feelings and show them easily.",
+    "If a rule seems unfair, I think it’s okay to question or challenge it."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null)); // storing 1..5
+  const [answers, setAnswers] = useState(Array(questions.length).fill(null)); // store 1..5
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ export default function NeuroTest() {
   const handleSelect = (qIndex, value) => {
     if (qIndex < 0 || qIndex >= questions.length) return;
     const updated = [...answers];
-    updated[qIndex] = value; // value should be 1..5 (UI uses j+1)
+    updated[qIndex] = value; // value expected 1..5
     setAnswers(updated);
   };
 
@@ -49,7 +49,6 @@ export default function NeuroTest() {
       return acc;
     }, {});
 
-  // compute percent (0..100) when answers are 1..5
   const computePercent = () => {
     const raw = answers.reduce((s, v) => s + (typeof v === "number" ? v : 0), 0);
     const maxRaw = questions.length * 5;
@@ -57,17 +56,17 @@ export default function NeuroTest() {
     return Math.round((raw / maxRaw) * 100);
   };
 
-  // compute 0..10 normalized with one decimal
   const computeNormalized10 = () => {
     const percent = computePercent();
-    const norm10 = Math.round(((percent / 100) * 10) * 10) / 10;
-    return norm10;
+    return Math.round(((percent / 100) * 10) * 10) / 10;
   };
 
   const interpretLevel = (percent) => {
-    if (percent < 33) return "Low level of Neuroticism";
-    if (percent < 66) return "Moderate level of Neuroticism";
-    return "High level of Neuroticism";
+    if (percent <= 19) return "Strong Prosocial Behavior (No Antisocial Tendencies)";
+    if (percent <= 50) return "Healthy Social Functioning (Few Antisocial Tendencies)";
+    if (percent <= 74) return "Moderate Concern (Some Antisocial Tendencies)";
+    if (percent <= 86) return "Significant Behavioral Dysregulation (Some Signs of Psychopathy)";
+    return "Marked Psychopathic Profile (Several Signs of Psychopathy)";
   };
 
   const safeText = (x) => {
@@ -91,14 +90,14 @@ export default function NeuroTest() {
 
     setLoading(true);
 
-    const percentScore = computePercent(); // 0..100
-    const normalized10 = computeNormalized10(); // 0..10 one decimal
+    const percentScore = computePercent();
+    const norm10 = computeNormalized10();
     const level = interpretLevel(percentScore);
 
     // show immediate local result
-    setResult({ scorePercent: percentScore, score10: normalized10, level });
+    setResult({ scorePercent: percentScore, score10: norm10, level });
 
-    // agent chain variables
+    // agent chain state
     let agentR_summary = "";
     let dData = null;
     let cData = null;
@@ -110,9 +109,9 @@ export default function NeuroTest() {
       // ---------- Agent R ----------
       const rPayload = {
         testName,
-        condition: "neuroticism",
+        condition: "psychopathy",
         score_percent: percentScore,
-        score_10: normalized10,
+        score_10: norm10,
         answers: buildAnswersPayload(),
       };
 
@@ -138,7 +137,7 @@ export default function NeuroTest() {
           testName,
           agentR_result: agentR_summary,
           score_percent: percentScore,
-          score_10: normalized10,
+          score_10: norm10,
         }),
       });
 
@@ -158,7 +157,7 @@ export default function NeuroTest() {
           agentR_result: agentR_summary,
           agentD_result: dData.result || dData.Result || safeText(dData),
           score_percent: percentScore,
-          score_10: normalized10,
+          score_10: norm10,
           answers: buildAnswersPayload(),
         }),
       });
@@ -171,7 +170,7 @@ export default function NeuroTest() {
       cSummary = cData.result || cData.Result || safeText(cData);
       setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
 
-      // ---------- Agent E (Debate / Consensus) ----------
+      // ---------- Agent E ----------
       const eRes = await fetch(`${API_BASE}/api/angelE`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -202,7 +201,7 @@ export default function NeuroTest() {
           agentC_result: cSummary,
           agentE_result: eSummary,
           score_percent: percentScore,
-          score_10: normalized10,
+          score_10: norm10,
         }),
       });
 
@@ -228,17 +227,16 @@ export default function NeuroTest() {
   return (
     <UserWrapper>
       <div style={styles.container}>
-        {/* HEADER SECTION */}
+        {/* HEADER */}
         <div style={styles.headerContainer}>
           <img
-            src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1500&q=80"
-            alt="Neuroticism Test Header"
+            src="https://media.istockphoto.com/id/1178499463/photo/man-in-a-suit-removes-his-mask.jpg?s=612x612&w=0&k=20&c=c_apXm37HuW40TCkzrJRDciuHXqhhj90aDvK4V9KM-0="
+            alt="Psychopathy Test Header"
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
-
           <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>Neuroticism Traits</h1>
+            <h1 style={styles.mainTitle}>Psychopathy Test</h1>
             <div style={styles.testMeta}>
               <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
@@ -248,10 +246,10 @@ export default function NeuroTest() {
 
         {/* SUBSECTION */}
         <div style={styles.subSection}>
-          <h2 style={styles.subTitle}>How emotionally stable are you?</h2>
+          <h2 style={styles.subTitle}>Do you show signs of psychopathy?</h2>
           <p style={styles.subDesc}>
-            Neuroticism affects how often you experience negative emotions (anxiety, irritability, worry).
-            This quick check assesses emotional stability — consider professional support if results are concerning.
+            Cool under pressure, emotionally distant, and hard to read — psychopathy blends confidence with a lack of empathy.
+            Those high in it often manipulate without guilt. This self-check gives a quick indication; it is not a diagnosis.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -260,7 +258,7 @@ export default function NeuroTest() {
           )}
         </div>
 
-        {/* TEST SECTION */}
+        {/* QUESTIONS */}
         {started && (
           <>
             <div style={styles.scaleBar}>
@@ -279,7 +277,7 @@ export default function NeuroTest() {
                     {colors.map((color, j) => (
                       <button
                         key={j}
-                        onClick={() => handleSelect(i, j + 1)} // store 1..5
+                        onClick={() => handleSelect(i, j + 1)}
                         type="button"
                         aria-pressed={answers[i] === j + 1}
                         style={{
@@ -306,11 +304,11 @@ export default function NeuroTest() {
             {result && (
               <div style={styles.resultBox}>
                 {result.scorePercent !== null && (
-                  <p style={styles.resultScore}>Your Neuroticism Score: {result.scorePercent}/100</p>
+                  <p style={styles.resultScore}>Your Score: {result.scorePercent} / 100</p>
                 )}
-                <p style={styles.resultText}>{result.level}</p>
-
-                {/* {result.agentRDiagnosis && (
+                {/* <p style={styles.resultText}>{result.level}</p> */}
+{/* 
+                {result.agentRDiagnosis && (
                   <p style={{ marginTop: 10 }}><strong>Agent R Diagnosis:</strong> {result.agentRDiagnosis}</p>
                 )}
 
@@ -327,27 +325,53 @@ export default function NeuroTest() {
                 )} */}
 
                 {result.agentJDecision && (
-                  <div style={{ marginTop: 12, textAlign: "left", color: "#444" }}>
+                  <div style={{ marginTop: "12px", textAlign: "left", color: "#444" }}>
                     <strong>Agent J (Judge) Decision:</strong>
                     {typeof result.agentJDecision === "string" ? (
-                      <div style={{ marginTop: 6 }}>{result.agentJDecision}</div>
+                      <div style={{ marginTop: "6px" }}>{result.agentJDecision}</div>
                     ) : (
-                      <div style={{ marginTop: 8 }}>
-                        {result.agentJDecision.decision && <div><strong>Decision:</strong> {result.agentJDecision.decision}</div>}
-                        {result.agentJDecision.confidence !== undefined && <div><strong>Confidence:</strong> {String(result.agentJDecision.confidence)}</div>}
-                        {result.agentJDecision.reasoning && <div style={{ marginTop: 6 }}><strong>Reasoning:</strong> {result.agentJDecision.reasoning}</div>}
-                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
-                          <div style={{ marginTop: 6 }}>
-                            <strong>Actions:</strong>
-                            <ul>
-                              {result.agentJDecision.actions.map((a, idx) => <li key={idx}>{a}</li>)}
-                            </ul>
+                      <div style={{ marginTop: "8px" }}>
+                        {result.agentJDecision.decision && (
+                          <div>
+                            <strong>Decision:</strong> {result.agentJDecision.decision}
+                          </div>
+                        )}
+
+                        {result.agentJDecision.confidence !== undefined && (
+                          <div>
+                            <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
+                          </div>
+                        )}
+
+                        {result.agentJDecision.reasoning && (
+                          <div style={{ marginTop: "6px" }}>
+                            <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
+                          </div>
+                        )}
+
+                        {Array.isArray(result.agentJDecision.actions) &&
+                          result.agentJDecision.actions.length > 0 && (
+                            <div style={{ marginTop: "6px" }}>
+                              <strong>Actions:</strong>
+                              <ul style={{ marginTop: "6px" }}>
+                                {result.agentJDecision.actions.map((a, idx) => (
+                                  <li key={idx}>{a}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                        {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
+                        {result.agentJDecision.final_call && (
+                          <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
+                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
                           </div>
                         )}
                       </div>
                     )}
                   </div>
                 )}
+
 
                 {result.chainError && (
                   <p style={{ marginTop: 10, color: "#b91c1c" }}>
@@ -363,7 +387,7 @@ export default function NeuroTest() {
   );
 }
 
-/* ------------------- STYLES ------------------- */
+/* ------------------- STYLES (unchanged) ------------------- */
 const styles = {
   container: {
     background: "rgba(255,255,255,0.95)",
@@ -374,155 +398,31 @@ const styles = {
     fontFamily: "'Poppins', sans-serif",
     textAlign: "center",
   },
-  headerContainer: {
-    position: "relative",
-    textAlign: "center",
-    color: "#fff",
-    overflow: "hidden",
-  },
-  headerBg: {
-    width: "100%",
-    height: "450px",
-    objectFit: "cover",
-  },
-  headerOverlay: {
-    position: "absolute",
-    inset: 0,
-    background: "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.3), rgba(0,0,0,0.7))",
-  },
-  headerContent: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-  },
-  mainTitle: {
-    fontSize: "68px",
-    fontWeight: "900",
-    marginBottom: "25px",
-    letterSpacing: "1px",
-    textShadow: "2px 4px 10px rgba(0,0,0,0.6)",
-  },
-  testMeta: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "18px",
-  },
-  metaBtnOrange: {
-    background: "rgba(249,115,22,0.9)",
-    color: "#fff",
-    padding: "10px 18px",
-    borderRadius: "25px",
-    fontWeight: "600",
-    fontSize: "14px",
-    backdropFilter: "blur(6px)",
-  },
-  metaBtnPink: {
-    background: "rgba(236,72,153,0.9)",
-    color: "#fff",
-    padding: "10px 18px",
-    borderRadius: "25px",
-    fontWeight: "600",
-    fontSize: "14px",
-    backdropFilter: "blur(6px)",
-  },
-  subSection: {
-    background: "linear-gradient(180deg, #243cc9, #4169e1)",
-    color: "#fff",
-    padding: "40px 20px 60px",
-    clipPath: "ellipse(120% 65% at 50% 25%)",
-  },
-  subTitle: {
-    fontSize: "32px",
-    fontWeight: "700",
-    marginBottom: "12px",
-  },
-  subDesc: {
-    fontSize: "16px",
-    lineHeight: "1.7",
-    maxWidth: "700px",
-    margin: "0 auto 20px",
-  },
-  startButton: {
-    background: "#7b61ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "30px",
-    padding: "14px 40px",
-    fontSize: "16px",
-    fontWeight: "600",
-    cursor: "pointer",
-    marginTop: "10px",
-    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
-  },
-  scaleBar: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(90deg, #ef4444, #f59e0b, #3b82f6, #22c55e)",
-    color: "#fff",
-    borderRadius: "10px",
-    padding: "12px 0",
-    margin: "50px auto",
-    width: "90%",
-    fontWeight: "600",
-    fontSize: "14px",
-    gap: "60px",
-  },
+  headerContainer: { position: "relative", textAlign: "center", color: "#fff", overflow: "hidden" },
+  headerBg: { width: "100%", height: "450px", objectFit: "cover" },
+  headerOverlay: { position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.3), rgba(0,0,0,0.7))" },
+  headerContent: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" },
+  mainTitle: { fontSize: "68px", fontWeight: "900", marginBottom: "25px", letterSpacing: "1px", textShadow: "2px 4px 10px rgba(0,0,0,0.6)" },
+  testMeta: { display: "flex", justifyContent: "center", gap: "18px" },
+  metaBtnOrange: { background: "rgba(249,115,22,0.9)", color: "#fff", padding: "10px 18px", borderRadius: "25px", fontWeight: "600", fontSize: "14px", backdropFilter: "blur(6px)" },
+  metaBtnPink: { background: "rgba(236,72,153,0.9)", color: "#fff", padding: "10px 18px", borderRadius: "25px", fontWeight: "600", fontSize: "14px", backdropFilter: "blur(6px)" },
+  subSection: { background: "linear-gradient(180deg, #f97316, #f59e0b)", color: "#fff", padding: "40px 20px 60px", clipPath: "ellipse(120% 65% at 50% 25%)" },
+  subTitle: { fontSize: "32px", fontWeight: "700", marginBottom: "12px" },
+  subDesc: { fontSize: "16px", lineHeight: "1.7", maxWidth: "700px", margin: "0 auto 20px" },
+  startButton: { background: "#7b61ff", color: "#fff", border: "none", borderRadius: "30px", padding: "14px 40px", fontSize: "16px", fontWeight: "600", cursor: "pointer", marginTop: "10px", boxShadow: "0 6px 14px rgba(123,97,255,0.3)", transition: "all 0.3s ease" },
+  scaleBar: { display: "flex", justifyContent: "center", alignItems: "center", background: "linear-gradient(90deg, #ef4444, #f59e0b, #3b82f6, #22c55e)", color: "#fff", borderRadius: "10px", padding: "12px 0", margin: "50px auto", width: "90%", fontWeight: "600", fontSize: "14px", gap: "60px" },
   scaleText: { textShadow: "0 1px 2px rgba(0,0,0,0.2)" },
   questionList: { marginTop: "20px", width: "90%", marginLeft: "auto", marginRight: "auto" },
   questionBlock: { marginBottom: "45px" },
-  questionText: {
-    fontSize: "18px",
-    color: "#333",
-    marginBottom: "25px",
-    fontWeight: "600",
-  },
+  questionText: { fontSize: "18px", color: "#333", marginBottom: "25px", fontWeight: "600" },
   circleRow: { display: "flex", justifyContent: "center", gap: "30px", marginBottom: "10px" },
-  circle: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "50%",
-    border: "3px solid #ccc",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-  },
+  circle: { width: "60px", height: "60px", borderRadius: "50%", border: "3px solid #ccc", cursor: "pointer", transition: "all 0.3s ease" },
   labelRow: { display: "flex", justifyContent: "space-between", width: "320px", margin: "8px auto" },
   labelLeft: { color: "#555", fontSize: "14px", fontWeight: "600" },
   labelRight: { color: "#555", fontSize: "14px", fontWeight: "600" },
   divider: { borderBottom: "1px solid #e5e7eb", width: "90%", margin: "35px auto" },
-  submitButton: {
-    display: "block",
-    margin: "40px auto 0",
-    backgroundColor: "#7b61ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "10px",
-    padding: "14px 40px",
-    fontSize: "16px",
-    fontWeight: "600",
-    cursor: "pointer",
-    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
-  },
-  resultBox: {
-    marginTop: "40px",
-    backgroundColor: "#f3f4f6",
-    borderRadius: "12px",
-    padding: "25px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-    width: "80%",
-    marginLeft: "auto",
-    marginRight: "auto",
-  },
-  resultScore: {
-    fontSize: "20px",
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: "8px",
-  },
-  resultText: {
-    fontSize: "18px",
-    fontWeight: "600",
-    color: "#7b61ff",
-  },
+  submitButton: { display: "block", margin: "40px auto 0", backgroundColor: "#7b61ff", color: "#fff", border: "none", borderRadius: "10px", padding: "14px 40px", fontSize: "16px", fontWeight: "600", cursor: "pointer", boxShadow: "0 6px 14px rgba(123,97,255,0.3)", transition: "transform 0.2s ease, box-shadow 0.2s ease" },
+  resultBox: { marginTop: "40px", backgroundColor: "#f3f4f6", borderRadius: "12px", padding: "25px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", width: "80%", marginLeft: "auto", marginRight: "auto" },
+  resultScore: { fontSize: "20px", fontWeight: "700", color: "#333", marginBottom: "8px" },
+  resultText: { fontSize: "18px", fontWeight: "600", color: "#7b61ff" },
 };

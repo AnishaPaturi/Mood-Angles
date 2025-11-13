@@ -1,72 +1,79 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function ADHDTest() {
+export default function MentalHealthTodayTest() {
   const API_BASE = "http://localhost:5000";
-  const testName = "ADHD";
-  
+  const testName = "Mental Health Today";
+
+ 
   const questions = [
-    "Do you find it hard to stay focused, even on things that interest you?",
-    "Do you often start projects but lose motivation before finishing?",
-    "Is it hard for you to keep your things organized — like your room, bag, or notes?",
-    "Do you find yourself forgetting appointments or where you placed important items?",
-    "Do you often feel restless or like you always have to be moving?",
-    "Do you talk a lot or interrupt people before they finish speaking?",
-    "Do you get distracted easily by your surroundings or your own thoughts?",
-    "Do you struggle to sit still for long periods, like in meetings or classes?",
-    "Do you sometimes do things impulsively, without thinking them through?",
-    "Do you often put things off until the last minute?",
-    "Do you get frustrated when things take longer than you expected?",
-    "Do you find it hard to follow long conversations or instructions?",
-    "Do you sometimes take on too many things and end up feeling overwhelmed?",
-    "Do you lose track of time when doing something interesting?",
-    "Do you find it hard to relax, even when you want to?",
-    "Do you have trouble sleeping because your mind won’t slow down?",
-    "Do you often switch from one task to another before finishing?",
-    "Do you forget small details even when you try to be careful?",
-    "Do you feel like your energy level is always changing — either too high or too low?",
-    "Do you sometimes say or do things you regret right after?"
+    "I often feel overwhelmed by my emotions.",
+    "I can usually handle the amount of stress in my life.",
+    "I sometimes notice physical signs of anxiety, such as tense muscles or sweaty palms.",
+    "I have close, supportive relationships with people I care about.",
+    "I regret some of my past decisions and think about them often.",
+    "I tend to be very self-critical or hard on myself.",
+    "I still struggle with painful experiences or losses from the past.",
+    "I can recognize and express my emotions in a healthy way.",
+    "I believe the people close to me will support me if I open up to them.",
+    "I sometimes engage in habits that make it harder to function at my best.",
+    "When I feel strong emotions, I usually understand what triggered them.",
+    "My mood stays fairly steady from day to day.",
+    "I often avoid or put off important tasks, even when I know I shouldn’t.",
+    "I feel sad or down more often than I’d like to.",
+    "I have a sense of meaning or purpose in my life.",
+    "I sometimes feel lonely or disconnected from others.",
+    "I get frustrated, upset, or angry easily.",
+    "My sleep or appetite has changed compared to when I felt at my best.",
+    "I can recover from challenges or setbacks without too much difficulty.",
+    "Most days, I manage my time and responsibilities fairly well."
   ];
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const handleSelect = (qIndex, value) => {
+    if (qIndex < 0 || qIndex >= questions.length) return;
     const updated = [...answers];
     updated[qIndex] = value;
     setAnswers(updated);
   };
 
-  // helper to build answers object
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {
       acc[`Q${i + 1}`] = `${q} → Answer: ${answers[i]}`;
       return acc;
     }, {});
 
-  const computeScore = () => {
-    const rawScore = answers.reduce((a, v) => a + v, 0);
-    const maxChoice = colors.length - 1; // e.g., 4 if choices 0..4
-    const maxPossible = questions.length * maxChoice;
-    if (maxPossible === 0) return 0;
-    return Math.round((rawScore / maxPossible) * 100);
+  // compute normalized 0-10 score (answers are 0..4)
+  const computeNormalized10 = () => {
+    const raw = answers.reduce((s, v) => s + (typeof v === "number" ? v : 0), 0);
+    const maxRaw = questions.length * 4; // each item max 4
+    if (maxRaw === 0) return 0;
+    const normalized = (raw / maxRaw) * 10;
+    return Math.round(normalized * 10) / 10; // one decimal
   };
 
-  const interpretLevel = (score) =>
-    score <= 19
-      ? "Low chance"
-      : score <= 50
-      ? "Moderate chance"
-      : score <= 74
-      ? "Some concern (watch symptoms)"
-      : score <= 86
-      ? "Significant concern"
-      : "High likelihood";
+  const interpretLevel = (norm10) => {
+    if (norm10 < 3.3) return "You appear to be coping well overall.";
+    if (norm10 < 6.6) return "You show some signs of emotional distress — consider healthy coping strategies.";
+    return "You may be experiencing significant stress or emotional challenges. Seeking professional help could be beneficial.";
+  };
 
-  // ---- Submit & Call Agents (R → D → C → E → J) ----
+  const safeText = (x) => {
+    if (x === undefined || x === null) return "";
+    if (typeof x === "string") return x;
+    try {
+      return JSON.stringify(x);
+    } catch {
+      return String(x);
+    }
+  };
+
   const handleSubmit = async () => {
     if (answers.some((a) => a === null)) {
       setResult({
@@ -76,49 +83,58 @@ export default function ADHDTest() {
       return;
     }
 
-    const score = computeScore();
-    const level = interpretLevel(score);
-
-    // show local result immediately
-    setResult({ score, level });
     setLoading(true);
+    const normalizedScore = computeNormalized10();
+    const level = interpretLevel(normalizedScore);
+    // also provide percent for agents (0-100)
+    const percentScore = Math.round((normalizedScore / 10) * 100);
 
-    // store intermediate data for later agents
-    let finalSummary = "";
+    // show immediate local result
+    setResult({ score: normalizedScore, level });
+
+    // agent chain variables
+    let agentR_summary = "";
     let dData = null;
     let cData = null;
     let eData = null;
-    let eSummary = "";
     let cSummary = "";
+    let eSummary = "";
 
     try {
       // ---------- Agent R ----------
-      const payloadR = {
+      const rPayload = {
         condition: testName,
         testName,
-        score,
-        level,
+        score_percent: percentScore,
+        normalized_score: normalizedScore,
         answers: buildAnswersPayload()
       };
-      const res = await fetch(`${API_BASE}/api/angelR`, {
+
+      const rRes = await fetch(`${API_BASE}/api/angelR`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payloadR)
+        body: JSON.stringify(rPayload)
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`Agent R failed: ${res.status} ${res.statusText} — ${errText}`);
+      if (!rRes.ok) {
+        const txt = await rRes.text();
+        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
       }
-      const data = await res.json();
-      finalSummary = String(data.result || data.Result || "").trim();
-      setResult((prev) => ({ ...prev, aiDiagnosis: finalSummary }));
+      const rJson = await rRes.json();
+      agentR_summary = String(rJson.result || rJson.Result || safeText(rJson)).trim();
+      setResult((prev) => ({ ...prev, aiDiagnosis: agentR_summary }));
 
       // ---------- Agent D ----------
       const dRes = await fetch(`${API_BASE}/api/angelD`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ condition: testName, testName, agentR_result: finalSummary, score, level })
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: agentR_summary,
+          score_percent: percentScore,
+          normalized_score: normalizedScore
+        })
       });
 
       if (!dRes.ok) {
@@ -126,7 +142,7 @@ export default function ADHDTest() {
         throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
       }
       dData = await dRes.json();
-      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || String(dData) }));
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || safeText(dData) }));
 
       // ---------- Agent C ----------
       const cRes = await fetch(`${API_BASE}/api/angelC`, {
@@ -135,10 +151,10 @@ export default function ADHDTest() {
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: finalSummary,
-          agentD_result: dData.result || dData.Result || String(dData),
-          score,
-          level,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          score_percent: percentScore,
+          normalized_score: normalizedScore,
           answers: buildAnswersPayload()
         })
       });
@@ -148,18 +164,18 @@ export default function ADHDTest() {
         throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
       }
       cData = await cRes.json();
-      cSummary = cData.result || cData.Result || String(cData).trim();
+      cSummary = cData.result || cData.Result || safeText(cData);
       setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
 
-      // ---------- Agent E (Debate & Consensus) ----------
+      // ---------- Agent E (Debate/Consensus) ----------
       const eRes = await fetch(`${API_BASE}/api/angelE`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           condition: testName,
           testName,
-          agentR_result: finalSummary,
-          agentD_result: dData.result || dData.Result || String(dData),
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
           agentC_result: cSummary
         })
       });
@@ -176,42 +192,34 @@ export default function ADHDTest() {
       setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
 
       // ---------- Agent J (Judge) ----------
-      try {
-        const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            condition: testName,
-            testName,
-            agentR_result: finalSummary,
-            agentD_result: dData.result || dData.Result || String(dData),
-            agentC_result: cSummary,
-            agentE_result: eSummary,
-            score,
-            level
-          })
-        });
+      const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: agentR_summary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentC_result: cSummary,
+          agentE_result: eSummary,
+          score_percent: percentScore,
+          normalized_score: normalizedScore
+        })
+      });
 
-        if (!jRes.ok) {
-          const txt = await jRes.text();
-          setResult((prev) => ({
-            ...prev,
-            agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}`
-          }));
-        } else {
-          const jData = await jRes.json();
-          setResult((prev) => ({ ...prev, agentJDecision: jData }));
-        }
-      } catch (err) {
-        console.error("Agent J connection error:", err);
-        setResult((prev) => ({ ...prev, agentJDecision: "⚠️ Could not connect to Agent J backend." }));
+      if (!jRes.ok) {
+        const txt = await jRes.text();
+        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
+      } else {
+        const jData = await jRes.json();
+        setResult((prev) => ({ ...prev, agentJDecision: jData }));
       }
     } catch (err) {
       console.error("Agent chain error:", err);
       setResult((prev) => ({
         ...prev,
-        aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain.",
-        chainError: err.message
+        chainError: err.message,
+        aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain."
       }));
     } finally {
       setLoading(false);
@@ -224,14 +232,14 @@ export default function ADHDTest() {
         {/* HEADER SECTION */}
         <div style={styles.headerContainer}>
           <img
-            src="https://www.resilience.org/wp-content/uploads/2025/09/Dark-Triad-Thumbnail-BG-Final-2048x1152-1.webp"
-            alt="ADHD Test Header"
+            src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=1500&q=80"
+            alt="Mental Health Test Header"
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
 
           <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>ADHD Test</h1>
+            <h1 style={styles.mainTitle}>Your Mental Health Today</h1>
             <div style={styles.testMeta}>
               <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
@@ -241,10 +249,9 @@ export default function ADHDTest() {
 
         {/* SUBSECTION */}
         <div style={styles.subSection}>
-          <h2 style={styles.subTitle}>Do you have ADHD?</h2>
+          <h2 style={styles.subTitle}>How well do you cope?</h2>
           <p style={styles.subDesc}>
-            Symptoms of attention-deficit/hyperactivity disorder (ADHD) can interfere with relationships,
-            career success, and other life goals. Take this quick test to find out if you might have ADHD.
+            This quick check helps you see how you're coping day to day. If results are concerning, consider reaching out to a clinician.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -253,7 +260,7 @@ export default function ADHDTest() {
           )}
         </div>
 
-        {/* IF TEST STARTED */}
+        {/* TEST SECTION */}
         {started && (
           <>
             {/* SCALE BAR */}
@@ -275,6 +282,8 @@ export default function ADHDTest() {
                       <button
                         key={j}
                         onClick={() => handleSelect(i, j)}
+                        type="button"
+                        aria-pressed={answers[i] === j}
                         style={{
                           ...styles.circle,
                           borderColor: color,
@@ -292,42 +301,35 @@ export default function ADHDTest() {
               ))}
             </div>
 
-            {/* SUBMIT BUTTON */}
+            {/* SUBMIT */}
             <button onClick={handleSubmit} style={styles.submitButton} disabled={loading}>
               {loading ? "Analyzing..." : "Submit Test"}
             </button>
 
-            {/* RESULTS SECTION */}
+            {/* RESULTS */}
             {result && (
               <div style={styles.resultBox}>
-                {result.score !== null && <p style={styles.resultScore}>Your ADHD Score: {result.score}/100</p>}
-                <p style={styles.resultText}>{result.level}</p>
+                {result.score !== null && (
+                  <p style={styles.resultScore}>Your Coping Score: {result.score} / 10</p>
+                )}
+                {/* <p style={styles.resultText}>{result.level}</p> */}
 
                 {/* {result.aiDiagnosis && (
-                  <p style={styles.agentRText}>
-                    <strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}
-                  </p>
+                  <p style={styles.agentRText}><strong>Agent R Diagnosis:</strong> {result.aiDiagnosis}</p>
                 )}
 
                 {result.agentDExplanation && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Agent D Summary:</strong> {result.agentDExplanation}
-                  </p>
+                  <p style={{ marginTop: 10 }}><strong>Agent D Summary:</strong> {result.agentDExplanation}</p>
                 )}
 
                 {result.agentCComparison && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Agent C Comparative Summary:</strong> {result.agentCComparison}
-                  </p>
+                  <p style={{ marginTop: 10 }}><strong>Agent C Comparative Summary:</strong> {result.agentCComparison}</p>
                 )}
 
                 {result.agentEDebate && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Agent E Debate Summary:</strong> {result.agentEDebate}
-                  </p>
+                  <p style={{ marginTop: 10 }}><strong>Agent E Debate Summary:</strong> {result.agentEDebate}</p>
                 )} */}
 
-                {/* Agent J output render */}
                 {result.agentJDecision && (
                   <div style={{ marginTop: "12px", textAlign: "left", color: "#444" }}>
                     <strong>Agent J (Judge) Decision:</strong>
@@ -340,24 +342,35 @@ export default function ADHDTest() {
                             <strong>Decision:</strong> {result.agentJDecision.decision}
                           </div>
                         )}
+
                         {result.agentJDecision.confidence !== undefined && (
                           <div>
                             <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
                           </div>
                         )}
+
                         {result.agentJDecision.reasoning && (
                           <div style={{ marginTop: "6px" }}>
                             <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
                           </div>
                         )}
-                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
-                          <div style={{ marginTop: "6px" }}>
-                            <strong>Actions:</strong>
-                            <ul style={{ marginTop: "6px" }}>
-                              {result.agentJDecision.actions.map((a, idx) => (
-                                <li key={idx}>{a}</li>
-                              ))}
-                            </ul>
+
+                        {Array.isArray(result.agentJDecision.actions) &&
+                          result.agentJDecision.actions.length > 0 && (
+                            <div style={{ marginTop: "6px" }}>
+                              <strong>Actions:</strong>
+                              <ul style={{ marginTop: "6px" }}>
+                                {result.agentJDecision.actions.map((a, idx) => (
+                                  <li key={idx}>{a}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                        {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
+                        {result.agentJDecision.final_call && (
+                          <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
+                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
                           </div>
                         )}
                       </div>
@@ -365,9 +378,9 @@ export default function ADHDTest() {
                   </div>
                 )}
 
-                {/* show chain error when present for debugging */}
+
                 {result.chainError && (
-                  <p style={{ marginTop: "10px", color: "#b91c1c" }}>
+                  <p style={{ marginTop: 10, color: "#b91c1c" }}>
                     <strong>Chain error:</strong> {result.chainError}
                   </p>
                 )}
@@ -444,7 +457,7 @@ const styles = {
     backdropFilter: "blur(6px)"
   },
   subSection: {
-    background: "linear-gradient(180deg, #f97316, #f59e0b)",
+    background: "linear-gradient(180deg, #243cc9, #4169e1)",
     color: "#fff",
     padding: "40px 20px 60px",
     clipPath: "ellipse(120% 65% at 50% 25%)"
@@ -568,9 +581,8 @@ const styles = {
     color: "#7b61ff"
   },
   agentRText: {
-    marginTop: "12px",
-    fontSize: "16px",
-    color: "#444",
-    lineHeight: "1.6"
+    marginTop: 12,
+    fontSize: 16,
+    color: "#444"
   }
 };

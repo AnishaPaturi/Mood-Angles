@@ -14,7 +14,6 @@ export default function Help() {
 
   const quickOptions = [
     "How to take a mood test?",
-    "View my results",
     "Login / Password help",
     "Find a doctor / psychologist",
   ];
@@ -25,14 +24,6 @@ export default function Help() {
       a: (
         <>
           Go to <Link to="/test" className="faq-link">Mood Test</Link> in your Dashboard, select a test, and follow the instructions.
-        </>
-      ),
-    },
-    {
-      q: "How can I understand my results?",
-      a: (
-        <>
-          You can view and understand your results directly on the <Link to="/test" className="faq-link">Results</Link>. They appear right at the bottom after you complete the test.
         </>
       ),
     },
@@ -125,13 +116,6 @@ export default function Help() {
     if (t.includes("mood test") || t.includes("take a test") || /\btest\b/.test(t)) {
       return (
         <>🧠 Take a test via <Link to="/test" className="faq-link">Mood Test</Link> in your Dashboard.</>
-      );
-    }
-
-    // ----- RESULTS -----
-    if (t.includes("result") || t.includes("score")) {
-      return (
-        <>📊 View your results at <Link to="/Dashboard" className="faq-link">Dashboard → Results</Link>.</>
       );
     }
 

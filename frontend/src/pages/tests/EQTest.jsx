@@ -1,39 +1,37 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
-export default function AutismTest() {
+export default function EmotionalIntelligenceTest() {
   const API_BASE = "http://localhost:5000";
-  const testName = "Autism Traits";
+  const testName = "Emotional Intelligence";
 
-  
   const questions = [
-    "I often notice patterns or details that other people don’t see.",
-    "I prefer to follow familiar routines and can get stressed when they change unexpectedly.",
-    "I sometimes struggle to understand social cues, like tone of voice or body language.",
-    "People have told me that I sound blunt or rude, even when I don’t mean to be.",
-    "I have specific interests or hobbies that I can focus on for long periods of time.",
-    "I’m very sensitive to physical sensations, such as certain fabrics, lights, or textures.",
-    "Making or maintaining eye contact can feel uncomfortable for me.",
-    "I find casual small talk or social chitchat difficult or tiring.",
-    "I tend to interpret things very literally and sometimes miss hidden meanings or jokes.",
-    "In group conversations, I’m often unsure when it’s my turn to speak.",
-    "Repetitive movements or routines, like pacing or tapping, help me stay calm when I’m stressed.",
-    "When my usual schedule or environment changes, I can feel anxious or upset.",
-    "I enjoy collecting or memorizing information about specific topics or categories.",
-    "I sometimes copy other people’s behavior or expressions to fit in socially.",
-    "It can be difficult for me to guess what others are thinking or feeling unless they say it directly.",
-    "I can talk about my favorite interests or topics for a very long time.",
-    "I sometimes miss when people use sarcasm, irony, or subtle humor.",
-    "Certain everyday sounds, lights, or textures that don’t bother others can feel overwhelming to me.",
-    "It can be hard to follow conversations when several people are talking at once.",
-    "I find it challenging to imagine situations or experiences that I haven’t personally encountered."
+    "I can recognize and understand my emotions as they happen.",
+    "I notice and interpret other people’s body language and tone of voice.",
+    "I sometimes lose my temper more quickly than I’d like.",
+    "I learn and grow from emotional experiences, even difficult ones.",
+    "When making an important decision, I consider both my current feelings and how I might feel later.",
+    "I recover well from emotional setbacks or disappointments.",
+    "I’m comfortable expressing a wide range of emotions in healthy ways.",
+    "I can stay calm and respectful during disagreements or conflict.",
+    "I try to understand and accept other people’s emotions without judging them.",
+    "I can stay grounded and steady in challenging or stressful situations.",
+    "I’m able to stay composed and think clearly when things get tough.",
+    "I sometimes speak or react impulsively before thinking about how it affects others.",
+    "I often feel and express gratitude toward others.",
+    "I accept my emotions, even when they’re uncomfortable or unpleasant.",
+    "I adjust my behavior when situations or people require something different from me.",
+    "I’m open to feedback and willing to try new approaches when things don’t work.",
+    "I try to validate and acknowledge other people’s feelings.",
+    "I can adapt easily to changing circumstances or environments.",
+    "I sometimes find it hard to understand what others are feeling.",
+    "I occasionally struggle to identify exactly what I’m feeling inside."
   ];
 
   const [answers, setAnswers] = useState(Array(questions.length).fill(null));
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const handleSelect = (qIndex, value) => {
@@ -50,38 +48,46 @@ export default function AutismTest() {
     }, {});
 
   const computeScore = () => {
-    // answers are 0..(colors.length-1). Compute percent 0..100
-    const rawScore = answers.reduce((a, v) => a + v, 0);
-    const maxChoice = colors.length - 1; // e.g., 4 if choices 0..4
-    const maxPossible = questions.length * maxChoice;
-    if (maxPossible === 0) return 0;
-    return Math.round((rawScore / maxPossible) * 100);
+    // answers are 0..4; convert raw sum to 0..100 %
+    const raw = answers.reduce((s, v) => s + (typeof v === "number" ? v : 0), 0);
+    const max = questions.length * (colors.length - 1); // 4 * n
+    if (max === 0) return 0;
+    return Math.round((raw / max) * 100);
   };
 
-  const interpretLevel = (score) =>
-    score < 25
-      ? "Low chance of Autistic Traits"
-      : score < 55
-      ? "Moderate chance of Autistic Traits"
-      : "High chance of Autistic Traits";
+  const interpretLevel = (score) => {
+    if (score <= 16) return "Very low emotional intelligence";
+    if (score <= 36) return "Low emotional intelligence";
+    if (score <= 63) return "Average (neither low nor high) emotional intelligence";
+    if (score <= 83) return "High emotional intelligence";
+    return "Very high emotional intelligence";
+  };
 
-  // ---- Submit & Call Agents (R → D → C → E → J) ----
+  const safeText = (x) => {
+    if (!x && x !== 0) return "";
+    if (typeof x === "string") return x;
+    try {
+      return JSON.stringify(x);
+    } catch {
+      return String(x);
+    }
+  };
+
   const handleSubmit = async () => {
     if (answers.some((a) => a === null)) {
       setResult({
         score: null,
-        level: "Please answer all questions before submitting!"
+        level: "⚠️ Please answer all questions before submitting!"
       });
       return;
     }
 
+    setLoading(true);
     const score = computeScore();
     const level = interpretLevel(score);
-
     setResult({ score, level });
-    setLoading(true);
 
-    // intermediate holders
+    // intermediary storage
     let finalSummary = "";
     let dData = null;
     let cData = null;
@@ -106,11 +112,11 @@ export default function AutismTest() {
       });
 
       if (!rRes.ok) {
-        const errText = await rRes.text();
-        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${errText}`);
+        const txt = await rRes.text();
+        throw new Error(`Agent R failed: ${rRes.status} ${rRes.statusText} — ${txt}`);
       }
       const rData = await rRes.json();
-      finalSummary = String(rData.result || rData.Result || "").trim();
+      finalSummary = String(rData.result || rData.Result || safeText(rData)).trim();
       setResult((prev) => ({ ...prev, aiDiagnosis: finalSummary }));
 
       // ---------- Agent D ----------
@@ -131,7 +137,7 @@ export default function AutismTest() {
         throw new Error(`Agent D failed: ${dRes.status} ${dRes.statusText} — ${txt}`);
       }
       dData = await dRes.json();
-      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || String(dData) }));
+      setResult((prev) => ({ ...prev, agentDExplanation: dData.result || dData.Result || safeText(dData) }));
 
       // ---------- Agent C ----------
       const cRes = await fetch(`${API_BASE}/api/angelC`, {
@@ -141,7 +147,7 @@ export default function AutismTest() {
           condition: testName,
           testName,
           agentR_result: finalSummary,
-          agentD_result: dData.result || dData.Result || String(dData),
+          agentD_result: dData.result || dData.Result || safeText(dData),
           score,
           level,
           answers: buildAnswersPayload()
@@ -153,10 +159,10 @@ export default function AutismTest() {
         throw new Error(`Agent C failed: ${cRes.status} ${cRes.statusText} — ${txt}`);
       }
       cData = await cRes.json();
-      cSummary = cData.result || cData.Result || String(cData).trim();
+      cSummary = cData.result || cData.Result || safeText(cData);
       setResult((prev) => ({ ...prev, agentCComparison: cSummary }));
 
-      // ---------- Agent E (Debate & Consensus) ----------
+      // ---------- Agent E (Debate/Consensus) ----------
       const eRes = await fetch(`${API_BASE}/api/angelE`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,7 +170,7 @@ export default function AutismTest() {
           condition: testName,
           testName,
           agentR_result: finalSummary,
-          agentD_result: dData.result || dData.Result || String(dData),
+          agentD_result: dData.result || dData.Result || safeText(dData),
           agentC_result: cSummary
         })
       });
@@ -174,50 +180,38 @@ export default function AutismTest() {
         throw new Error(`Agent E failed: ${eRes.status} ${eRes.statusText} — ${txt}`);
       }
       eData = await eRes.json();
-      eSummary =
-        eData.final_consensus ||
-        eData.result ||
-        `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
+      eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
       setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
 
       // ---------- Agent J (Judge) ----------
-      try {
-        const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            condition: testName,
-            testName,
-            agentR_result: finalSummary,
-            agentD_result: dData.result || dData.Result || String(dData),
-            agentC_result: cSummary,
-            agentE_result: eSummary,
-            score,
-            level
-          })
-        });
+      const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          agentR_result: finalSummary,
+          agentD_result: dData.result || dData.Result || safeText(dData),
+          agentC_result: cSummary,
+          agentE_result: eSummary,
+          score,
+          level
+        })
+      });
 
-        if (!jRes.ok) {
-          const txt = await jRes.text();
-          setResult((prev) => ({
-            ...prev,
-            agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}`
-          }));
-        } else {
-          const jData = await jRes.json();
-          // store decision object or string
-          setResult((prev) => ({ ...prev, agentJDecision: jData }));
-        }
-      } catch (err) {
-        console.error("Agent J connection error:", err);
-        setResult((prev) => ({ ...prev, agentJDecision: "⚠️ Could not connect to Agent J backend." }));
+      if (!jRes.ok) {
+        const txt = await jRes.text();
+        setResult((prev) => ({ ...prev, agentJDecision: `⚠️ Agent J failed: ${jRes.status} ${jRes.statusText} — ${txt}` }));
+      } else {
+        const jData = await jRes.json();
+        setResult((prev) => ({ ...prev, agentJDecision: jData }));
       }
     } catch (err) {
       console.error("Agent chain error:", err);
       setResult((prev) => ({
         ...prev,
-        aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain.",
-        chainError: err.message
+        chainError: err.message,
+        aiDiagnosis: prev?.aiDiagnosis || "⚠️ Could not complete diagnosis chain."
       }));
     } finally {
       setLoading(false);
@@ -227,16 +221,16 @@ export default function AutismTest() {
   return (
     <UserWrapper>
       <div style={styles.container}>
+        {/* HEADER */}
         <div style={styles.headerContainer}>
           <img
-            src="https://sentis.com.au/wp-content/uploads/2023/09/kys-story-news-e1694063308229.webp"
-            alt="Autism Test Header"
+            src="https://t4.ftcdn.net/jpg/06/04/38/29/240_F_604382909_wIVX5mencOVhuW0mR5l4tUduOooaUCib.jpg"
+            alt="Emotional Intelligence Header"
             style={styles.headerBg}
           />
-          <div style={styles.headerOverlay}></div>
-
+          <div style={styles.headerOverlay} />
           <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>Autism Traits</h1>
+            <h1 style={styles.mainTitle}>Emotional Intelligence (EQ) Test</h1>
             <div style={styles.testMeta}>
               <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
@@ -244,11 +238,12 @@ export default function AutismTest() {
           </div>
         </div>
 
+        {/* SUBSECTION */}
         <div style={styles.subSection}>
-          <h2 style={styles.subTitle}>Could you be on the autism spectrum?</h2>
+          <h2 style={styles.subTitle}>How emotionally aware and resilient are you?</h2>
           <p style={styles.subDesc}>
-            Autism can include social differences, restricted/repetitive behavior, and sensory sensitivities.
-            This test is a screening tool — not a diagnosis. If results show concern, consider professional evaluation.
+            EQ measures how you perceive, manage, and respond to emotions. This quick quiz gives a rough
+            indication and — if concerning — suggests further reflection or professional guidance.
           </p>
           {!started && (
             <button style={styles.startButton} onClick={() => setStarted(true)}>
@@ -257,6 +252,7 @@ export default function AutismTest() {
           )}
         </div>
 
+        {/* TEST */}
         {started && (
           <>
             <div style={styles.scaleBar}>
@@ -275,15 +271,14 @@ export default function AutismTest() {
                     {colors.map((color, j) => (
                       <button
                         key={j}
+                        type="button"
                         onClick={() => handleSelect(i, j)}
+                        aria-pressed={answers[i] === j}
                         style={{
                           ...styles.circle,
                           borderColor: color,
                           backgroundColor: answers[i] === j ? color : "transparent"
                         }}
-                        aria-pressed={answers[i] === j}
-                        aria-label={`answer-${i + 1}-${j}`}
-                        type="button"
                       />
                     ))}
                   </div>
@@ -300,10 +295,11 @@ export default function AutismTest() {
               {loading ? "Analyzing..." : "Submit Test"}
             </button>
 
+            {/* RESULTS */}
             {result && (
               <div style={styles.resultBox}>
-                {result.score !== null && <p style={styles.resultScore}>Your Autism Traits Score: {result.score}/100</p>}
-                <p style={styles.resultText}>{result.level}</p>
+                {result.score !== null && <p style={styles.resultScore}>Your EQ Score: {result.score}/100</p>}
+                {/* <p style={styles.resultText}>{result.level}</p> */}
 
                 {/* {result.aiDiagnosis && (
                   <p style={styles.agentRText}>
@@ -312,19 +308,19 @@ export default function AutismTest() {
                 )}
 
                 {result.agentDExplanation && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
+                  <p style={{ marginTop: 10, fontSize: 16 }}>
                     <strong>Agent D Summary:</strong> {result.agentDExplanation}
                   </p>
                 )}
 
                 {result.agentCComparison && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
+                  <p style={{ marginTop: 10, fontSize: 16 }}>
                     <strong>Agent C Comparative Summary:</strong> {result.agentCComparison}
                   </p>
                 )}
 
                 {result.agentEDebate && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
+                  <p style={{ marginTop: 10, fontSize: 16 }}>
                     <strong>Agent E Debate Summary:</strong> {result.agentEDebate}
                   </p>
                 )} */}
@@ -336,15 +332,40 @@ export default function AutismTest() {
                       <div style={{ marginTop: "6px" }}>{result.agentJDecision}</div>
                     ) : (
                       <div style={{ marginTop: "8px" }}>
-                        {result.agentJDecision.decision && <div><strong>Decision:</strong> {result.agentJDecision.decision}</div>}
-                        {result.agentJDecision.confidence !== undefined && <div><strong>Confidence:</strong> {String(result.agentJDecision.confidence)}</div>}
-                        {result.agentJDecision.reasoning && <div style={{ marginTop: "6px" }}><strong>Reasoning:</strong> {result.agentJDecision.reasoning}</div>}
-                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
+                        {result.agentJDecision.decision && (
+                          <div>
+                            <strong>Decision:</strong> {result.agentJDecision.decision}
+                          </div>
+                        )}
+
+                        {result.agentJDecision.confidence !== undefined && (
+                          <div>
+                            <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
+                          </div>
+                        )}
+
+                        {result.agentJDecision.reasoning && (
                           <div style={{ marginTop: "6px" }}>
-                            <strong>Actions:</strong>
-                            <ul style={{ marginTop: "6px" }}>
-                              {result.agentJDecision.actions.map((a, idx) => <li key={idx}>{a}</li>)}
-                            </ul>
+                            <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
+                          </div>
+                        )}
+
+                        {Array.isArray(result.agentJDecision.actions) &&
+                          result.agentJDecision.actions.length > 0 && (
+                            <div style={{ marginTop: "6px" }}>
+                              <strong>Actions:</strong>
+                              <ul style={{ marginTop: "6px" }}>
+                                {result.agentJDecision.actions.map((a, idx) => (
+                                  <li key={idx}>{a}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                        {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
+                        {result.agentJDecision.final_call && (
+                          <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
+                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
                           </div>
                         )}
                       </div>
@@ -352,8 +373,9 @@ export default function AutismTest() {
                   </div>
                 )}
 
+
                 {result.chainError && (
-                  <p style={{ marginTop: "10px", color: "#b91c1c" }}>
+                  <p style={{ marginTop: 10, color: "#b91c1c" }}>
                     <strong>Chain error:</strong> {result.chainError}
                   </p>
                 )}
@@ -391,7 +413,7 @@ const styles = {
   headerOverlay: {
     position: "absolute",
     inset: 0,
-    background: "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.3), rgba(0,0,0,0.7))"
+    background: "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.3))"
   },
   headerContent: {
     position: "absolute",
@@ -399,80 +421,15 @@ const styles = {
     left: "50%",
     transform: "translate(-50%, -50%)"
   },
-  mainTitle: {
-    fontSize: "68px",
-    fontWeight: "900",
-    marginBottom: "25px",
-    letterSpacing: "1px",
-    textShadow: "2px 4px 10px rgba(0,0,0,0.6)"
-  },
-  testMeta: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "18px"
-  },
-  metaBtnOrange: {
-    background: "rgba(249,115,22,0.9)",
-    color: "#fff",
-    padding: "10px 18px",
-    borderRadius: "25px",
-    fontWeight: "600",
-    fontSize: "14px",
-    backdropFilter: "blur(6px)"
-  },
-  metaBtnPink: {
-    background: "rgba(236,72,153,0.9)",
-    color: "#fff",
-    padding: "10px 18px",
-    borderRadius: "25px",
-    fontWeight: "600",
-    fontSize: "14px",
-    backdropFilter: "blur(6px)"
-  },
-  subSection: {
-    background: "linear-gradient(180deg, #f97316, #f59e0b)",
-    color: "#fff",
-    padding: "40px 20px 60px",
-    clipPath: "ellipse(120% 65% at 50% 25%)"
-  },
-  subTitle: {
-    fontSize: "32px",
-    fontWeight: "700",
-    marginBottom: "12px"
-  },
-  subDesc: {
-    fontSize: "16px",
-    lineHeight: "1.7",
-    maxWidth: "700px",
-    margin: "0 auto 20px"
-  },
-  startButton: {
-    background: "#7b61ff",
-    color: "#fff",
-    border: "none",
-    borderRadius: "30px",
-    padding: "14px 40px",
-    fontSize: "16px",
-    fontWeight: "600",
-    cursor: "pointer",
-    marginTop: "10px",
-    boxShadow: "0 6px 14px rgba(123,97,255,0.3)",
-    transition: "all 0.3s ease"
-  },
-  scaleBar: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(90deg, #ef4444, #f59e0b, #3b82f6, #22c55e)",
-    color: "#fff",
-    borderRadius: "10px",
-    padding: "12px 0",
-    margin: "50px auto",
-    width: "90%",
-    fontWeight: "600",
-    fontSize: "14px",
-    gap: "60px"
-  },
+  mainTitle: { fontSize: "68px", fontWeight: "900", marginBottom: "25px", textShadow: "2px 4px 10px rgba(0,0,0,0.6)" },
+  testMeta: { display: "flex", justifyContent: "center", gap: "18px" },
+  metaBtnOrange: { background: "rgba(249,115,22,0.9)", color: "#fff", padding: "10px 18px", borderRadius: "25px", fontWeight: "600" },
+  metaBtnPink: { background: "rgba(236,72,153,0.9)", color: "#fff", padding: "10px 18px", borderRadius: "25px", fontWeight: "600" },
+  subSection: { background: "linear-gradient(180deg, #243cc9, #4169e1)", color: "#fff", padding: "40px 20px 60px", clipPath: "ellipse(120% 65% at 50% 25%)" },
+  subTitle: { fontSize: "32px", fontWeight: "700", marginBottom: "12px" },
+  subDesc: { fontSize: "16px", lineHeight: "1.7", maxWidth: "700px", margin: "0 auto 20px" },
+  startButton: { background: "#7b61ff", color: "#fff", border: "none", borderRadius: "30px", padding: "14px 40px", fontSize: "16px", fontWeight: "600", cursor: "pointer", marginTop: "10px", boxShadow: "0 6px 14px rgba(123,97,255,0.3)" },
+  scaleBar: { display: "flex", justifyContent: "center", alignItems: "center", background: "linear-gradient(90deg, #ef4444, #f59e0b, #3b82f6, #22c55e)", color: "#fff", borderRadius: "10px", padding: "12px 0", margin: "50px auto", width: "90%", fontWeight: "600", fontSize: "14px", gap: "60px" },
   scaleText: { textShadow: "0 1px 2px rgba(0,0,0,0.2)" },
   questionList: { marginTop: "20px", width: "90%", marginLeft: "auto", marginRight: "auto" },
   questionBlock: { marginBottom: "45px" },
@@ -483,9 +440,9 @@ const styles = {
   labelLeft: { color: "#555", fontSize: "14px", fontWeight: "600" },
   labelRight: { color: "#555", fontSize: "14px", fontWeight: "600" },
   divider: { borderBottom: "1px solid #e5e7eb", width: "90%", margin: "35px auto" },
-  submitButton: { display: "block", margin: "40px auto 0", backgroundColor: "#7b61ff", color: "#fff", border: "none", borderRadius: "10px", padding: "14px 40px", fontSize: "16px", fontWeight: "600", cursor: "pointer", boxShadow: "0 6px 14px rgba(123,97,255,0.3)", transition: "transform 0.2s ease, box-shadow 0.2s ease" },
+  submitButton: { display: "block", margin: "40px auto 0", backgroundColor: "#7b61ff", color: "#fff", border: "none", borderRadius: "10px", padding: "14px 40px", fontSize: "16px", fontWeight: "600", cursor: "pointer", boxShadow: "0 6px 14px rgba(123,97,255,0.3)" },
   resultBox: { marginTop: "40px", backgroundColor: "#f3f4f6", borderRadius: "12px", padding: "25px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", width: "80%", marginLeft: "auto", marginRight: "auto" },
   resultScore: { fontSize: "20px", fontWeight: "700", color: "#333", marginBottom: "8px" },
   resultText: { fontSize: "18px", fontWeight: "600", color: "#7b61ff" },
-  agentRText: { marginTop: "12px", fontSize: "16px", color: "#444", lineHeight: "1.6" }
+  agentRText: { marginTop: 12, fontSize: 16, color: "#444" }
 };

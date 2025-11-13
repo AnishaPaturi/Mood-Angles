@@ -245,17 +245,24 @@ export default function BipolarTest() {
       // ---------- Save to DB ----------
       const payloadToSave = {
         testType: testName,
+        score: percentScore, // REQUIRED by backend
+        level,
+        
+        // Optional extras
         score_percent: percentScore,
         score_10: norm10,
-        level,
+        
         answers: buildAnswersPayload(),
+        
         agentR_result: agentR_summary || null,
         agentD_result: dData?.result || null,
         agentC_result: cSummary || null,
         agentE_result: eSummary || null,
         agentJ_result: jData || null,
-        meta: { submittedAt: new Date().toISOString() },
+
+        meta: { submittedAt: new Date().toISOString() }
       };
+
 
       const saveResp = await sendResultToDB(payloadToSave);
 
@@ -368,7 +375,7 @@ export default function BipolarTest() {
                 {result.scorePercent !== null && (
                   <p style={styles.resultScore}>Your Bipolar Check Score: {result.scorePercent}/100</p>
                 )}
-                <p style={styles.resultText}>{result.level}</p>
+                {/* <p style={styles.resultText}>{result.level}</p> */}
 
                 {/* {result.agentRDiagnosis && (
                   <p style={styles.agentRText}>
@@ -403,30 +410,46 @@ export default function BipolarTest() {
                     ) : (
                       <div style={{ marginTop: "8px" }}>
                         {result.agentJDecision.decision && (
-                          <div><strong>Decision:</strong> {result.agentJDecision.decision}</div>
+                          <div>
+                            <strong>Decision:</strong> {result.agentJDecision.decision}
+                          </div>
                         )}
+
                         {result.agentJDecision.confidence !== undefined && (
-                          <div><strong>Confidence:</strong> {String(result.agentJDecision.confidence)}</div>
+                          <div>
+                            <strong>Confidence:</strong> {String(result.agentJDecision.confidence)}
+                          </div>
                         )}
+
                         {result.agentJDecision.reasoning && (
                           <div style={{ marginTop: "6px" }}>
                             <strong>Reasoning:</strong> {result.agentJDecision.reasoning}
                           </div>
                         )}
-                        {Array.isArray(result.agentJDecision.actions) && result.agentJDecision.actions.length > 0 && (
-                          <div style={{ marginTop: "6px" }}>
-                            <strong>Actions:</strong>
-                            <ul style={{ marginTop: "6px" }}>
-                              {result.agentJDecision.actions.map((a, idx) => (
-                                <li key={idx}>{a}</li>
-                              ))}
-                            </ul>
+
+                        {Array.isArray(result.agentJDecision.actions) &&
+                          result.agentJDecision.actions.length > 0 && (
+                            <div style={{ marginTop: "6px" }}>
+                              <strong>Actions:</strong>
+                              <ul style={{ marginTop: "6px" }}>
+                                {result.agentJDecision.actions.map((a, idx) => (
+                                  <li key={idx}>{a}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                        {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
+                        {result.agentJDecision.final_call && (
+                          <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
+                            <strong>Final Judgment:</strong> {result.agentJDecision.final_call}
                           </div>
                         )}
                       </div>
                     )}
                   </div>
                 )}
+
 
                 {/* show chain error when present for debugging */}
                 {result.chainError && (
