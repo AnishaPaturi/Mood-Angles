@@ -88,6 +88,67 @@ router.post("/reset-password/:token", async (req, res) => {
   }
 });
 
+/* ============================
+   GOOGLE LOGIN
+   ============================ */
+router.post("/google", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: "Google token missing" });
+    }
+
+    // Google token verification
+    const googleRes = await fetch(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
+    );
+
+    const googleData = await googleRes.json();
+
+    if (googleData.error) {
+      return res.status(401).json({ message: "Invalid Google token" });
+    }
+
+    const email = googleData.email?.trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ message: "Google login failed: No email" });
+    }
+
+    // Find or Create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name: googleData.name || "Google User",
+        email,
+        password: "GOOGLE_AUTH_USER", // dummy password
+        profilePic: googleData.picture || "",
+        isGoogleAuth: true,
+      });
+    }
+
+    // JWT Sign
+    const tokenJWT = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      message: "Google login successful",
+      token: tokenJWT,
+      user,
+    });
+
+  } catch (error) {
+    console.error("Google login error:", error);
+    res.status(500).json({ message: "Google login failed", error: String(error) });
+  }
+});
+
+
 export default router;
 
 
