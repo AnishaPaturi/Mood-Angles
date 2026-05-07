@@ -11,7 +11,7 @@ function UploadD() {
 
   // ✅ Fetch uploaded files
   useEffect(() => {
-    fetch("http://localhost:5000/api/uploads")
+    fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/uploads`)
       .then((res) => res.json())
       .then((data) => setUploadedFiles(data))
       .catch((err) => console.error("Error fetching uploaded files:", err));
@@ -42,7 +42,7 @@ function UploadD() {
       const formData = new FormData();
       formData.append("file", files[0]); // one at a time
 
-      const res = await fetch("http://localhost:5000/api/uploads", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/uploads`, {
         method: "POST",
         body: formData,
       });

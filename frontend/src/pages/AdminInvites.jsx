@@ -6,7 +6,7 @@ export default function AdminInvites() {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/invite/requests")
+    fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/invite/requests`)
       .then((res) => res.json())
       .then((data) => {
         setRequests(data);

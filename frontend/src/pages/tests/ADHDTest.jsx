@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
 export default function ADHDTest() {
-  const API_BASE = "http://localhost:5000";
+  const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
   const testName = "ADHD";
   
   const questions = [
