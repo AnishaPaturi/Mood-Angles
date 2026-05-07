@@ -1,128 +1,158 @@
-# MoodAngles
+<div align="center">
+  <!-- You can replace the src below with a link to your actual project logo/banner -->
+  <img src="https://via.placeholder.com/150?text=Mood-Angles+Logo" alt="MoodAngles Logo" width="120" style="border-radius: 20px;"/>
 
-A comprehensive mental health application designed to help users track their moods, manage wellness, and connect with psychiatrists. Built with modern web technologies for a seamless user experience.
+  # 🧠 Mood-Angles
+  
+  **A Comprehensive, AI-Powered Mental Health & Telepsychiatry Platform**
+  
+  [![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+  [![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+  [![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com/)
+  [![Python](https://img.shields.io/badge/Python_ML-14354C?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
+  [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+</div>
 
-## Features
+<br />
 
-- **Mood Tracking**: Log daily moods and visualize trends over time.
-- **Daily Wellness Check-ins**: Record sleep quality, energy levels, and physical discomfort.
-- **Medical History Management**: Store diagnoses, treatments, medications, and symptoms.
-- **AI Insights**: Receive personalized recommendations and mood pattern analysis.
-- **Appointment Scheduling**: Book and manage therapy sessions.
-- **User Profiles**: Comprehensive profiles for users and psychiatrists.
-- **Authentication**: Secure login/signup with password hashing and Google OAuth support.
-- **Responsive Design**: Mobile-friendly interface with Tailwind CSS.
+## 🌟 Overview
 
-## Tech Stack
+**Mood-Angles** isn't just a mood tracker; it is a holistic mental health companion. Built with cutting-edge web technologies, it bridges the gap between daily emotional awareness and professional psychiatric care. By combining seamless daily check-ins with predictive **Machine Learning insights**, Mood-Angles empowers users to understand their mental well-being on a deeper level while providing a highly secure portal to connect with certified professionals.
 
-### Frontend
-- React 19
-- Vite (build tool)
-- Tailwind CSS (styling)
-- React Router DOM (navigation)
+---
 
-### Backend
-- Node.js
-- Express.js
-- MongoDB with Mongoose
-- Passport.js (Google OAuth)
-- bcryptjs (password hashing)
-- JWT (authentication)
+## ✨ Incredible Features
 
-### Machine Learning
-- Python 3.x
-- Pandas (data manipulation)
-- Scikit-learn (machine learning)
-- Joblib (model serialization)
+- **📊 Intelligent Mood Tracking:** Log your daily moods, energy levels, and physical discomfort. Visualize your emotional journey through interactive, beautiful trends and charts.
+- **🤖 AI-Powered Insights:** Powered by a Python/Scikit-learn Machine Learning pipeline, the platform analyzes your history to uncover hidden patterns and deliver personalized wellness recommendations.
+- **👨‍⚕️ Telepsychiatry Portal:** Direct scheduling system! Users can easily book, manage, and attend therapy sessions with registered psychiatrists based on real-time availability.
+- **🔐 Secure Medical Profiles:** A highly secure vault for your medical history, current medications, diagnoses, and treatments.
+- **🛡️ Enterprise-Grade Authentication:** Fortified with JWT, bcrypt password hashing, and seamless **Google OAuth** integration.
+- **📱 Responsive & Premium Design:** A beautifully crafted, modern UI built with Tailwind CSS that feels native on both mobile and desktop screens.
 
-## Prerequisites
+---
 
-- Node.js (v18 or higher)
-- MongoDB (local or cloud instance)
-- Python 3.x (for ML components)
-- npm or yarn
-- pip (Python package installer)
+## 🛠️ Tech Stack Architecture
 
-## Installation
+Mood-Angles leverages a robust Microservices-inspired architecture combining the MERN stack with a dedicated Python ML engine.
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd MoodAngles
-   ```
+### Frontend 🎨
+- **React 19** & **Vite** for blazing-fast rendering and optimal performance.
+- **Tailwind CSS** for a highly responsive, modern, and aesthetic user interface.
+- **React Router DOM** for seamless client-side navigation.
 
-2. Install Node.js dependencies:
-   ```bash
-   npm install
-   npm install express mongoose dotenv cors python-shell openai
-   ```
+### Backend ⚙️
+- **Node.js** & **Express.js** providing a fast, scalable RESTful API.
+- **MongoDB** & **Mongoose** for flexible, NoSQL document storage.
+- **Passport.js** handling OAuth and **JWT** for stateless session management.
 
-3. Install Python dependencies:
-   ```bash
-   pip install pandas scikit-learn joblib
-   ```
+### AI & Machine Learning 🧠
+- **Python 3.x** environment.
+- **Scikit-Learn** & **Pandas** for data wrangling and predictive modeling.
+- **Joblib** for high-performance model serialization.
 
-4. Set up environment variables:
-   Create a `.env` file in the root directory with:
-   ```
-   MONGO_URI=your_mongodb_connection_string
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   SESSION_SECRET=your_session_secret
-   PORT=5000
-   ```
+---
 
-5. Train the ML model (optional, if not already trained):
-   ```bash
-   cd backend/ml
-   python train_model.py
-   ```
+## 🚀 Getting Started
 
-6. Start the backend server:
-   ```bash
-   cd backend
-   node server.js
-   ```
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
-7. In a new terminal, start the frontend:
-   ```bash
-   npm run dev
-   ```
+### Prerequisites
 
-8. Open your browser to `http://localhost:5173` (Vite default).
+Ensure you have the following installed:
+- **Node.js** (v18 or higher)
+- **MongoDB** (Local instance or MongoDB Atlas Cloud)
+- **Python 3.x** (with `pip`)
 
-## Usage
+### 1. Clone the Repository
 
-- **User Registration/Login**: Sign up as a user or psychiatrist.
-- **Dashboard**: View mood trends, daily check-ins, and insights.
-- **Profile**: Manage personal and medical information.
-- **Appointments**: Schedule sessions with psychiatrists.
+```bash
+git clone https://github.com/yourusername/Mood-Angles.git
+cd Mood-Angles
+```
 
-## API Endpoints
+### 2. Backend Setup & Dependencies
 
-### Authentication
-- `POST /api/auth/signup` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/psychiatrist/signup` - Psychiatrist registration
-- `POST /api/auth/psychiatrist/login` - Psychiatrist login
-- `GET /api/auth/profile` - Get user profile
+Install Node.js dependencies for the API server:
+```bash
+npm install
+npm install express mongoose dotenv cors python-shell openai
+```
 
-### OAuth
-- `GET /api/auth/google` - Google OAuth login
-- `GET /api/auth/google/callback` - OAuth callback
+### 3. Machine Learning Setup
 
-## Contributing
+Install the required Python packages for the AI engine:
+```bash
+pip install pandas scikit-learn joblib
+```
 
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit changes: `git commit -m 'Add feature'`
-4. Push to branch: `git push origin feature-name`
-5. Open a pull request.
+### 4. Environment Variables
 
-## License
+Create a `.env` file in the root directory and configure your secrets:
+```env
+MONGO_URI=your_mongodb_connection_string
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+SESSION_SECRET=your_hyper_secure_session_secret
+PORT=5000
+```
 
-This project is licensed under the MIT License.
+### 5. Train the AI Model (Optional)
 
-## Contact
+If the pre-trained model isn't available, generate a new one:
+```bash
+cd backend/ml
+python train_model.py
+```
 
-For questions or support, please contact the development team.
+### 6. Ignition 🔥
+
+Start the backend server:
+```bash
+cd backend
+node server.js
+```
+
+In a new terminal window, spin up the Vite frontend:
+```bash
+npm run dev
+```
+Navigate to `http://localhost:5173` to experience Mood-Angles!
+
+---
+
+## 🔌 Core API Endpoints
+
+### 🛡️ Authentication
+- `POST /api/auth/signup` - Register a new User
+- `POST /api/auth/login` - Authenticate User
+- `POST /api/auth/psychiatrist/signup` - Register a new Psychiatrist
+- `POST /api/auth/psychiatrist/login` - Authenticate Psychiatrist
+- `GET /api/auth/profile` - Fetch Profile Data
+
+### 🌐 OAuth Integration
+- `GET /api/auth/google` - Initiate Google OAuth Flow
+- `GET /api/auth/google/callback` - Google OAuth Callback handler
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions to make Mood-Angles even better! 
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<div align="center">
+  <i>Crafted with ❤️ for Mental Wellness</i>
+</div>
