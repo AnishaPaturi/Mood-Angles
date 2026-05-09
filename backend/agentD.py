@@ -57,7 +57,10 @@ def main():
 
     # Try OpenAI but handle exceptions and fallback
     try:
-        client = OpenAI(api_Key=os.getenv("OPENAI_API_KEY"))
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("OPENROUTER_API_KEY", os.getenv("OPENAI_API_KEY"))
+        )
         prompt = f"""
 You are Agent D, a follow-up diagnostic summarizer for a mental-health screener.
 Given:
@@ -70,29 +73,16 @@ Write 2–4 concise sentences that:
 2. Suggest next steps (professional evaluation, monitoring, self-care).
 Keep it friendly and factual. Output ONLY plain text (no lists, no JSON).
 """
-        resp = client.responses.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            input=[{"role": "system", "content": "You are Agent D, a concise, empathetic summarizer."},
+        resp = client.chat.completions.create(
+            model=os.getenv("LLM_MODEL", "openrouter/free"),
+            messages=[{"role": "system", "content": "You are Agent D, a concise, empathetic summarizer."},
                    {"role": "user", "content": prompt}],
-            max_output_tokens=200
+            max_tokens=200
         )
 
-        # best-effort extract text
-        out_text = None
-        try:
-            out_text = getattr(resp, "output_text", None)
-            if not out_text:
-                # try to parse dict-like
-                d = resp.to_dict() if hasattr(resp, "to_dict") else (resp if isinstance(resp, dict) else None)
-                if isinstance(d, dict):
-                    # walk common shapes
-                    out_text = d.get("output_text") or d.get("result") or None
-                if not out_text:
-                    out_text = str(resp)
-        except Exception:
-            out_text = str(resp)
+        out_text = resp.choices[0].message.content
 
-        if out_text is None:
+        if not out_text:
             raise Exception("No output text from OpenAI response")
 
         # Clean and return

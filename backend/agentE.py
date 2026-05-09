@@ -10,7 +10,10 @@ from dotenv import load_dotenv
 from openai import OpenAI, APIError
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY", os.getenv("OPENAI_API_KEY"))
+)
 
 def safe_json_output(obj):
     try:
@@ -63,16 +66,16 @@ Task:
 """
 
     try:
-        resp = client.responses.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            input=[
+        resp = client.chat.completions.create(
+            model=os.getenv("LLM_MODEL", "openrouter/free"),
+            messages=[
                 {"role": "system", "content": "You are Agent E, an impartial debate moderator."},
                 {"role": "user", "content": prompt}
             ],
-            max_output_tokens=600
+            max_tokens=600
         )
 
-        text = extract_text(resp)
+        text = resp.choices[0].message.content or ""
 
         # Remove ```json fences if present
         text = re.sub(r"^```(?:json)?", "", text, flags=re.IGNORECASE).strip("` \n")

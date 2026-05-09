@@ -9,7 +9,10 @@ from dotenv import load_dotenv
 from openai import OpenAI, APIError
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY", os.getenv("OPENAI_API_KEY"))
+)
 
 def sanitize_string(s: str) -> str:
     if not isinstance(s, str):
@@ -149,13 +152,13 @@ Constraints:
     ]
 
     try:
-        resp = client.responses.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            input=messages,
-            max_output_tokens=300
+        resp = client.chat.completions.create(
+            model=os.getenv("LLM_MODEL", "openrouter/free"),
+            messages=messages,
+            max_tokens=300
         )
 
-        out_text = extract_text(resp)
+        out_text = resp.choices[0].message.content or ""
         # strip fencing if any
         text = out_text.strip()
         if text.startswith("```"):

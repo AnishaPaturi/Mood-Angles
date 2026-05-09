@@ -99,7 +99,7 @@ app.post("/api/angelR", (req, res) => {
     stderr += chunk.toString();
   });
 
-  const timeLimit = Number(process.env.AGENT_PY_TIMEOUT_MS || 15000);
+  const timeLimit = Number(process.env.AGENT_PY_TIMEOUT_MS || 60000);
   const killTimeout = setTimeout(() => {
     killedByTimeout = true;
     try {
@@ -183,7 +183,7 @@ function runPythonAgent(req, res, scriptName) {
   py.stdout.on("data", (chunk) => (stdout += chunk.toString()));
   py.stderr.on("data", (chunk) => (stderr += chunk.toString()));
 
-  const timeLimit = Number(process.env.AGENT_PY_TIMEOUT_MS || 15000);
+  const timeLimit = Number(process.env.AGENT_PY_TIMEOUT_MS || 60000);
   const killTimeout = setTimeout(() => {
     killedByTimeout = true;
     try {

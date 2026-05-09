@@ -10,7 +10,10 @@ from dotenv import load_dotenv
 from openai import OpenAI, APIError
 
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.getenv("OPENROUTER_API_KEY", os.getenv("OPENAI_API_KEY"))
+)
 
 
 # =================== UTF-8 & STRUCTURE SANITIZERS ===================
@@ -124,14 +127,14 @@ Output only the final summary — no JSON, no code block, no markdown formatting
 
     try:
         # ========== OpenAI Call ==========
-        resp = client.responses.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
-            input=messages,
-            max_output_tokens=400
+        resp = client.chat.completions.create(
+            model=os.getenv("LLM_MODEL", "openrouter/free"),
+            messages=messages,
+            max_tokens=400
         )
 
         # ========== Clean Output ==========
-        out_text = extract_text_from_resp(resp) or ""
+        out_text = resp.choices[0].message.content or ""
 
         # --- Remove markdown code fences like ```json ... ``` ---
         text = re.sub(r"^```(?:json)?", "", out_text, flags=re.IGNORECASE).strip("` \n")

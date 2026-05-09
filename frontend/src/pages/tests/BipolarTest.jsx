@@ -407,6 +407,12 @@ export default function BipolarTest() {
                     <strong>Angel J (Judge) Decision:</strong>
                     {typeof result.AngelJDecision === "string" ? (
                       <div style={{ marginTop: "6px" }}>{result.AngelJDecision}</div>
+                    ) : result.AngelJDecision.error ? (
+                      <div style={{ marginTop: "6px", color: "#b91c1c" }}>
+                        <strong>Error:</strong> {result.AngelJDecision.error}
+                        <br />
+                        {result.AngelJDecision.details}
+                      </div>
                     ) : (
                       <div style={{ marginTop: "8px" }}>
                         {result.AngelJDecision.decision && (
