@@ -53,7 +53,7 @@ def deterministic_judgment(score, condition):
     s = float(score) if score else 0
     cond_lower = (condition or "").lower()
     
-    # Determine urgency based on score
+    # Determine urgency based on score (0-100 scale)
     if s <= 19:
         decision = "Unlikely"
         conf = 0.2
@@ -80,19 +80,56 @@ def deterministic_judgment(score, condition):
         urgency = "urgent"
         timeline = "Within days"
     
-    # Condition-specific suggestions
-    baseline_actions = ["Professional evaluation recommended"]
+    # Condition-specific suggestions based on symptom patterns
+    baseline_actions = []
+    
     if "autism" in cond_lower or "adhd" in cond_lower:
-        baseline_actions.append("Document specific behaviors/symptoms daily")
+        baseline_actions = [
+            "Track routines and sensory triggers in a daily journal",
+            "Practice scripts for social situations",
+            "Consider screening tools like AQ-50 or RAADS-R"
+        ]
         if urgency in ["medium-high", "high", "urgent"]:
-            baseline_actions.append("Consider neuropsychological assessment")
-    elif "anxiety" in cond_lower or "depress" in cond_lower or "bipolar" in cond_lower:
-        baseline_actions.append("Monitor mood/sleep patterns")
-        baseline_actions.append("Practice grounding/breathing techniques")
+            baseline_actions.append("Ask your doctor about neuropsychological evaluation")
+    elif "anxiety" in cond_lower:
+        baseline_actions = [
+            "Practice 4-7-8 breathing for 5 minutes twice daily",
+            "Limit caffeine and alcohol",
+            "Use grounding techniques: name 5 things you see, 4 you hear, 3 you touch"
+        ]
         if urgency in ["high", "urgent"]:
-            baseline_actions.append("Have a support person available")
+            baseline_actions.append("Tell your doctor: 'I have persistent worry affecting daily life'")
+    elif "depress" in cond_lower:
+        baseline_actions = [
+            "Set one small achievable goal each day",
+            "Get 15 minutes of sunlight and movement",
+            "Create a safety plan with trusted contacts"
+        ]
+        if urgency in ["high", "urgent"]:
+            baseline_actions.append("Tell your doctor: 'I need help with persistent low mood and energy'")
+    elif "bipolar" in cond_lower:
+        baseline_actions = [
+            "Track mood daily using a simple 1-10 scale",
+            "Maintain consistent sleep schedule",
+            "Avoid stimulants and sudden schedule changes"
+        ]
+        if urgency in ["high", "urgent"]:
+            baseline_actions.append("Tell your doctor: 'I notice mood swings between highs and lows'")
     else:
-        baseline_actions.append("Track symptoms using a journal")
+        baseline_actions = [
+            "Keep a simple daily log of your experiences",
+            "Note patterns in your energy and mood",
+            "Bring this log to your healthcare appointment"
+        ]
+    
+    # Add timing context to actions
+    timing_note = {
+        "low": " (long-term self-monitoring)",
+        "medium": " (routine follow-up)",
+        "medium-high": " (sooner rather than later)",
+        "high": " (within 1-2 weeks)",
+        "urgent": " (as soon as possible)"
+    }
     
     return {
         "decision": decision,
@@ -101,7 +138,8 @@ def deterministic_judgment(score, condition):
         "actions": baseline_actions,
         "final_call": f"Assessment: {decision}. Urgency: {timeline}.",
         "urgency": urgency,
-        "timeline": timeline
+        "timeline": timeline,
+        "timing_note": timing_note.get(urgency, "")
     }
 
 def build_clinical_context(data):
@@ -147,7 +185,7 @@ def main():
         safe_print_json(fallback)
         return
 
-    # Build a clinical-only prompt (explicitly forbid referencing other agents)
+# Build a clinical-only prompt (explicitly forbid referencing other agents)
     clinical_context = build_clinical_context(data)
     prompt = f"""
 You are a clinical reasoning assistant producing a concise, medical-style diagnostic judgment.
@@ -174,11 +212,15 @@ Task:
      or any equivalent.
    - Always produce a clear, clinically grounded explanation using whatever information is available (score, level, symptoms, highlights).
 
-4) Recommend 0–3 concrete next actions (short phrases) including self-help strategies before professional consultation.
+4) Recommend 0–3 concrete next actions (short phrases) including self-help strategies BEFORE professional consultation. These should be specific to the condition:
+   - Autism/ADHD: mention AQ-50, RAADS-R, tracking routines, social scripts
+   - Anxiety: breathing exercises, grounding techniques, limiting stimulants
+   - Depression: daily goals, sunlight/exercise, safety planning
+   - Bipolar: mood tracking, sleep consistency, avoiding substance triggers
 
-5) Include an "urgency" field: "low" (routine), "medium" (1-2 months), "medium-high" (2-4 weeks), "high" (1-2 weeks), or "urgent" (within days).
+5) Include an "urgency" field: "low" (score 0-19), "medium" (20-50), "medium-high" (51-74), "high" (75-86), or "urgent" (87-100). THE URGENCY MUST MATCH THE SCORE.
 
-6) Include a "timeline" field: when to seek professional help.
+6) Include a "timeline" field based on urgency: "Routine screening" (low), "Within 1-2 months" (medium), "Within 2-4 weeks" (medium-high), "Within 1-2 weeks" (high), "Within days" (urgent).
 
 7) Produce a "final_call" field — a single sentence summarizing the overall judgment in simple clinical language.
 
@@ -188,9 +230,8 @@ Constraints:
 - Keep reasoning clinical and non-alarmist.
 - Do not say "ask another agent" or mention other agents.
 - DO NOT imply insufficient information anywhere in the response.
+- THE URGENCY MUST ALWAYS REFLECT THE SCORE - if score is 95+, use "urgent"
 """
-
-
 
     messages = [
         {"role": "system", "content": "You are a concise clinical diagnostician. Focus on medical reasoning only."},

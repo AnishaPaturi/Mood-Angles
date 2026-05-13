@@ -304,69 +304,97 @@ export default function AutismTest() {
               <div style={styles.resultBox}>
                 {result.score !== null && (
                   <>
-                    {/* Score Display with Spectrum Bar */}
-                    <div style={styles.scoreSection}>
-                      <h3 style={styles.scoreTitle}>Your Autism Traits Score</h3>
-                      <div style={styles.scoreValue}>{result.score}<span style={styles.scoreTotal}>/100</span></div>
-                      <div style={styles.spectrumBar}>
-                        <div style={styles.spectrumLabels}>
-                          <span>Few traits</span>
-                          <span>Some traits</span>
-                          <span>Many traits</span>
-                        </div>
-                        <div style={styles.spectrumTrack}>
-                          <div style={{...styles.spectrumFill, width: `${result.score}%`}}></div>
-                          <div style={{...styles.spectrumMarker, left: `calc(${result.score}% - 12px)`}}></div>
-                        </div>
+                    {/* Purple Hero Score Section */}
+                    <div style={styles.heroScore}>
+                      <div style={styles.heroTitle}>Your Autism Traits Score</div>
+                      <div style={styles.gaugeContainer}>
+                        <svg width="200" height="120" viewBox="0 0 200 120">
+                          <path 
+                            d="M 20 100 A 80 80 0 0 1 180 100" 
+                            fill="none" 
+                            stroke="#e5e7eb" 
+                            strokeWidth="12"
+                            strokeLinecap="round"
+                          />
+                          <path 
+                            d="M 20 100 A 80 80 0 0 1 180 100" 
+                            fill="none" 
+                            stroke="#7b61ff" 
+                            strokeWidth="12"
+                            strokeLinecap="round"
+                            strokeDasharray="251.2"
+                            strokeDashoffset={251.2 - (result.score / 100) * 251.2}
+                          />
+                          <circle 
+                            cx={20 + (result.score / 100) * 160} 
+                            cy={100 - Math.sin((result.score / 100) * Math.PI) * 80} 
+                            r="10" 
+                            fill="#7b61ff"
+                          />
+                        </svg>
+                        <div style={styles.gaugeScore}>{result.score}<span style={styles.gaugeTotal}>/100</span></div>
                       </div>
-                      <div style={styles.levelBadge}>
-                        {interpretLevel(result.score)}
+                      <div style={styles.gaugeLabels}>
+                        <span style={{color: "#22c55e"}}>Few</span>
+                        <span style={{color: "#facc15"}}>Some</span>
+                        <span style={{color: "#ef4444"}}>Many</span>
                       </div>
+                      <div style={styles.heroBadge}>{interpretLevel(result.score)}</div>
                     </div>
 
                     {/* Disclaimer */}
                     <p style={styles.disclaimer}>
-                      This is a screening tool, not a clinical diagnosis. Results suggest areas for further exploration with a qualified professional.
+                      This is a screening tool, not a clinical diagnosis.
                     </p>
 
-                    {/* Angel J Decision - Improved Display */}
+                    {/* Angel J Decision - Redesigned Display */}
                     {result.AngelJDecision && (
-                      <div style={styles.decisionSection}>
-                        <h4 style={styles.sectionTitle}>What This Means</h4>
-                        {typeof result.AngelJDecision === "string" ? (
-                          <p style={styles.decisionText}>{result.AngelJDecision}</p>
-                        ) : (
-                          <>
-                            {result.AngelJDecision.decision && (
-                              <p style={styles.decisionText}>
-                                <strong>Initial Assessment:</strong> {result.AngelJDecision.decision}
-                              </p>
-                            )}
-                            {result.AngelJDecision.reasoning && (
-                              <p style={styles.decisionText}>{result.AngelJDecision.reasoning}</p>
-                            )}
-                          </>
-                        )}
+                      <>
+                        <div style={styles.meaningSection}>
+                          <h4 style={styles.sectionTitle}>What This Means</h4>
+                          {typeof result.AngelJDecision === "string" ? (
+                            <p style={styles.meaningText}>{result.AngelJDecision}</p>
+                          ) : (
+                            <p style={styles.meaningText}>
+                              {result.AngelJDecision.decision === "Likely" 
+                                ? "Your responses show notable autistic trait patterns worth exploring further."
+                                : result.AngelJDecision.decision === "Possible"
+                                ? "Some traits align with autistic patterns — this may merit further discussion."
+                                : "Few traits strongly associated with autism were indicated."}
+                            </p>
+                          )}
+                        </div>
 
-                        <h4 style={styles.sectionTitle}>Suggested Next Steps</h4>
-                        {typeof result.AngelJDecision === "object" && result.AngelJDecision.actions && (
-                          <ul style={styles.actionList}>
-                            {Array.isArray(result.AngelJDecision.actions) 
-                              ? result.AngelJDecision.actions.map((a, idx) => <li key={idx}>{a}</li>)
-                              : <li>{result.AngelJDecision.actions}</li>
-                            }
-                          </ul>
-                        )}
+                        <div style={styles.nextStepsSection}>
+                          <h4 style={styles.sectionTitle}>Suggested Next Steps</h4>
+                          {typeof result.AngelJDecision === "object" && result.AngelJDecision.actions && (
+                            <div style={styles.stepsList}>
+                              {Array.isArray(result.AngelJDecision.actions) 
+                                ? result.AngelJDecision.actions.map((a, idx) => (
+                                    <div key={idx} style={styles.stepItem}>
+                                      <span style={styles.stepIcon}>✓</span>
+                                      <span style={styles.stepText}>{a}</span>
+                                    </div>
+                                  ))
+                                : <div style={styles.stepItem}><span style={styles.stepIcon}>✓</span><span style={styles.stepText}>{result.AngelJDecision.actions}</span></div>
+                              }
+                            </div>
+                          )}
+                        </div>
 
-                        {result.AngelJDecision.urgency && (
-                          <div style={styles.urgencyBox}>
-                            <strong>Urgency:</strong> {result.AngelJDecision.urgency === "urgent" ? "Immediate attention recommended" :
-                              result.AngelJDecision.urgency === "high" ? "Within 1-2 weeks" :
-                              result.AngelJDecision.urgency === "medium-high" ? "Within 2-4 weeks" :
-                              result.AngelJDecision.urgency === "medium" ? "Within 1-2 months" : "Routine check-in"}
-                          </div>
-                        )}
-                      </div>
+                        {/* Timing and Tools */}
+                        <div style={styles.timingBox}>
+                          <strong>When to connect with care:</strong>{" "}
+                          {result.AngelJDecision.urgency === "urgent" ? "Soon — within days" :
+                           result.AngelJDecision.urgency === "high" ? "Within 1-2 weeks" :
+                           result.AngelJDecision.urgency === "medium-high" ? "Within 2-4 weeks" :
+                           result.AngelJDecision.urgency === "medium" ? "Within 1-2 months" : "Routine — a few months is okay"}
+                        </div>
+
+                        <div style={styles.toolsBox}>
+                          <strong>Tools you can use:</strong> Consider taking AQ-50 or RAADS-R screening tools before your appointment.
+                        </div>
+                      </>
                     )}
                   </>
                 )}
@@ -508,21 +536,34 @@ const styles = {
   resultText: { fontSize: "18px", fontWeight: "600", color: "#7b61ff" },
   AngelRText: { marginTop: "12px", fontSize: "16px", color: "#444", lineHeight: "1.6" },
 
-  /* New Result Styles */
-  scoreSection: { marginBottom: "20px" },
-  scoreTitle: { fontSize: "18px", color: "#555", marginBottom: "8px" },
-  scoreValue: { fontSize: "48px", fontWeight: "800", color: "#7b61ff", display: "flex", alignItems: "center", justifyContent: "center" },
-  scoreTotal: { fontSize: "24px", fontWeight: "400", color: "#888", marginLeft: "4px" },
-  spectrumBar: { margin: "15px 0" },
-  spectrumLabels: { display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#666", marginBottom: "5px" },
-  spectrumTrack: { height: "12px", background: "linear-gradient(90deg, #22c55e, #facc15, #ef4444)", borderRadius: "6px", position: "relative" },
-  spectrumFill: { height: "100%", background: "rgba(255,255,255,0.3)", borderRadius: "6px" },
-  spectrumMarker: { position: "absolute", top: "-4px", width: "20px", height: "20px", background: "#fff", border: "2px solid #7b61ff", borderRadius: "50%" },
-  levelBadge: { display: "inline-block", background: "#7b61ff", color: "#fff", padding: "6px 16px", borderRadius: "20px", fontSize: "14px", fontWeight: "600", marginTop: "10px" },
-  disclaimer: { fontSize: "13px", color: "#888", fontStyle: "italic", marginTop: "15px", padding: "10px", background: "#f9fafb", borderRadius: "8px" },
-  decisionSection: { marginTop: "25px", padding: "20px", background: "#fff", borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" },
-  sectionTitle: { fontSize: "18px", fontWeight: "700", color: "#333", marginBottom: "12px", borderBottom: "1px solid #eee", paddingBottom: "8px" },
-  decisionText: { fontSize: "15px", color: "#444", lineHeight: "1.6", marginBottom: "12px" },
-  actionList: { listStyle: "disc inside", color: "#444", fontSize: "15px", lineHeight: "1.8", marginTop: "8px" },
-  urgencyBox: { marginTop: "15px", padding: "10px 15px", background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: "8px", fontSize: "14px" }
+  /* Hero Score Section */
+  heroScore: { 
+    background: "linear-gradient(135deg, #7b61ff 0%, #9371ff 100%)", 
+    borderRadius: "20px", 
+    padding: "30px 20px", 
+    color: "#fff",
+    marginBottom: "20px"
+  },
+  heroTitle: { fontSize: "18px", fontWeight: "500", opacity: "0.9", marginBottom: "10px" },
+  gaugeContainer: { position: "relative", height: "120px", display: "flex", alignItems: "center", justifyContent: "center" },
+  gaugeScore: { position: "absolute", top: "40px", fontSize: "36px", fontWeight: "800", color: "#fff" },
+  gaugeTotal: { fontSize: "20px", fontWeight: "400", opacity: "0.7" },
+  gaugeLabels: { display: "flex", justifyContent: "space-between", padding: "0 20px", marginTop: "10px", fontSize: "14px", fontWeight: "600" },
+  heroBadge: { display: "inline-block", background: "rgba(255,255,255,0.2)", color: "#fff", padding: "6px 16px", borderRadius: "20px", fontSize: "14px", fontWeight: "600", marginTop: "15px" },
+
+  /* Content Sections */
+  meaningSection: { background: "#fff", borderRadius: "12px", padding: "20px", marginTop: "20px" },
+  nextStepsSection: { background: "#fff", borderRadius: "12px", padding: "20px", marginTop: "15px" },
+  sectionTitle: { fontSize: "18px", fontWeight: "700", color: "#333", marginBottom: "12px" },
+  meaningText: { fontSize: "15px", color: "#444", lineHeight: "1.6" },
+
+  /* Steps */
+  stepsList: { marginTop: "10px" },
+  stepItem: { display: "flex", alignItems: "flex-start", marginBottom: "10px" },
+  stepIcon: { color: "#22c55e", fontWeight: "bold", marginRight: "8px", fontSize: "16px" },
+  stepText: { fontSize: "15px", color: "#444", flex: 1 },
+
+  /* Timing and Tools */
+  timingBox: { background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: "8px", padding: "10px 15px", fontSize: "14px", marginTop: "15px" },
+  toolsBox: { background: "#ede9fe", border: "1px solid #7b61ff", borderRadius: "8px", padding: "10px 15px", fontSize: "14px", marginTop: "15px" }
 };
