@@ -302,81 +302,74 @@ export default function AutismTest() {
 
             {result && (
               <div style={styles.resultBox}>
-                {result.score !== null && <p style={styles.resultScore}>Your Autism Traits Score: {result.score}/100</p>}
-                {/* <p style={styles.resultText}>{result.level}</p> */}
+                {result.score !== null && (
+                  <>
+                    {/* Score Display with Spectrum Bar */}
+                    <div style={styles.scoreSection}>
+                      <h3 style={styles.scoreTitle}>Your Autism Traits Score</h3>
+                      <div style={styles.scoreValue}>{result.score}<span style={styles.scoreTotal}>/100</span></div>
+                      <div style={styles.spectrumBar}>
+                        <div style={styles.spectrumLabels}>
+                          <span>Few traits</span>
+                          <span>Some traits</span>
+                          <span>Many traits</span>
+                        </div>
+                        <div style={styles.spectrumTrack}>
+                          <div style={{...styles.spectrumFill, width: `${result.score}%`}}></div>
+                          <div style={{...styles.spectrumMarker, left: `calc(${result.score}% - 12px)`}}></div>
+                        </div>
+                      </div>
+                      <div style={styles.levelBadge}>
+                        {interpretLevel(result.score)}
+                      </div>
+                    </div>
 
-                {/* {result.aiDiagnosis && (
-                  <p style={styles.AngelRText}>
-                    <strong>Angel R Diagnosis:</strong> {result.aiDiagnosis}
-                  </p>
-                )}
+                    {/* Disclaimer */}
+                    <p style={styles.disclaimer}>
+                      This is a screening tool, not a clinical diagnosis. Results suggest areas for further exploration with a qualified professional.
+                    </p>
 
-                {result.AngelDExplanation && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Angel D Summary:</strong> {result.AngelDExplanation}
-                  </p>
-                )}
-
-                {result.AngelCComparison && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Angel C Comparative Summary:</strong> {result.AngelCComparison}
-                  </p>
-                )}
-
-                {result.AngelEDebate && (
-                  <p style={{ marginTop: "10px", fontSize: "16px", color: "#444", lineHeight: "1.6" }}>
-                    <strong>Angel E Debate Summary:</strong> {result.AngelEDebate}
-                  </p>
-                )} */}
-
-                {result.AngelJDecision && (
-                  <div style={{ marginTop: "12px", textAlign: "left", color: "#444" }}>
-                    <strong>Angel J (Judge) Decision:</strong>
-                    {typeof result.AngelJDecision === "string" ? (
-                      <div style={{ marginTop: "6px" }}>{result.AngelJDecision}</div>
-                    ) : (
-                      <div style={{ marginTop: "8px" }}>
-                        {result.AngelJDecision.decision && (
-                          <div>
-                            <strong>Decision:</strong> {result.AngelJDecision.decision}
-                          </div>
+                    {/* Angel J Decision - Improved Display */}
+                    {result.AngelJDecision && (
+                      <div style={styles.decisionSection}>
+                        <h4 style={styles.sectionTitle}>What This Means</h4>
+                        {typeof result.AngelJDecision === "string" ? (
+                          <p style={styles.decisionText}>{result.AngelJDecision}</p>
+                        ) : (
+                          <>
+                            {result.AngelJDecision.decision && (
+                              <p style={styles.decisionText}>
+                                <strong>Initial Assessment:</strong> {result.AngelJDecision.decision}
+                              </p>
+                            )}
+                            {result.AngelJDecision.reasoning && (
+                              <p style={styles.decisionText}>{result.AngelJDecision.reasoning}</p>
+                            )}
+                          </>
                         )}
 
-                        {result.AngelJDecision.confidence !== undefined && (
-                          <div>
-                            <strong>Confidence:</strong> {String(result.AngelJDecision.confidence)}
-                          </div>
+                        <h4 style={styles.sectionTitle}>Suggested Next Steps</h4>
+                        {typeof result.AngelJDecision === "object" && result.AngelJDecision.actions && (
+                          <ul style={styles.actionList}>
+                            {Array.isArray(result.AngelJDecision.actions) 
+                              ? result.AngelJDecision.actions.map((a, idx) => <li key={idx}>{a}</li>)
+                              : <li>{result.AngelJDecision.actions}</li>
+                            }
+                          </ul>
                         )}
 
-                        {result.AngelJDecision.reasoning && (
-                          <div style={{ marginTop: "6px" }}>
-                            <strong>Reasoning:</strong> {result.AngelJDecision.reasoning}
-                          </div>
-                        )}
-
-                        {Array.isArray(result.AngelJDecision.actions) &&
-                          result.AngelJDecision.actions.length > 0 && (
-                            <div style={{ marginTop: "6px" }}>
-                              <strong>Actions:</strong>
-                              <ul style={{ marginTop: "6px" }}>
-                                {result.AngelJDecision.actions.map((a, idx) => (
-                                  <li key={idx}>{a}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                        {/* ⭐ FINAL CALL ADDED HERE ⭐ */}
-                        {result.AngelJDecision.final_call && (
-                          <div style={{ marginTop: "10px", fontSize: "17px", fontWeight: "600", color: "#111" }}>
-                            <strong>Final Judgment:</strong> {result.AngelJDecision.final_call}
+                        {result.AngelJDecision.urgency && (
+                          <div style={styles.urgencyBox}>
+                            <strong>Urgency:</strong> {result.AngelJDecision.urgency === "urgent" ? "Immediate attention recommended" :
+                              result.AngelJDecision.urgency === "high" ? "Within 1-2 weeks" :
+                              result.AngelJDecision.urgency === "medium-high" ? "Within 2-4 weeks" :
+                              result.AngelJDecision.urgency === "medium" ? "Within 1-2 months" : "Routine check-in"}
                           </div>
                         )}
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
-
 
                 {result.chainError && (
                   <p style={{ marginTop: "10px", color: "#b91c1c" }}>
@@ -513,5 +506,23 @@ const styles = {
   resultBox: { marginTop: "40px", backgroundColor: "#f3f4f6", borderRadius: "12px", padding: "25px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", width: "80%", marginLeft: "auto", marginRight: "auto" },
   resultScore: { fontSize: "20px", fontWeight: "700", color: "#333", marginBottom: "8px" },
   resultText: { fontSize: "18px", fontWeight: "600", color: "#7b61ff" },
-  AngelRText: { marginTop: "12px", fontSize: "16px", color: "#444", lineHeight: "1.6" }
+  AngelRText: { marginTop: "12px", fontSize: "16px", color: "#444", lineHeight: "1.6" },
+
+  /* New Result Styles */
+  scoreSection: { marginBottom: "20px" },
+  scoreTitle: { fontSize: "18px", color: "#555", marginBottom: "8px" },
+  scoreValue: { fontSize: "48px", fontWeight: "800", color: "#7b61ff", display: "flex", alignItems: "center", justifyContent: "center" },
+  scoreTotal: { fontSize: "24px", fontWeight: "400", color: "#888", marginLeft: "4px" },
+  spectrumBar: { margin: "15px 0" },
+  spectrumLabels: { display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#666", marginBottom: "5px" },
+  spectrumTrack: { height: "12px", background: "linear-gradient(90deg, #22c55e, #facc15, #ef4444)", borderRadius: "6px", position: "relative" },
+  spectrumFill: { height: "100%", background: "rgba(255,255,255,0.3)", borderRadius: "6px" },
+  spectrumMarker: { position: "absolute", top: "-4px", width: "20px", height: "20px", background: "#fff", border: "2px solid #7b61ff", borderRadius: "50%" },
+  levelBadge: { display: "inline-block", background: "#7b61ff", color: "#fff", padding: "6px 16px", borderRadius: "20px", fontSize: "14px", fontWeight: "600", marginTop: "10px" },
+  disclaimer: { fontSize: "13px", color: "#888", fontStyle: "italic", marginTop: "15px", padding: "10px", background: "#f9fafb", borderRadius: "8px" },
+  decisionSection: { marginTop: "25px", padding: "20px", background: "#fff", borderRadius: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" },
+  sectionTitle: { fontSize: "18px", fontWeight: "700", color: "#333", marginBottom: "12px", borderBottom: "1px solid #eee", paddingBottom: "8px" },
+  decisionText: { fontSize: "15px", color: "#444", lineHeight: "1.6", marginBottom: "12px" },
+  actionList: { listStyle: "disc inside", color: "#444", fontSize: "15px", lineHeight: "1.8", marginTop: "8px" },
+  urgencyBox: { marginTop: "15px", padding: "10px 15px", background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: "8px", fontSize: "14px" }
 };
