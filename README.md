@@ -1,184 +1,649 @@
-<div align="center">
-  <!-- You can replace the src below with a link to your actual project logo/banner -->
-  <img src="https://via.placeholder.com/150?text=Mood-Angles+Logo" alt="MoodAngles Logo" width="120" style="border-radius: 20px;"/>
+# 🧠 Mood-Angles – AI-Powered Mental Health & Telepsychiatry Platform
 
-  # 🧠 Mood-Angles
-  
-  **A Comprehensive, AI-Powered Mental Health & Telepsychiatry Platform**
-  
-  [![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
-  [![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-  [![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com/)
-  [![Python](https://img.shields.io/badge/Python_ML-14354C?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
-  [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-</div>
+![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-Express-green?style=for-the-badge&logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Database-green?style=for-the-badge&logo=mongodb&logoColor=white)
+![Python](https://img.shields.io/badge/Python-ML_Engine-blue?style=for-the-badge&logo=python&logoColor=white)
+![AI Powered](https://img.shields.io/badge/AI-Powered-blueviolet?style=for-the-badge)
+![Deployment](https://img.shields.io/badge/Deployed-Render-purple?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Development-brightgreen?style=for-the-badge)
 
-<br />
+---
 
 ## 🌟 Overview
 
-**Mood-Angles** isn't just a mood tracker; it is a holistic mental health companion. Built with cutting-edge web technologies, it bridges the gap between daily emotional awareness and professional psychiatric care. By combining seamless daily check-ins with predictive **Machine Learning insights**, Mood-Angles empowers users to understand their mental well-being on a deeper level while providing a highly secure portal to connect with certified professionals.
+**Mood-Angles** is a comprehensive, AI-powered mental health and telepsychiatry platform that bridges the gap between daily emotional awareness and professional psychiatric care. It combines intelligent mood tracking, predictive machine learning insights, and a secure telepsychiatry portal to provide holistic mental healthcare.
+
+Built with the MERN stack (MongoDB, Express, React, Node.js) enhanced with Python-based machine learning agents for psychological assessments and diagnostic support.
 
 ---
 
-## ✨ Incredible Features
+## 🎯 Problem Statement
 
-- **📊 Intelligent Mood Tracking:** Log your daily moods, energy levels, and physical discomfort. Visualize your emotional journey through interactive, beautiful trends and charts.
-- **🤖 AI-Powered Insights:** Powered by a Python/Scikit-learn Machine Learning pipeline, the platform analyzes your history to uncover hidden patterns and deliver personalized wellness recommendations.
-- **👨‍⚕️ Telepsychiatry Portal:** Direct scheduling system! Users can easily book, manage, and attend therapy sessions with registered psychiatrists based on real-time availability.
-- **🔐 Secure Medical Profiles:** A highly secure vault for your medical history, current medications, diagnoses, and treatments.
-- **🛡️ Enterprise-Grade Authentication:** Fortified with JWT, bcrypt password hashing, and seamless **Google OAuth** integration.
-- **📱 Responsive & Premium Design:** A beautifully crafted, modern UI built with Tailwind CSS that feels native on both mobile and desktop screens.
+Mental health care faces significant challenges:
 
----
+- ❌ Limited access to professional psychiatric care  
+- ❌ Difficulty tracking mood patterns over time  
+- ❌ No early warning system for mental health crises  
+- ❌ Lack of AI-assisted diagnostic support  
+- ❌ Inefficient appointment scheduling with psychiatrists  
 
-## 🛠️ Tech Stack Architecture
-
-Mood-Angles leverages a robust Microservices-inspired architecture combining the MERN stack with a dedicated Python ML engine.
-
-### Frontend 🎨
-- **React 19** & **Vite** for blazing-fast rendering and optimal performance.
-- **Tailwind CSS** for a highly responsive, modern, and aesthetic user interface.
-- **React Router DOM** for seamless client-side navigation.
-
-### Backend ⚙️
-- **Node.js** & **Express.js** providing a fast, scalable RESTful API.
-- **MongoDB** & **Mongoose** for flexible, NoSQL document storage.
-- **Passport.js** handling OAuth and **JWT** for stateless session management.
-
-### AI & Machine Learning 🧠
-- **Python 3.x** environment.
-- **Scikit-Learn** & **Pandas** for data wrangling and predictive modeling.
-- **Joblib** for high-performance model serialization.
+👉 Mood-Angles addresses these by providing an end-to-end platform for mood tracking, AI analysis, and direct connection to verified psychiatrists.
 
 ---
 
-## 🚀 Getting Started
+## ⚙️ Key Features
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+### 📊 Intelligent Mood Tracking
+- Daily mood, energy, and discomfort logging  
+- Interactive charts and trend visualization  
+- Historical emotion pattern analysis  
 
-### Prerequisites
+### 🤖 AI-Powered Insights
+- Machine Learning pipeline (Scikit-Learn)  
+- Predictive mental health pattern recognition  
+- Personalized wellness recommendations  
 
-Ensure you have the following installed:
-- **Node.js** (v18 or higher)
-- **MongoDB** (Local instance or MongoDB Atlas Cloud)
-- **Python 3.x** (with `pip`)
+### 🧠 Multi-Agent Assessment System
+Five specialized Python AI agents for psychological analysis:
+- **Agent C**: Cognitive assessment  
+- **Agent D**: Depression analysis  
+- **Agent E**: Emotional evaluation  
+- **Agent J**: Judgement & behavior analysis  
+- **Agent R**: Risk & safety evaluation  
 
-### 1. Clone the Repository
+### 👨‍⚕️ Telepsychiatry Portal
+- Real-time psychiatrist availability  
+- Direct appointment booking system  
+- Role-based dashboards (User, Psychiatrist, Admin)  
+- Invitation-based psychiatrist registration  
 
-```bash
-git clone https://github.com/yourusername/Mood-Angles.git
-cd Mood-Angles
+### 🔐 Enterprise Security
+- JWT-based authentication  
+- Bcrypt password hashing  
+- Google OAuth integration  
+- Role-based access control (User/Psychiatrist/Admin)  
+
+### 📱 Comprehensive Profiles
+- Medical history vault  
+- Medication tracking  
+- Treatment records  
+- Safety assessments  
+
+### 📈 Advanced Analytics
+- Emotion record tracking  
+- Psychological scale responses  
+- Test result history  
+- Progress monitoring  
+
+### 📄 Report Generation
+- Diagnosis reports  
+- Treatment records  
+- PDF export capabilities  
+
+---
+
+## 🏗️ System Architecture
+
+```
+User Request → Express Backend → Python Agent (Subprocess)
+     ↓              ↓                    ↓
+React Frontend  REST API         ML Processing
+     ↓              ↓                    ↓
+  MongoDB ← Credential & Data Storage ← Results
+     ↓
+    Redis (optional caching)
+     ↓
+Email Service (nodemailer)
 ```
 
-### 2. Backend Setup & Dependencies
+Core pipeline:
+- **Frontend**: React components → API calls
+- **Backend**: Express routes → Python agent spawning
+- **AI Agents**: JSON stdin/stdout communication
+- **Database**: MongoDB document storage
 
-Install Node.js dependencies for the API server:
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 19, Vite, Tailwind CSS 4, React Router DOM |
+| **Backend** | Node.js, Express.js, MongoDB, Mongoose |
+| **Authentication** | JWT, Bcrypt, Passport.js, Google OAuth 2.0 |
+| **AI/ML Engine** | Python 3.x, Scikit-Learn, Pandas, Joblib |
+| **File Upload** | Multer |
+| **Email** | Nodemailer |
+| **API Communication** | Python-Shell, Axios |
+| **Deployment** | Render (Proposed), Local Development |
+
+---
+
+## 📁 Project Structure
+
+### 🔹 Backend (`backend/`)
+
+```
+backend/
+│
+├── server.js                    # Main Express application entry point
+├── .env                         # Backend environment variables
+├── package.json                 # Dependencies: express, mongoose, openai, python-shell
+├── requirements.txt             # Python dependencies for ML agents
+│
+├── agents/ (Python scripts)
+│   ├── agentC.py               # Cognitive assessment agent
+│   ├── agentD.py               # Depression analysis agent
+│   ├── agentE.py               # Emotional evaluation agent
+│   ├── agentJ.py               # Judgement & behavior analysis agent
+│   ├── agentR.py               # Risk & safety evaluation agent
+│   └── validation.py           # Agent input/output validation
+│
+├── config/
+│   └── db.js                   # MongoDB connection configuration
+│
+├── controllers/
+│   └── authController.js       # Authentication & user management logic
+│
+├── models/                     # MongoDB schemas
+│   ├── User.js                 # User accounts & profiles
+│   ├── Psychiatrist.js         # Psychiatrist verification & details
+│   ├── UserSettings.js         # User preferences & settings
+│   ├── Conversation.js         # Chat conversations
+│   ├── Diagnosis.js            # Mental health diagnoses
+│   ├── DiagnosisReport.js      # Detailed diagnosis reports
+│   ├── TreatmentRecord.js      # Treatment history
+│   ├── MedicalRecord.js        # Medical history
+│   ├── EmotionRecord.js        # Emotion tracking data
+│   ├── JudgementRecord.js      # Clinical judgments
+│   ├── ExplainabilityRecord.js # AI explainability data
+│   ├── MonitoringRecord.js     # Patient monitoring data
+│   ├── SafetyRecord.js         # Safety assessments
+│   ├── ScaleResponse.js        # Psychological scale responses
+│   ├── TestResult.js           # Assessment test results
+│   ├── Feedback.js             # User feedback
+│   ├── Invite.js               # Invitation system
+│   ├── InviteRequest.js        # Invitation requests
+│   └── DebateRecord.js         # Discussion/debate records
+│
+├── routes/                     # API endpoints
+│   ├── authRoutes.js           # Registration, login, logout, Google OAuth
+│   ├── profileRoute.js         # User/profile management
+│   ├── results.js              # Test results & assessments
+│   ├── uploadRoute.js          # File upload handling
+│   ├── otpRoutes.js            # OTP verification
+│   ├── inviteRoutes.js         # Invitation system
+│   ├── feedbackRoutes.js       # Feedback collection
+│   └── settingsRoutes.js       # Settings management
+│
+├── uploads/                    # User-uploaded files (profile pictures, documents)
+│
+├── MoodAngles_Project_Report.html    # Project documentation
+├── MoodAngles_Project_Report.docx    # Project report (Word)
+├── Moodangels.pdf                     # PDF documentation
+└── n8n.json                         # Workflow automation config
+```
+
+---
+
+### 🔹 Frontend (`frontend/`)
+
+```
+frontend/
+│
+├── package.json                # Dependencies: react, vite, tailwind, axios
+├── package-lock.json           # Locked versions
+├── .env                        # Frontend environment variables
+├── vite.config.js              # Vite build configuration
+├── tailwind.config.js          # Tailwind CSS configuration
+├── postcss.config.js           # PostCSS configuration
+├── eslint.config.js            # ESLint configuration
+├── index.html                  # HTML entry point
+│
+├── src/
+│   ├── main.jsx               # React entry point
+│   ├── App.jsx                # Main app with routing
+│   ├── App.css                # Global styles
+│   ├── index.css              # Tailwind imports
+│   │
+│   ├── components/            # Reusable UI components
+│   │   └── UserWrapper.jsx    # Auth state wrapper
+│   │
+│   ├── pages/                 # Route pages
+│   │   ├── Landing.jsx        # Landing/home page
+│   │   ├── Login.jsx          # User login
+│   │   ├── Signup.jsx         # User registration
+│   │   ├── Logout.jsx         # Logout handler
+│   │   ├── ForgotPassword.jsx # Password reset request
+│   │   ├── ResetPassword.jsx  # Password reset form
+│   │   ├── PLogin.jsx         # Psychiatrist login
+│   │   ├── PSignup.jsx        # Psychiatrist registration
+│   │   ├── AdminInvites.jsx   # Admin invitation management
+│   │   ├── RequestInvite.jsx  # Invitation request page
+│   │   ├── Profile.jsx        # User profile view/edit
+│   │   ├── Settings.jsx       # User settings
+│   │   ├── Help.jsx           # Help & support
+│   │   ├── Support.jsx        # Support contact
+│   │   ├── UploadD.jsx        # File upload
+│   │   ├── TestPage.jsx       # Generic test template
+│   │   ├── Articles.jsx       # Educational content
+│   │   ├── ChatBot.jsx        # AI chatbot interface
+│   │   ├── Dashboard.jsx      # Main landing dashboard
+│   │   ├── UDashboard.jsx     # User-specific dashboard
+│   │   ├── PDashboard.jsx     # Psychiatrist dashboard
+│   │   │
+│   │   └── tests/             # Psychological assessments
+│   │       ├── ADHDTest.jsx
+│   │       ├── AnxietyTest.jsx
+│   │       ├── AutismTest.jsx
+│   │       ├── BipolarTest.jsx
+│   │       ├── DepressionTest.jsx
+│   │       ├── EQTest.jsx
+│   │       ├── MentalHeathTodayTest.jsx
+│   │       ├── NeuroTest.jsx
+│   │       └── PersonalityTest.jsx
+│   │
+│   ├── assets/                # Static assets
+│   │   ├── PAvatar.png
+│   │   ├── UAvatar.png
+│   │   ├── react.svg
+│   │   └── stethoscope.png
+│   │
+│   └── styles/                # Additional CSS
+│       └── Login.css
+│
+└── dist/                      # Production build output
+```
+
+---
+
+## 📦 Dependencies
+
+### 🔹 Backend
+
 ```bash
 cd backend
 npm install
-npm install express mongoose dotenv cors python-shell openai
 ```
 
-### 3. Machine Learning Setup
+Key packages:
+- **express** – REST API framework
+- **mongoose** – MongoDB ODM
+- **jsonwebtoken** – JWT authentication
+- **bcryptjs** – Password hashing
+- **google-auth-library** – Google OAuth
+- **nodemailer** – Email sending
+- **python-shell** – Python ML agent integration
+- **openai** – OpenAI API integration
+- **multer** – File uploads
+- **uuid** – Unique ID generation
+- **dotenv** – Environment variables
+- **cors** – Cross-origin resource sharing
 
-Install the required Python packages for the AI engine:
+### 🔹 Frontend
+
 ```bash
-pip install pandas scikit-learn joblib
+cd frontend
+npm install
 ```
 
-### 4. Environment Variables
+Key packages:
+- **react** (19.1.1) – UI library
+- **react-dom** – React renderer
+- **react-router-dom** (7.8.2) – Client-side routing
+- **vite** (7.1.2) – Build tool & dev server
+- **tailwindcss** (4.1.12) – Utility-first CSS
+- **axios** – HTTP client
+- **lucide-react** – Icon library
+- **google-oauth-client** – Google authentication
+- **concurrently** – Run multiple commands
 
-#### Frontend (.env)
+---
 
-Create a `.env` file in the `frontend/` directory:
+## 🔐 Environment Variables
+
+### Backend `.env` (create in `backend/`)
+
+```env
+NODE_ENV=development
+PORT=5000
+FRONTEND_URL=http://localhost:5173
+
+# Database
+MONGO_URI=your_mongodb_connection_string
+
+# Authentication
+JWT_SECRET=your_jwt_secret_key_here
+SESSION_SECRET=your_session_secret_here
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# AI/ML Services
+OPENAI_API_KEY=your_openai_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
+HF_TOKEN=your_huggingface_token
+
+# Email Service
+EMAIL_USER=your_email@example.com
+EMAIL_PASS=your_email_password_or_app_password
+
+# Agent Configuration
+AGENT_PY_TIMEOUT_MS=60000
+PYTHON_PATH=python  # or python3 based on system
+```
+
+### Frontend `.env` (create in `frontend/`)
+
 ```env
 VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 VITE_LOCAL_BACKEND=http://localhost:5000
-VITE_PROD_BACKEND=https://your-production-backend-url.com
+VITE_PROD_BACKEND=https://mood-angles-6.onrender.com
 ```
 
-- `VITE_LOCAL_BACKEND` — URL of the backend server for local development (default: `http://localhost:5000`)
-- `VITE_PROD_BACKEND` — URL of the deployed production backend (e.g., `https://mood-angles-6.onrender.com`)
+---
 
-#### Backend (.env)
+## 🚀 Running the Project
 
-Create a `.env` file in the `backend/` directory:
-```env
-MONGO_URI=your_mongodb_connection_string
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-JWT_SECRET=your_secure_jwt_secret
-SESSION_SECRET=your_hyper_secure_session_secret
-PORT=5000
-FRONTEND_URL=http://localhost:5173
-HF_TOKEN=your_hugging_face_token
-OPENAI_API_KEY=your_openai_api_key
-OPENROUTER_API_KEY=your_openrouter_api_key
-AGENT_PY_TIMEOUT_MS=60000
-EMAIL_USER=your_email@example.com
-EMAIL_PASS=your_email_password
+### Prerequisites
+
+- **Node.js** v18+ ([Download](https://nodejs.org))
+- **MongoDB** (local or [MongoDB Atlas](https://cloud.mongodb.com))
+- **Python** 3.x (for ML agents)
+
+---
+
+### 1️⃣ Clone Repository
+
+```bash
+git clone https://github.com/AnishaPaturi/Mood-Angles.git
+cd Mood-Angles
 ```
 
-- `FRONTEND_URL` — Used for CORS and generating links in emails (set to your dev frontend URL locally, e.g., `http://localhost:5173`)
+---
 
-### 5. Train the AI Model (Optional)
+### 2️⃣ Backend Setup
 
-If the pre-trained model isn't available, generate a new one:
 ```bash
 cd backend
-python train_model.py
+npm install
 ```
 
-### 6. Ignition 🔥
+Create `.env` file with required variables (see Environment Variables section).
 
-Start the backend server:
+Start the backend:
+
 ```bash
-cd backend
-node server.js
+npm start
+# Server runs on http://localhost:5000
 ```
 
-In a new terminal window, spin up the Vite frontend:
+---
+
+### 3️⃣ Frontend Setup
+
 ```bash
 cd frontend
-npm run dev
+npm install
 ```
-Navigate to `http://localhost:5173` to experience Mood-Angles!
+
+Create `.env` file with required variables.
+
+Start development server:
+
+```bash
+npm run dev
+# Frontend runs on http://localhost:5173
+```
+
+Or run both simultaneously:
+
+```bash
+npm run dev:all
+```
 
 ---
 
-## 🔌 Core API Endpoints
+### 4️⃣ Machine Learning Setup (Optional)
 
-### 🛡️ Authentication
-- `POST /api/auth/signup` - Register a new User
-- `POST /api/auth/login` - Authenticate User
-- `POST /api/auth/psychiatrist/signup` - Register a new Psychiatrist
-- `POST /api/auth/psychiatrist/login` - Authenticate Psychiatrist
-- `GET /api/auth/profile` - Fetch Profile Data
+If training a custom mood prediction model:
 
-### 🌐 OAuth Integration
-- `GET /api/auth/google` - Initiate Google OAuth Flow
-- `GET /api/auth/google/callback` - Google OAuth Callback handler
+```bash
+cd backend
+pip install pandas scikit-learn joblib
+python train_model.py  # Generates mood_model.pkl
+```
 
 ---
 
-## 🤝 Contributing
+## 🔌 API Endpoints
 
-We welcome contributions to make Mood-Angles even better! 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### 🛡️ Authentication (`/api/auth`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/signup` | Register a new user |
+| POST | `/login` | Authenticate user |
+| POST | `/psychiatrist/signup` | Register psychiatrist |
+| POST | `/psychiatrist/login` | Authenticate psychiatrist |
+| GET | `/profile` | Fetch user profile |
+| GET | `/google` | Initiate Google OAuth |
+| GET | `/google/callback` | Google OAuth callback |
+| POST | `/logout` | Logout user |
+
+---
+
+### 👤 Profile Management (`/api/profile`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Get current user profile |
+| PUT | `/` | Update profile information |
+| POST | `/upload-photo` | Upload profile picture |
+
+---
+
+### 🧠 Assessment & Results (`/api/results`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/test` | Submit assessment results |
+| GET | `/history` | Get user test history |
+| GET | `/test/:id` | Get specific test result |
+| POST | `/analyze` | Trigger AI analysis |
+
+---
+
+### 📁 File Upload (`/api/uploads`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/` | Upload file (profile pic, documents) |
+| GET | `/:filename` | Download uploaded file |
+
+---
+
+### 🔔 Notifications & Invites (`/api/invite`, `/api/otp`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/request` | Request psychiatrist invite |
+| GET | `/validate/:token` | Validate invite token |
+| POST | `/send-otp` | Send OTP for verification |
+| POST | `/verify-otp` | Verify OTP |
+
+---
+
+### 💬 Feedback (`/api/feedback`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/` | Submit user feedback |
+| GET | `/` | Get all feedback (admin) |
+
+---
+
+### 🤖 AI Agent Endpoint (`/api/angelR`)
+
+**POST** `/api/angelR` – Spawns Python Agent R for risk evaluation  
+Accepts JSON in request body, returns diagnostic summary via stdout.
+
+---
+
+## 📊 Example Request & Response
+
+### Trigger AI Analysis
+
+**Request:**
+
+```bash
+POST http://localhost:5000/api/results/analyze
+Content-Type: application/json
+
+{
+  "userId": "65f123b4567890abc1234567",
+  "scores": {
+    "anxiety": 72,
+    "depression": 45,
+    "stress": 58
+  },
+  "responses": {
+    "mood_rating": 3,
+    "energy_level": 2,
+    "sleep_quality": 4
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "analysis": {
+    "summary": "Moderate anxiety symptoms detected",
+    "risk_level": "medium",
+    "recommendations": [
+      "Consider scheduling a consultation",
+      "Practice daily mindfulness",
+      "Monitor mood trends"
+    ],
+    "agent_output": {
+      "score": 72,
+      "condition": "Anxiety",
+      "interpretation": "Moderate likelihood of Anxiety — consider monitoring symptoms"
+    }
+  },
+  "timestamp": "2026-05-13T17:30:00.000Z"
+}
+```
+
+---
+
+## 🧪 Testing
+
+### Backend Tests
+
+```bash
+cd backend
+npm test
+```
+
+### Python Agent Tests
+
+```bash
+cd backend
+python -m pytest test_agents.py -v
+```
+
+### Frontend Tests
+
+```bash
+cd frontend
+npm run test
+```
+
+### Manual Testing Checklist
+
+- [ ] User signup/login with email/password
+- [ ] Google OAuth login
+- [ ] Psychiatrist invitation request
+- [ ] Mood tracking entries
+- [ ] Assessment test completion
+- [ ] AI analysis generation
+- [ ] Profile photo upload
+- [ ] Email notification delivery
+- [ ] Role-based dashboard access
+
+---
+
+## ⚠️ Limitations
+
+- **External APIs**: Requires valid OpenAI/OpenRouter API keys for AI agents  
+- **Database**: MongoDB must be running; no built-in fallback  
+- **Email**: SMTP configuration required for OTP & notifications  
+- **Python Path**: Agent scripts require system Python accessible in PATH  
+- **CORS**: Frontend URL must be whitelisted in backend CORS config  
+- **Production**: Requires proper SSL certificates for OAuth callbacks
+
+---
+
+## 🔮 Future Improvements
+
+- 🔐 **PostgreSQL** migration for better relational data  
+- 🤖 **Transformer models** for advanced NLP analysis  
+- 📱 **React Native** mobile app  
+- 🔔 **Real-time notifications** with WebSockets  
+- 📊 **Advanced analytics dashboard** with D3.js charts  
+- 🧩 **Plugin system** for additional assessment modules  
+- 🌐 **Multi-language** support (i18n)  
+- 🔒 **HIPAA compliance** audit & encryption enhancements  
+- 🤝 **Insurance integration** for billing  
+- 📈 **Research collaboration** mode for academic studies  
+
+---
+
+## 👥 Team
+
+| GitHub Username | Name | Contributions |
+|-----------------|------|---------------|
+| [AnishaPaturi](https://github.com/AnishaPaturi) | Anisha | 112 |
+| [Parinamika-13](https://github.com/Parinamika-13) | Vindhya / Parinamika | 39 |
+| [vahinichilukamarri](https://github.com/vahinichilukamarri) | Vahini | 29 |
+| [vindhya-tech](https://github.com/vindhya-tech) | Vindhya | 17 |
+
 
 ---
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+---
+
+## 🙌 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. **Fork** the repository  
+2. Create a **feature branch**: `git checkout -b feature/AmazingFeature`  
+3. **Commit** changes: `git commit -m 'Add AmazingFeature'`  
+4. **Push** to branch: `git push origin feature/AmazingFeature`  
+5. Open a **Pull Request**  
+
+For major changes, please open an issue first to discuss.
+
+---
+
+## 📞 Contact & Support
+
+- **Issues**: [GitHub Issues](https://github.com/AnishaPaturi/Mood-Angles/issues)  
+- **Email**: Check repository for team contact details  
+- **Project Report**: `MoodAngles_Project_Report.docx`  
 
 ---
 
 <div align="center">
-  <i>Crafted with ❤️ for Mental Wellness</i>
+  <b>Crafted with ❤️ for Mental Wellness</b><br>
+  <i>Empowering minds through AI and compassionate technology</i>
 </div>
