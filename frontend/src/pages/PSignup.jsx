@@ -56,7 +56,7 @@
 
 //     try {
 //       const res = await fetch(
-//         `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/psychiatrist/signup`,
+//         `${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/auth/psychiatrist/signup`,
 //         {
 //           method: "POST",
 //           headers: { "Content-Type": "application/json" },
@@ -417,7 +417,7 @@ export default function PsychiatristSignup() {
 
   // Google OAuth redirect (reuses backend endpoint)
   const handleGoogle = () => {
-    window.location.href = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/google`;
+    window.location.href = `${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/auth/google`;
   };
 
   // ✅ Submit handler
@@ -464,7 +464,7 @@ export default function PsychiatristSignup() {
       };
 
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/psychiatrist/signup`,
+        `${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/auth/psychiatrist/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

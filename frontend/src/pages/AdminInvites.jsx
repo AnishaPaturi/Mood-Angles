@@ -5,8 +5,13 @@ export default function AdminInvites() {
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState("");
 
+  const API_BASE =
+    (import.meta.env.DEV
+      ? import.meta.env.VITE_LOCAL_BACKEND
+      : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
+
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/invite/requests`)
+    fetch(`${API_BASE}/api/invite/requests`)
       .then((res) => res.json())
       .then((data) => {
         setRequests(data);
@@ -21,7 +26,7 @@ export default function AdminInvites() {
   const approveInvite = async (id) => {
     setMsg("");
     try {
-      const res = await fetch(`http://localhost:5000/api/invite/approve/${id}`, {
+      const res = await fetch(`${API_BASE}/api/invite/approve/${id}`, {
         method: "POST",
       });
       const data = await res.json();

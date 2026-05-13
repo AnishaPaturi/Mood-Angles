@@ -9,9 +9,14 @@ function UploadD() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const fileInputRef = useRef(null);
 
+  const API_BASE =
+    (import.meta.env.DEV
+      ? import.meta.env.VITE_LOCAL_BACKEND
+      : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
+
   // ✅ Fetch uploaded files
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/uploads`)
+    fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/uploads`)
       .then((res) => res.json())
       .then((data) => setUploadedFiles(data))
       .catch((err) => console.error("Error fetching uploaded files:", err));
@@ -42,7 +47,7 @@ function UploadD() {
       const formData = new FormData();
       formData.append("file", files[0]); // one at a time
 
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/uploads`, {
+      const res = await fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/uploads`, {
         method: "POST",
         body: formData,
       });
@@ -138,7 +143,7 @@ function UploadD() {
               const handleDelete = async () => {
                 if (!window.confirm(`Delete ${filename}?`)) return;
                 try {
-                  const res = await fetch(`http://localhost:5000/api/uploads/${filename}`, {
+                  const res = await fetch(`${API_BASE}/api/uploads/${filename}`, {
                     method: "DELETE",
                   });
                   const data = await res.json();
@@ -155,7 +160,7 @@ function UploadD() {
 
               return (
                 <div key={i} className="uploaded-item">
-                  <a href={`http://localhost:5000${file}`} target="_blank" rel="noopener noreferrer">
+                  <a href={`${API_BASE}${file}`} target="_blank" rel="noopener noreferrer">
                     {filename}
                   </a>
                   <button

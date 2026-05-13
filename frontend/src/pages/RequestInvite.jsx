@@ -24,7 +24,7 @@ export default function RequestInvite() {
     setStatus({ msg: "", ok: null });
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/invite/request`, {
+      const res = await fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/invite/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

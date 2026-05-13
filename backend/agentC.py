@@ -6,14 +6,19 @@ import json
 import os
 import re
 import traceback
-from dotenv import load_dotenv
-from openai import OpenAI, APIError
 
-load_dotenv()
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY", os.getenv("OPENAI_API_KEY"))
-)
+try:
+    from dotenv import load_dotenv
+    from openai import OpenAI, APIError
+    load_dotenv()
+    OPENAI_AVAILABLE = True
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY", os.getenv("OPENAI_API_KEY"))
+    )
+except Exception:
+    OPENAI_AVAILABLE = False
+    client = None
 
 
 # =================== UTF-8 & STRUCTURE SANITIZERS ===================
@@ -43,6 +48,25 @@ def safe_json_output(obj):
     except Exception:
         sys.stdout.write(json.dumps({"error": "json_dump_failed"}))
 
+def deterministic_summary(agentR_result, agentD_result, score, level):
+    if score is not None:
+        try:
+            s = float(score)
+            if s <= 19:
+                verdict = "low likelihood"
+            elif s <= 50:
+                verdict = "moderate likelihood"
+            elif s <= 74:
+                verdict = "some concern"
+            elif s <= 86:
+                verdict = "significant concern"
+            else:
+                verdict = "high likelihood"
+        except Exception:
+            verdict = "unclear"
+    else:
+        verdict = "unclear"
+    return f"{agentR_result or 'Findings'} suggest {verdict}. {agentD_result or 'Further evaluation recommended'}."
 
 # =================== OPENAI RESPONSE PARSING ===================
 
@@ -95,6 +119,12 @@ def main():
         })
         return
 
+    # Use deterministic fallback if OpenAI unavailable or no API key
+    if not OPENAI_AVAILABLE or not os.getenv("OPENAI_API_KEY"):
+        fallback = deterministic_summary(agentR_result, agentD_result, score, level)
+        safe_json_output({"result": fallback})
+        return
+
     # Format answers
     if isinstance(answers, dict) and answers:
         formatted_answers = "\n".join([f"{k}: {v}" for k, v in answers.items()])
@@ -130,7 +160,8 @@ Output only the final summary — no JSON, no code block, no markdown formatting
         resp = client.chat.completions.create(
             model=os.getenv("LLM_MODEL", "openrouter/free"),
             messages=messages,
-            max_tokens=400
+            max_tokens=400,
+            timeout=30
         )
 
         # ========== Clean Output ==========
@@ -147,16 +178,22 @@ Output only the final summary — no JSON, no code block, no markdown formatting
         except Exception:
             result = text
 
+        if not result or not result.strip():
+            fallback = deterministic_summary(agentR_result, agentD_result, score, level)
+            result = fallback
+
         # Sanitize and output clean text only
         result = sanitize_string(result).strip()
         safe_json_output({"result": result})
 
     except APIError as e:
         tb = traceback.format_exc()
-        safe_json_output({"error": "openai_api_error", "details": str(e), "traceback": tb})
+        fallback = deterministic_summary(agentR_result, agentD_result, score, level)
+        safe_json_output({"error": "openai_api_error", "details": str(e), "traceback": tb, "fallback_used": True, "fallback_result": fallback})
     except Exception as e:
         tb = traceback.format_exc()
-        safe_json_output({"error": "unexpected_error", "details": str(e), "traceback": tb})
+        fallback = deterministic_summary(agentR_result, agentD_result, score, level)
+        safe_json_output({"error": "unexpected_error", "details": str(e), "traceback": tb, "fallback_used": True, "fallback_result": fallback})
 
 
 if __name__ == "__main__":

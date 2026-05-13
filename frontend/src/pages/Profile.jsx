@@ -15,8 +15,13 @@ function Profile() {
   useEffect(() => {
     if (!userId) return;
 
+    const API_BASE =
+      (import.meta.env.DEV
+        ? import.meta.env.VITE_LOCAL_BACKEND
+        : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
+
     // Fetch profile data
-    fetch(`http://localhost:5000/api/profile/${userId}`)
+    fetch(`${API_BASE}/api/profile/${userId}`)
       .then((res) => res.json())
       .then((data) => {
         setUser(data.user);
@@ -41,7 +46,7 @@ function Profile() {
   // ✅ Save updated profile
   const handleProfileUpdate = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/profile/update/${userId}`, {
+      const res = await fetch(`${API_BASE}/api/profile/update/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -115,7 +120,7 @@ function Profile() {
 
     // Save mood to backend too ✅
     try {
-      const res = await fetch(`http://localhost:5000/api/profile/mood/${userId}`, {
+      const res = await fetch(`${API_BASE}/api/profile/mood/${userId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ moodHistory: updatedHistory }),

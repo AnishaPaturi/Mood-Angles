@@ -47,7 +47,7 @@
 
 //     try {
 //       const res = await fetch(
-//         `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/psychiatrist/login`,
+//         `${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/auth/psychiatrist/login`,
 //         {
 //           method: "POST",
 //           headers: { "Content-Type": "application/json" },
@@ -346,7 +346,7 @@ export default function PLogin() {
   };
 
   const handleGoogle = () => {
-    window.location.href = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/google`;
+    window.location.href = `${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/auth/google`;
   };
 
   const handleSubmit = async (e) => {
@@ -365,7 +365,7 @@ export default function PLogin() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/psychiatrist/login`, {
+      const res = await fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/auth/psychiatrist/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password: password.trim() }),

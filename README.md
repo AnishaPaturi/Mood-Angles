@@ -75,6 +75,7 @@ cd Mood-Angles
 
 Install Node.js dependencies for the API server:
 ```bash
+cd backend
 npm install
 npm install express mongoose dotenv cors python-shell openai
 ```
@@ -88,20 +89,44 @@ pip install pandas scikit-learn joblib
 
 ### 4. Environment Variables
 
-Create a `.env` file in the root directory and configure your secrets:
+#### Frontend (.env)
+
+Create a `.env` file in the `frontend/` directory:
+```env
+VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+VITE_LOCAL_BACKEND=http://localhost:5000
+VITE_PROD_BACKEND=https://your-production-backend-url.com
+```
+
+- `VITE_LOCAL_BACKEND` — URL of the backend server for local development (default: `http://localhost:5000`)
+- `VITE_PROD_BACKEND` — URL of the deployed production backend (e.g., `https://mood-angles-6.onrender.com`)
+
+#### Backend (.env)
+
+Create a `.env` file in the `backend/` directory:
 ```env
 MONGO_URI=your_mongodb_connection_string
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+JWT_SECRET=your_secure_jwt_secret
 SESSION_SECRET=your_hyper_secure_session_secret
 PORT=5000
+FRONTEND_URL=http://localhost:5173
+HF_TOKEN=your_hugging_face_token
+OPENAI_API_KEY=your_openai_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
+AGENT_PY_TIMEOUT_MS=60000
+EMAIL_USER=your_email@example.com
+EMAIL_PASS=your_email_password
 ```
+
+- `FRONTEND_URL` — Used for CORS and generating links in emails (set to your dev frontend URL locally, e.g., `http://localhost:5173`)
 
 ### 5. Train the AI Model (Optional)
 
 If the pre-trained model isn't available, generate a new one:
 ```bash
-cd backend/ml
+cd backend
 python train_model.py
 ```
 
@@ -115,6 +140,7 @@ node server.js
 
 In a new terminal window, spin up the Vite frontend:
 ```bash
+cd frontend
 npm run dev
 ```
 Navigate to `http://localhost:5173` to experience Mood-Angles!

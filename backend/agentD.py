@@ -77,7 +77,8 @@ Keep it friendly and factual. Output ONLY plain text (no lists, no JSON).
             model=os.getenv("LLM_MODEL", "openrouter/free"),
             messages=[{"role": "system", "content": "You are Agent D, a concise, empathetic summarizer."},
                    {"role": "user", "content": prompt}],
-            max_tokens=200
+            max_tokens=200,
+            timeout=30
         )
 
         out_text = resp.choices[0].message.content

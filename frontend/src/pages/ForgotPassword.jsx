@@ -25,7 +25,7 @@ export default function ForgotPassword() {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/send-otp`, {
+      const response = await fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: contact }),
@@ -48,7 +48,7 @@ export default function ForgotPassword() {
   const handleVerifyOtp = async () => {
   setError("");
   try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/verify-otp`, {
+    const response = await fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/verify-otp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: contact, otp: enteredOtp }),
@@ -84,7 +84,7 @@ const handleResetPassword = async (e) => {
   }
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/reset-password`, {
+    const response = await fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/reset-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: contact, newPassword }),

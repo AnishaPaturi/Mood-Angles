@@ -6,28 +6,33 @@ import json
 import os
 import re
 import traceback
-from dotenv import load_dotenv
-from openai import OpenAI, APIError
 
-load_dotenv()
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY", os.getenv("OPENAI_API_KEY"))
-)
+try:
+    from dotenv import load_dotenv
+    from openai import OpenAI, APIError
+    load_dotenv()
+    OPENAI_AVAILABLE = True
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY", os.getenv("OPENAI_API_KEY"))
+    )
+except Exception:
+    OPENAI_AVAILABLE = False
+    client = None
+
+def deterministic_debate(agentR_result, agentD_result, agentC_result, condition):
+    summary = agentR_result or agentD_result or agentC_result or "insufficient data"
+    return {
+        "supportive_argument": f"The evidence suggests {condition} may be present based on reported patterns.",
+        "counter_argument": f"However, {summary} — more information would help clarify.",
+        "final_consensus": f"Further professional evaluation is recommended to confirm or rule out {condition}."
+    }
 
 def safe_json_output(obj):
     try:
         sys.stdout.buffer.write(json.dumps(obj, ensure_ascii=False).encode("utf-8", "replace"))
     except Exception:
         sys.stdout.write(json.dumps({"error": "json_dump_failed"}))
-
-def extract_text(resp):
-    try:
-        t = getattr(resp, "output_text", None)
-        if isinstance(t, str): return t.strip()
-    except Exception:
-        pass
-    return str(resp)
 
 def main():
     try:
@@ -42,6 +47,12 @@ def main():
     agentC_result = data.get("agentC_result", "")
     condition = data.get("condition", "the condition")
 
+    # Use deterministic fallback if OpenAI unavailable or no API key
+    if not OPENAI_AVAILABLE or not os.getenv("OPENAI_API_KEY"):
+        fallback = deterministic_debate(agentR_result, agentD_result, agentC_result, condition)
+        safe_json_output(fallback)
+        return
+
     prompt = f"""
 You are Agent E — a diagnostic debate coordinator.
 
@@ -53,8 +64,8 @@ Context:
 
 Task:
 1. Create a short debate between two experts:
-   • **Supportive AI:** argues why the diagnosis is likely.
-   • **Skeptical AI:** argues why it may not be certain or could be explained otherwise.
+    • **Supportive AI:** argues why the diagnosis is likely.
+    • **Skeptical AI:** argues why it may not be certain or could be explained otherwise.
 2. Then, as a **Moderator**, summarize the balanced consensus in 1–2 sentences.
 3. Respond only as a JSON object:
 
@@ -72,7 +83,8 @@ Task:
                 {"role": "system", "content": "You are Agent E, an impartial debate moderator."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=600
+            max_tokens=600,
+            timeout=30
         )
 
         text = resp.choices[0].message.content or ""
@@ -82,19 +94,25 @@ Task:
         text = re.sub(r"```$", "", text).strip()
 
         try:
-            parsed = json.loads(text)
+            parsed = json.loads(text) if text else None
         except Exception:
-            # fallback: wrap as one field
-            parsed = {"final_consensus": text}
+            parsed = None
+
+        if not parsed or not isinstance(parsed, dict):
+            # Use fallback if no valid JSON or empty response
+            fallback = deterministic_debate(agentR_result, agentD_result, agentC_result, condition)
+            parsed = fallback
 
         safe_json_output(parsed)
 
     except APIError as e:
         tb = traceback.format_exc()
-        safe_json_output({"error": "openai_api_error", "details": str(e), "traceback": tb})
+        fallback = deterministic_debate(agentR_result, agentD_result, agentC_result, condition)
+        safe_json_output({"error": "openai_api_error", "details": str(e), "traceback": tb, "fallback_used": True, "fallback_result": fallback})
     except Exception as e:
         tb = traceback.format_exc()
-        safe_json_output({"error": "unexpected_error", "details": str(e), "traceback": tb})
+        fallback = deterministic_debate(agentR_result, agentD_result, agentC_result, condition)
+        safe_json_output({"error": "unexpected_error", "details": str(e), "traceback": tb, "fallback_used": True, "fallback_result": fallback})
 
 if __name__ == "__main__":
     main()

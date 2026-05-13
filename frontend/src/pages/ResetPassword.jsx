@@ -8,10 +8,15 @@ export default function ResetPassword() {
   const { token } = useParams();
   const navigate = useNavigate();
 
+  const API_BASE =
+    (import.meta.env.DEV
+      ? import.meta.env.VITE_LOCAL_BACKEND
+      : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(`http://localhost:5000/api/auth/reset-password/${token}`, { password });
+      const res = await axios.post(`${API_BASE}/api/auth/reset-password/${token}`, { password });
       setMessage(res.data.message);
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {

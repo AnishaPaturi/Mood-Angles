@@ -26,7 +26,7 @@ export default function Login() {
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/login`, {
+      const res = await fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -76,7 +76,7 @@ const handleGoogleLogin = async (credentialResponse) => {
     // console.log("Decoded Google Token:", decoded);
 
     // ✅ Correct backend call
-    const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/google`, {
+    const res = await axios.post(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/auth/google`, {
       token: token, // ⭐ MUST match backend
     });
 

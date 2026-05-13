@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
 
 export default function PsychopathyTest() {
-  const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+  const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Psychopathy Test";
 
   
