@@ -4,83 +4,95 @@ export default function MentalHealthChat() {
   const [messages, setMessages] = useState([
     {
       sender: "bot",
-      text: "Hey there, I’m Luna. I’m here to listen — how are you really feeling today?",
+      text: "Hey there, I'm Luna. I'm here to listen — how are you really feeling today?",
     },
   ]);
   const [input, setInput] = useState("");
   const chatEndRef = useRef(null);
 
+  const API_BASE =
+    (import.meta.env.DEV
+      ? import.meta.env.VITE_LOCAL_BACKEND
+      : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = (e) => {
+  const getStaticReply = (text) => {
+    if (/(fuck|shit|bitch|bullshit|damn|crap)/.test(text)) {
+      return "I understand that you're feeling emotional and going through a lot right now. But can we please avoid using rude language here? I want this to be a safe, peaceful space for you to open up. I'm here to help you — you can let it out, just gently. 💛";
+    }
+    if (/(sad|depress|unhappy|down)/.test(text)) {
+      return "It's okay to feel sad sometimes. You don't have to hide it — everyone has days that feel too heavy. I'm here to listen if you'd like to talk about what's been on your mind. 💛";
+    }
+    if (/(anxiety|anxious|panic|worry|nervous)/.test(text)) {
+      return "That sounds really tough. Take a slow, deep breath with me... inhale for 4, hold for 2, exhale for 6. You're safe here — you're not alone. 🌿";
+    }
+    if (/(stress|pressure|tired|burnout)/.test(text)) {
+      return "Seems like you've been holding a lot inside. You deserve a moment to just breathe and rest. Maybe take a sip of water or step away from the noise for a minute. ☁️";
+    }
+    if (/(sleep|insomnia|rest)/.test(text)) {
+      return "It's hard when your mind won't slow down enough to rest. Maybe dim the lights, play something soft, or just focus on breathing for a few moments. 🌙";
+    }
+    if (/(lonely|alone|isolate)/.test(text)) {
+      return "Feeling lonely can hurt deeply. But please know — I'm right here with you, listening. Even small connections count, and you're not invisible. 💌";
+    }
+    if (/(angry|frustrate|mad)/.test(text)) {
+      return "I get it. Anger can feel intense and messy, but it's okay to feel it. You can talk to me about what caused it — sometimes putting it into words helps release some of that weight. 🔥";
+    }
+    if (/(self[-\s]?care|mindful|meditate)/.test(text)) {
+      return "That's wonderful to hear. Self-care isn't selfish — it's how we rebuild ourselves. Even small acts like stretching, breathing, or journaling can calm your mind. 🕯️";
+    }
+    if (/(love|relationship|heartbreak)/.test(text)) {
+      return "Heartbreak hurts more than most things, doesn't it? You gave love your best — that's something to be proud of. It'll take time, but you'll feel light again. 💔";
+    }
+    if (/(motivate|hopeless|stuck)/.test(text)) {
+      return "When motivation fades, even small things feel huge. That's okay — progress isn't about speed. What's one tiny thing you could do right now to feel a bit better? 🌤️";
+    }
+    if (/(happy|joy|excite|grateful)/.test(text)) {
+      return "I'm so glad to hear that! Moments of happiness are precious. Hold onto that feeling and let it brighten your day. Remember, I'm here whenever you want to share more. 🌈";
+    }
+    if (/(weather|movie|sports|react|python|code|github|ai|html|javascript|math|game|instagram|youtube|tiktok|login|signup|result)/.test(text)) {
+      return "Hmm... that sounds interesting, but it's not really something I can help with. I'm here mainly to talk about how you're feeling — your emotions, stress, or anything on your mind. 💬";
+    }
+    return "I hear you. That sounds like a lot to hold inside. You can talk to me about it — I'll listen without judgment. Sometimes letting it out is the first step to feeling lighter. 💛";
+  };
+
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userMsg = { sender: "user", text: input.trim() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setTimeout(() => handleBotReply(input.trim().toLowerCase()), 600);
-  };
 
-  const handleBotReply = (text) => {
-    let reply = "";
+    // Convert existing messages to history format for API
+    const history = messages.map((m) => ({
+      sender: m.sender,
+      text: m.text,
+    }));
 
-    // --- Vulgar language handling ---
-    if (/(fuck|shit|bitch|bullshit|damn|crap)/.test(text)) {
-      reply =
-        "I understand that you’re feeling emotional and going through a lot right now. But can we please avoid using rude language here? I want this to be a safe, peaceful space for you to open up. I’m here to help you — you can let it out, just gently. 💛";
+    try {
+      const response = await fetch(`${API_BASE}/api/chatbot/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input.trim(), history }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessages((prev) => [...prev, { sender: "bot", text: data.reply }]);
+      } else {
+        throw new Error("API failed");
+      }
+    } catch (err) {
+      console.warn("Using fallback responses:", err);
+      // Use static fallback for offline mode
+      const reply = getStaticReply(input.trim().toLowerCase());
+      setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
     }
-
-    // --- Emotion-based replies ---
-    else if (/(sad|depress|unhappy|down)/.test(text)) {
-      reply =
-        "It’s okay to feel sad sometimes. You don’t have to hide it — everyone has days that feel too heavy. I’m here to listen if you’d like to talk about what’s been on your mind. 💛";
-    } else if (/(anxiety|anxious|panic|worry|nervous)/.test(text)) {
-      reply =
-        "That sounds really tough. Take a slow, deep breath with me... inhale for 4, hold for 2, exhale for 6. You’re safe here — you’re not alone. 🌿";
-    } else if (/(stress|pressure|tired|burnout)/.test(text)) {
-      reply =
-        "Seems like you’ve been holding a lot inside. You deserve a moment to just breathe and rest. Maybe take a sip of water or step away from the noise for a minute. ☁️";
-    } else if (/(sleep|insomnia|rest)/.test(text)) {
-      reply =
-        "It’s hard when your mind won’t slow down enough to rest. Maybe dim the lights, play something soft, or just focus on breathing for a few moments. 🌙";
-    } else if (/(lonely|alone|isolate)/.test(text)) {
-      reply =
-        "Feeling lonely can hurt deeply. But please know — I’m right here with you, listening. Even small connections count, and you’re not invisible. 💌";
-    } else if (/(angry|frustrate|mad)/.test(text)) {
-      reply =
-        "I get it. Anger can feel intense and messy, but it’s okay to feel it. You can talk to me about what caused it — sometimes putting it into words helps release some of that weight. 🔥";
-    } else if (/(self[-\s]?care|mindful|meditate)/.test(text)) {
-      reply =
-        "That’s wonderful to hear. Self-care isn’t selfish — it’s how we rebuild ourselves. Even small acts like stretching, breathing, or journaling can calm your mind. 🕯️";
-    } else if (/(love|relationship|heartbreak)/.test(text)) {
-      reply =
-        "Heartbreak hurts more than most things, doesn’t it? You gave love your best — that’s something to be proud of. It’ll take time, but you’ll feel light again. 💔";
-    } else if (/(motivate|hopeless|stuck)/.test(text)) {
-      reply =
-        "When motivation fades, even small things feel huge. That’s okay — progress isn’t about speed. What’s one tiny thing you could do right now to feel a bit better? 🌤️";
-    } else if (/(happy|joy|excite|grateful)/.test(text)) {
-      reply =
-        "I’m so glad to hear that! Moments of happiness are precious. Hold onto that feeling and let it brighten your day. Remember, I’m here whenever you want to share more. 🌈";
-    }
-
-    // --- Off-topic replies ---
-    else if (
-      /(weather|movie|sports|react|python|code|github|ai|html|javascript|math|game|instagram|youtube|tiktok|login|signup|result)/.test(text)){
-      reply =
-        "Hmm... that sounds interesting, but it’s not really something I can help with. I’m here mainly to talk about how you’re feeling — your emotions, stress, or anything on your mind. 💬";
-    }
-
-    // --- Default supportive fallback ---
-    else {
-      reply =
-        "I hear you. That sounds like a lot to hold inside. You can talk to me about it — I’ll listen without judgment. Sometimes letting it out is the first step to feeling lighter. 💛";
-    }
-
-    setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
-  };
+};
 
   const styles = `
     @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap');
@@ -220,7 +232,24 @@ export default function MentalHealthChat() {
     <div className="chat-page">
       <style>{styles}</style>
       <div className="chat-box">
-        <div className="chat-header">💬 Luna — Your Calm Space</div>
+        <div className="chat-header">
+          💬 Luna — Your Calm Space
+          <button
+            onClick={() => setMessages([{ sender: "bot", text: "Hey there, I'm Luna. I'm here to listen — how are you really feeling today?" }])}
+            style={{
+              float: "right",
+              background: "rgba(255,255,255,0.3)",
+              border: "none",
+              borderRadius: "12px",
+              padding: "4px 10px",
+              fontSize: "0.8rem",
+              cursor: "pointer",
+              color: "#fff",
+            }}
+          >
+            Clear
+          </button>
+        </div>
 
         <div className="chat-body">
           {messages.map((msg, i) => (

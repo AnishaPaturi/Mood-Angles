@@ -14,6 +14,7 @@ import otpRoutes from "./routes/otpRoutes.js";
 import inviteRoutes from "./routes/inviteRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import documentAnalysis from "./routes/documentAnalysis.js";
+import chatbotRoute from "./routes/chatbotRoute.js";
 
 
 // ✅ Load environment variables
@@ -54,6 +55,7 @@ app.use("/api/otp", otpRoutes);
 app.use("/api/invite", inviteRoutes);
 app.use("/api/documents", documentAnalysis);
 app.use("/api/results", resultsRoute);
+app.use("/api/chatbot", chatbotRoute);
 
 
 
