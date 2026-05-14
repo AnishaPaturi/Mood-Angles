@@ -88,8 +88,8 @@ function Profile() {
     }
   };
 
-  // ✅ Fixed + Safe + Compressed Profile Photo Upload
-  const handlePhotoUpload = async (event) => {
+// ✅ Fixed + Safe + Compressed Profile Photo Upload
+   const handlePhotoUpload = async (event) => {
     const file = event?.target?.files?.[0];
     if (!file) {
       console.warn("⚠️ No file selected.");
@@ -97,10 +97,10 @@ function Profile() {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const img = new Image();
       img.src = e.target.result;
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         const MAX_WIDTH = 300;
@@ -111,12 +111,29 @@ function Profile() {
         const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
 
         try {
+          // Save to localStorage for quick access
           localStorage.setItem("profilePhoto", compressedDataUrl);
           setProfilePic(compressedDataUrl);
+
+          // Persist to backend for cross-session persistence
+          const res = await fetch(`${API_BASE}/api/profile/uploadPhoto/${userId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profilePic: compressedDataUrl }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to save photo");
+
+          // Update user state with backend response
+          if (data.user) setUser(data.user);
+
+          // Notify other components (like UserWrapper) of photo update
+          window.dispatchEvent(new Event("profilePhotoUpdated"));
+
           alert("✅ Profile photo updated successfully!");
         } catch (err) {
           console.error("Upload failed:", err);
-          alert("⚠️ Upload failed: Image too large even after compression.");
+          alert("⚠️ Upload failed: " + err.message);
         }
       };
     };
