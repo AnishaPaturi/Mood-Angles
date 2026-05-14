@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import UserWrapper from "../components/UserWrapper";
-import { UploadCloud, FileUp, CheckCircle2, Tag } from "lucide-react";
+import { UploadCloud, FileUp, CheckCircle2, Tag, FileText } from "lucide-react";
 
 function UploadD() {
   const [files, setFiles] = useState([]);
@@ -8,6 +8,8 @@ function UploadD() {
   const [success, setSuccess] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [category, setCategory] = useState("Other");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
   const fileInputRef = useRef(null);
   const userId = localStorage.getItem("userId");
 
@@ -75,6 +77,38 @@ function UploadD() {
     } finally {
       setUploading(false);
       setTimeout(() => setSuccess(false), 4000);
+    }
+  };
+
+  // ✅ Analyze document
+  const handleAnalyze = async () => {
+    if (!files.length) return alert("Please select a file!");
+    if (!userId) return alert("Please log in to analyze documents");
+
+    setAnalyzing(true);
+    setAnalysisResult(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", files[0]);
+
+      const res = await fetch(`${API_BASE}/api/documents/analyze`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setAnalysisResult(data);
+        alert("Document analyzed successfully!");
+      } else {
+        alert("Analysis failed: " + data.error);
+      }
+    } catch (error) {
+      console.error("Analysis error:", error);
+      alert("Something went wrong!");
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -147,9 +181,17 @@ function UploadD() {
             </select>
           </div>
 
-          <button className="upload-btn" onClick={handleUpload}>
-            {uploading ? "Uploading..." : "Start Upload"}
-          </button>
+<button className="upload-btn" onClick={handleUpload}>
+             {uploading ? "Uploading..." : "Start Upload"}
+           </button>
+
+           <button 
+             className="upload-btn" 
+             onClick={handleAnalyze}
+             style={{ marginLeft: "0.5rem", background: "#7b61ff" }}
+           >
+             {analyzing ? "Analyzing..." : "Analyze Document"}
+           </button>
 
           {uploading && (
             <div className="progress-bar">
@@ -157,13 +199,33 @@ function UploadD() {
             </div>
           )}
 
-          {success && (
-            <div className="success-msg">
-              <CheckCircle2 color="#16a34a" size={20} />
-              <span>Upload Successful!</span>
-            </div>
-          )}
-        </div>
+{success && (
+             <div className="success-msg">
+               <CheckCircle2 color="#16a34a" size={20} />
+               <span>Upload Successful!</span>
+             </div>
+           )}
+         </div>
+
+         {/* ✅ Analysis Results */}
+         {analysisResult && (
+           <div className="upload-card" style={{ marginTop: "1rem" }}>
+             <h3 className="text-lg font-semibold mb-2">📊 Analysis Results</h3>
+             <div style={{ textAlign: "left", padding: "1rem" }}>
+               <p><strong>File:</strong> {analysisResult.file}</p>
+               <p><strong>Extracted Text Preview:</strong></p>
+               <p style={{ fontSize: "0.85rem", color: "#555", maxHeight: "100px", overflow: "auto", background: "#f9f9f9", padding: "0.5rem" }}>
+                 {analysisResult.extractedText?.substring(0, 500)}...
+               </p>
+               {analysisResult.analysis?.agentJ && (
+                 <div style={{ marginTop: "1rem" }}>
+                   <p><strong>Assessment:</strong> {analysisResult.analysis.agentJ.decision}</p>
+                   <p><strong>Urgency:</strong> {analysisResult.analysis.agentJ.urgency}</p>
+                 </div>
+               )}
+             </div>
+           </div>
+         )}
 
 {/* ✅ Uploaded file list */}
         <div className="uploaded-list">
