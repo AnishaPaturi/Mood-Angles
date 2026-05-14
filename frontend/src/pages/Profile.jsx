@@ -8,17 +8,18 @@ function Profile() {
   const [profilePic, setProfilePic] = useState(null);
   const [mood, setMood] = useState("");
   const [history, setHistory] = useState([]);
+  const [testResults, setTestResults] = useState([]);
 
   const userId = localStorage.getItem("userId");
+
+  const API_BASE =
+    (import.meta.env.DEV
+      ? import.meta.env.VITE_LOCAL_BACKEND
+      : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
 
   // ✅ Fetch User Data + Mood History
   useEffect(() => {
     if (!userId) return;
-
-    const API_BASE =
-      (import.meta.env.DEV
-        ? import.meta.env.VITE_LOCAL_BACKEND
-        : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
 
     // Fetch profile data
     fetch(`${API_BASE}/api/profile/${userId}`)
@@ -36,6 +37,23 @@ function Profile() {
       })
       .catch((err) => console.error("Fetch user failed:", err));
   }, [userId]);
+
+// ✅ Fetch test results
+   useEffect(() => {
+     if (!userId) {
+       console.warn("⚠️ No userId found in localStorage");
+       return;
+     }
+
+     console.log("🔍 Fetching test results for userId:", userId);
+     fetch(`${API_BASE}/api/profile/test-results/${userId}`)
+       .then((res) => res.json())
+       .then((data) => {
+         console.log("📊 Test results response:", data);
+         setTestResults(data.testResults || []);
+       })
+       .catch((err) => console.error("Fetch test results failed:", err));
+   }, [userId]);
 
   // ✅ Load saved photo when returning to page
   useEffect(() => {
@@ -170,7 +188,7 @@ function Profile() {
 
         {/* Tabs */}
         <div style={styles.tabs}>
-          {["profile", "medical", "wellness", "history"].map((tab) => (
+          {["profile", "medical", "wellness", "history", "tests"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -280,17 +298,50 @@ function Profile() {
             </div>
           )}
 
+          {/* Medical Tab */}
           {activeTab === "medical" && <p>Medical info coming soon</p>}
+
+          {/* Tests Tab */}
+          {activeTab === "tests" && (
+            <div>
+              <h3>📋 Test History</h3>
+              {testResults.length === 0 ? (
+                <p>No tests taken yet.</p>
+              ) : (
+                <div>
+                  {testResults.map((test, i) => (
+                    <div key={i} style={styles.testItem}>
+                      <h4 style={{ margin: "0 0 8px 0" }}>{test.testType}</h4>
+                      <p style={{ margin: "4px 0" }}>
+                        <strong>Score:</strong> {test.score}%
+                      </p>
+                      <p style={{ margin: "4px 0" }}>
+                        <strong>Result:</strong> {test.level}
+                      </p>
+                      <p style={{ margin: "4px 0", fontSize: "12px", color: "#666" }}>
+                        Taken: {new Date(test.createdAt).toLocaleDateString()}
+                      </p>
+                      {test.agents?.agentJ?.decision && (
+                        <p style={{ margin: "8px 0", fontSize: "13px", color: "#555" }}>
+                          <strong>Assessment:</strong> {test.agents.agentJ.decision === "Likely" ? "Likely present" : test.agents.agentJ.decision === "Possible" ? "Possibly present" : "Unlikely present"}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </UserWrapper>
   );
 }
+
 const styles = {
-  // The full page background — use your preferred color here
   page: {
     padding: "30px",
-    background: "#f8c8dc", // 💖 use your pink or remove for transparent
+    background: "#f8c8dc",
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
@@ -346,14 +397,13 @@ const styles = {
     border: "none",
   },
 
-  // ✅ Fixed section — no background, no box, no shadow
   section: {
     padding: "20px",
     width: "100%",
     maxWidth: "800px",
-    background: "transparent", // 🔥 removes white panel
-    boxShadow: "none",         // 🔥 removes shadow
-    borderRadius: "0",         // optional: remove rounded edge
+    background: "transparent",
+    boxShadow: "none",
+    borderRadius: "0",
   },
 
   input: {
@@ -380,6 +430,14 @@ const styles = {
     width: "100%",
     borderRadius: "8px",
     cursor: "pointer",
+  },
+
+  testItem: {
+    background: "#fff",
+    padding: "15px",
+    marginBottom: "12px",
+    borderRadius: "8px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
   },
 };
 

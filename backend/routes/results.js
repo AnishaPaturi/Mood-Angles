@@ -26,8 +26,12 @@ router.post("/", /* requireAuth, */ async (req, res) => {
       return res.status(400).json({ error: "missing_fields", details: "testType, score, level required" });
     }
 
+    // `results` route currently has no auth middleware, so `req.user` may be undefined.
+    // Frontend sends `user` in the body (localStorage userId). Prefer body user if present.
+    const userFromBody = req.body.user;
+
     const doc = new TestResult({
-      user: req.user?.id || null,
+      user: req.user?.id || userFromBody || null,
       testType,
       score,
       level,

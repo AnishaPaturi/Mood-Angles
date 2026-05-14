@@ -4,6 +4,7 @@ import UserWrapper from "../../components/UserWrapper";
 export default function BipolarTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Bipolar Test";
+  const userId = localStorage.getItem("userId");
 
   
   const questions = [
@@ -242,19 +243,20 @@ export default function BipolarTest() {
         setResult((prev) => ({ ...prev, AngelJDecision: jData }));
       }
 
-     // ---------- Save to DB ----------
-     const payloadToSave = {
-       testType: testName,
-       score: percentScore, // REQUIRED by backend
-       level,
-       answers: buildAnswersPayload(),
-       agentR_result: AngelR_summary || null,
-       agentD_result: dData?.result || null,
-       agentC_result: cSummary || null,
-       agentE_result: eSummary || null,
-       agentJ_result: jData || null,
-       meta: { submittedAt: new Date().toISOString() }
-     };
+// ---------- Save to DB ----------
+      const payloadToSave = {
+        user: userId,
+        testType: testName,
+        score: percentScore, // REQUIRED by backend
+        level,
+        answers: buildAnswersPayload(),
+        agentR_result: AngelR_summary || null,
+        agentD_result: dData?.result || null,
+        agentC_result: cSummary || null,
+        agentE_result: eSummary || null,
+        agentJ_result: jData || null,
+        meta: { submittedAt: new Date().toISOString() }
+      };
 
 
       const saveResp = await sendResultToDB(payloadToSave);

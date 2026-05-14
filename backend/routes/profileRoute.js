@@ -1,5 +1,6 @@
 import express from "express";
-import User from "../models/User.js"; // ✅ Ensure correct path and casing
+import User from "../models/User.js";
+import TestResult from "../models/TestResult.js";
 
 const router = express.Router();
 
@@ -88,6 +89,29 @@ router.put("/mood/:userId", async (req, res) => {
   } catch (err) {
     console.error("❌ Error in PUT /mood:", err);
     res.status(500).json({ error: "Failed to update mood history" });
+  }
+});
+
+// ✅ Get user's test results
+router.get("/test-results/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log("🔍 Fetching test results for userId:", userId);
+    
+    const testResults = await TestResult.find({
+      $or: [
+        { user: userId },
+        { user: null }
+      ]
+    })
+      .sort({ createdAt: -1 })
+      .select("testType score level createdAt answers agents");
+
+    console.log("📊 Found test results count:", testResults.length);
+    res.json({ testResults });
+  } catch (err) {
+    console.error("❌ Error in GET /test-results:", err);
+    res.status(500).json({ error: "Failed to fetch test results" });
   }
 });
 
