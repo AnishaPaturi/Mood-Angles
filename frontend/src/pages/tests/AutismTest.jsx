@@ -58,12 +58,33 @@ export default function AutismTest() {
     return Math.round((rawScore / maxPossible) * 100);
   };
 
-  const interpretLevel = (score) =>
-    score < 25
-      ? "Low chance of Autistic Traits"
-      : score < 55
-      ? "Moderate chance of Autistic Traits"
-      : "High chance of Autistic Traits";
+   const interpretLevel = (score) =>
+     score < 25
+       ? "Low chance of Autistic Traits"
+       : score < 55
+       ? "Moderate chance of Autistic Traits"
+       : "High chance of Autistic Traits";
+
+  // --- Save results to DB helper ---
+  const sendResultToDB = async (payload) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Save failed: ${res.status} ${res.statusText} — ${txt}`);
+      }
+      return await res.json();
+    } catch (err) {
+      console.error("Error saving result to DB:", err);
+      return { error: String(err) };
+    }
+  };
 
   // ---- Submit & Call Angels (R → D → C → E → J) ----
   const handleSubmit = async () => {
@@ -81,15 +102,16 @@ export default function AutismTest() {
     setResult({ score, level });
     setLoading(true);
 
-    // intermediate holders
-    let finalSummary = "";
-    let dData = null;
-    let cData = null;
-    let eData = null;
-    let cSummary = "";
-    let eSummary = "";
+     // intermediate holders
+     let finalSummary = "";
+     let dData = null;
+     let cData = null;
+     let eData = null;
+     let cSummary = "";
+     let eSummary = "";
+     let jData = null;
 
-    try {
+     try {
       // ---------- Angel R ----------
       const payloadR = {
         condition: testName,
@@ -203,15 +225,39 @@ export default function AutismTest() {
             ...prev,
             AngelJDecision: `⚠️ Angel J failed: ${jRes.status} ${jRes.statusText} — ${txt}`
           }));
-        } else {
-          const jData = await jRes.json();
-          // store decision object or string
-          setResult((prev) => ({ ...prev, AngelJDecision: jData }));
-        }
+         } else {
+           jData = await jRes.json();
+           setResult((prev) => ({ ...prev, AngelJDecision: jData }));
+         }
       } catch (err) {
         console.error("Angel J connection error:", err);
         setResult((prev) => ({ ...prev, AngelJDecision: "⚠️ Could not connect to Angel J backend." }));
       }
+
+      // ---------- Save to DB ----------
+      const payloadToSave = {
+        testType: testName,
+        score: score, // REQUIRED by backend
+        level,
+        answers: buildAnswersPayload(),
+        agentR_result: finalSummary || null,
+        agentD_result: dData?.result || null,
+        agentC_result: cSummary || null,
+        agentE_result: eSummary || null,
+        agentJ_result: jData || null,
+        meta: { submittedAt: new Date().toISOString() }
+      };
+
+      const saveResp = await sendResultToDB(payloadToSave);
+
+      if (saveResp && saveResp.ok) {
+        setResult((prev) => ({ ...prev, savedId: saveResp.id || saveResp._id || null, savedOk: true }));
+      } else if (saveResp && saveResp.error) {
+        setResult((prev) => ({ ...prev, savedOk: false, savedError: saveResp.error }));
+      } else {
+        setResult((prev) => ({ ...prev, savedOk: false }));
+      }
+
     } catch (err) {
       console.error("Angel chain error:", err);
       setResult((prev) => ({
@@ -402,6 +448,17 @@ export default function AutismTest() {
                 {result.chainError && (
                   <p style={{ marginTop: "10px", color: "#b91c1c" }}>
                     <strong>Chain error:</strong> {result.chainError}
+                  </p>
+                )}
+
+                {result.savedOk === true && (
+                  <p style={{ marginTop: "8px", color: "#064e3b" }}>
+                    Results saved (id: {result.savedId || "n/a"})
+                  </p>
+                )}
+                {result.savedOk === false && result.savedError && (
+                  <p style={{ marginTop: "8px", color: "#b91c1c" }}>
+                    Save error: {result.savedError}
                   </p>
                 )}
               </div>
