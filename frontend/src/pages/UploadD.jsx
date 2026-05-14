@@ -1,26 +1,31 @@
 import React, { useState, useRef, useEffect } from "react";
 import UserWrapper from "../components/UserWrapper";
-import { UploadCloud, FileUp, CheckCircle2 } from "lucide-react";
+import { UploadCloud, FileUp, CheckCircle2, Tag } from "lucide-react";
 
 function UploadD() {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [category, setCategory] = useState("Other");
   const fileInputRef = useRef(null);
+  const userId = localStorage.getItem("userId");
 
   const API_BASE =
     (import.meta.env.DEV
       ? import.meta.env.VITE_LOCAL_BACKEND
       : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
 
-  // ✅ Fetch uploaded files
+  const CATEGORIES = ["Prescription", "Lab Report", "Psychiatrist Letter", "Insurance", "Other"];
+
+  // ✅ Fetch uploaded files for current user
   useEffect(() => {
-    fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/uploads`)
+    if (!userId) return;
+    fetch(`${API_BASE}/api/uploads?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => setUploadedFiles(data))
       .catch((err) => console.error("Error fetching uploaded files:", err));
-  }, []);
+  }, [userId]);
 
   // File select or drop
   const handleFilesChange = (e) => {
@@ -38,16 +43,19 @@ function UploadD() {
 
   const handleDragOver = (e) => e.preventDefault();
 
-  // ✅ Upload
+  // ✅ Upload with category
   const handleUpload = async () => {
     if (!files.length) return alert("Please select a file!");
+    if (!userId) return alert("Please log in to upload files");
 
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append("file", files[0]); // one at a time
+      formData.append("file", files[0]);
+      formData.append("category", category);
+      formData.append("userId", userId);
 
-      const res = await fetch(`${(import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000"}/api/uploads`, {
+      const res = await fetch(`${API_BASE}/api/uploads`, {
         method: "POST",
         body: formData,
       });
@@ -57,7 +65,7 @@ function UploadD() {
       if (res.ok) {
         setSuccess(true);
         setFiles([]);
-        setUploadedFiles((prev) => [...prev, data.filePath]);
+        setUploadedFiles((prev) => [...prev, data.file]);
       } else {
         alert("Upload failed: " + data.message);
       }
@@ -115,6 +123,30 @@ function UploadD() {
             </div>
           )}
 
+          {/* Category Selector */}
+          <div style={{ marginTop: "1rem" }}>
+            <label style={{ marginRight: "0.5rem", color: "#7e3a3a" }}>
+              <Tag size={16} style={{ marginRight: "0.25rem" }} />
+              Category:
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={{
+                padding: "0.5rem",
+                borderRadius: "0.5rem",
+                border: "1px solid #f0c4c4",
+                background: "#fff8f5",
+              }}
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button className="upload-btn" onClick={handleUpload}>
             {uploading ? "Uploading..." : "Start Upload"}
           </button>
@@ -133,12 +165,26 @@ function UploadD() {
           )}
         </div>
 
-        {/* ✅ Uploaded file list */}
+{/* ✅ Uploaded file list */}
         <div className="uploaded-list">
           <h3 className="text-lg font-semibold mb-2">Previously Uploaded</h3>
           {uploadedFiles.length > 0 ? (
             uploadedFiles.map((file, i) => {
-              const filename = file.split("/").pop();
+              // Defensive handling for file data
+              if (!file) return null;
+              
+              const isString = typeof file === "string";
+              let fileEntry = {};
+              
+              if (isString) {
+                fileEntry = { filePath: file, filename: file.split("/").pop(), category: "Other" };
+              } else if (typeof file === "object") {
+                fileEntry = { ...file };
+              }
+              
+              const filename = fileEntry.filename || (fileEntry.filePath ? fileEntry.filePath.split("/").pop() : "unknown") || "unknown";
+              const filePath = fileEntry.filePath || `/uploads/${filename}`;
+              const fileCategory = fileEntry.category || "Other";
 
               const handleDelete = async () => {
                 if (!window.confirm(`Delete ${filename}?`)) return;
@@ -149,20 +195,29 @@ function UploadD() {
                   const data = await res.json();
 
                   if (res.ok) {
-                    setUploadedFiles((prev) => prev.filter((f) => f !== file));
+                    setUploadedFiles((prev) => prev.filter((f) => {
+                      if (!f) return true;
+                      const name = typeof f === "string" ? f.split("/").pop() : (f.filename || f.filePath?.split("/").pop());
+                      return name !== filename;
+                    }));
                   } else {
                     alert("Delete failed: " + data.message);
                   }
-                } catch (err) {
-                  alert("Error deleting file!");
+                } catch {
+                   alert("Error deleting file!");
                 }
               };
 
               return (
                 <div key={i} className="uploaded-item">
-                  <a href={`${API_BASE}${file}`} target="_blank" rel="noopener noreferrer">
-                    {filename}
-                  </a>
+                  <div>
+                    <a href={`${API_BASE}${filePath}`} target="_blank" rel="noopener noreferrer">
+                      {filename}
+                    </a>
+                    <span style={{ marginLeft: "0.5rem", fontSize: "0.8rem", color: "#d08b8b" }}>
+                      [{fileCategory}]
+                    </span>
+                  </div>
                   <button
                     onClick={handleDelete}
                     style={{
