@@ -10,27 +10,39 @@ const router = express.Router();
 // ✅ Feedback submission route
 router.post("/", async (req, res) => {
   try {
+    console.log(" Feedback route hit");
     const { name, email, message } = req.body;
+    console.log(" Body received:", { name, email, message: message ? message.substring(0, 50) : "undef" });
 
-    if (!name || !email || !message)
+    if (!name || !email || !message) {
+      console.log(" Validation failed");
       return res.status(400).json({ error: "All fields are required" });
+    }
 
+    console.log(" Saving to MongoDB...");
     // ✅ Save feedback in MongoDB
     const feedback = new Feedback({ name, email, message });
     await feedback.save();
+    console.log(" Saved feedback ID:", feedback._id);
 
+    console.log(" Creating transporter...");
     // ✅ Email setup
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.ADMIN_EMAIL, // your gmail
-        pass: process.env.ADMIN_EMAIL_PASSWORD, // app password
+        user: process.env.EMAIL_USER, // your gmail
+        pass: process.env.EMAIL_PASS, // app password
       },
     });
+    console.log(" Transporter created");
+
+    console.log(" Verifying transporter...");
+    await transporter.verify();
+    console.log(" Transporter verified");
 
     // ✅ Email content
     const mailOptions = {
-      from: `"MoodAngles Feedback" <${process.env.ADMIN_EMAIL}>`,
+      from: `"MoodAngles Feedback" <${process.env.EMAIL_USER}>`,
       to: "moodangles@gmail.com", // admin email
       subject: `📝 New Feedback from ${name}`,
       html: `
@@ -43,8 +55,10 @@ router.post("/", async (req, res) => {
       `,
     };
 
+    console.log(" Sending email...");
     // ✅ Send email
     await transporter.sendMail(mailOptions);
+    console.log(" Email sent");
 
     res.json({
       success: true,

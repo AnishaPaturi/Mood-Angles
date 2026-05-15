@@ -1,0 +1,17 @@
+◇ injected env (12) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+🚀 Server running on port 5000
+✅ MongoDB connected: ac-frapivp-shard-00-00.aw3izih.mongodb.net
+ Feedback route hit
+ Body received: { name: 'T', email: 't@t.com', message: 'm' }
+ Saving to MongoDB...
+ Saved feedback ID: new ObjectId('6a0668eb30be596225ee6a95')
+ Creating transporter...
+ Transporter created
+ Verifying transporter...
+ Transporter verified
+ Sending email...
+ Email sent
