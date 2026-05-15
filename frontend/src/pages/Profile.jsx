@@ -88,57 +88,97 @@ function Profile() {
     }
   };
 
-// ✅ Fixed + Safe + Compressed Profile Photo Upload
+   // ✅ Fixed + Safe + Compressed Profile Photo Upload
    const handlePhotoUpload = async (event) => {
-    const file = event?.target?.files?.[0];
-    if (!file) {
-      console.warn("⚠️ No file selected.");
-      return;
-    }
+     const file = event?.target?.files?.[0];
+     if (!file) {
+       console.warn("⚠️ No file selected.");
+       return;
+     }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const img = new Image();
-      img.src = e.target.result;
-      img.onload = async () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        const MAX_WIDTH = 300;
-        const scale = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scale;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
+     const reader = new FileReader();
+     reader.onload = async (e) => {
+       const img = new Image();
+       img.src = e.target.result;
+       img.onload = async () => {
+         const canvas = document.createElement("canvas");
+         const ctx = canvas.getContext("2d");
+         const MAX_WIDTH = 300;
+         const scale = MAX_WIDTH / img.width;
+         canvas.width = MAX_WIDTH;
+         canvas.height = img.height * scale;
+         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+         const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
 
-        try {
-          // Save to localStorage for quick access
-          localStorage.setItem("profilePhoto", compressedDataUrl);
-          setProfilePic(compressedDataUrl);
+         try {
+           // Persist to backend for cross-session persistence
+           const res = await fetch(`${API_BASE}/api/profile/uploadPhoto/${userId}`, {
+             method: "PUT",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify({ profilePic: compressedDataUrl }),
+           });
+           const data = await res.json();
+           if (!res.ok) throw new Error(data.error || "Failed to save photo");
 
-          // Persist to backend for cross-session persistence
-          const res = await fetch(`${API_BASE}/api/profile/uploadPhoto/${userId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ profilePic: compressedDataUrl }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || "Failed to save photo");
+           // Save to localStorage for quick access only after success
+           localStorage.setItem("profilePhoto", compressedDataUrl);
+           setProfilePic(compressedDataUrl);
 
-          // Update user state with backend response
-          if (data.user) setUser(data.user);
+           // Update user state with backend response
+           if (data.user) setUser(data.user);
 
-          // Notify other components (like UserWrapper) of photo update
-          window.dispatchEvent(new Event("profilePhotoUpdated"));
+           // Notify other components (like UserWrapper) of photo update
+           window.dispatchEvent(new Event("profilePhotoUpdated"));
 
-          alert("✅ Profile photo updated successfully!");
-        } catch (err) {
-          console.error("Upload failed:", err);
-          alert("⚠️ Upload failed: " + err.message);
-        }
-      };
-    };
-    reader.readAsDataURL(file);
-  };
+           alert("✅ Profile photo updated successfully!");
+         } catch (err) {
+           console.error("Upload failed:", err);
+           alert("⚠️ Upload failed: " + err.message);
+         }
+       };
+     };
+     reader.readAsDataURL(file);
+   };
+
+   // ✅ Remove profile photo
+   const handlePhotoRemove = async () => {
+     try {
+       console.log("🗑️ Attempting to remove photo for userId:", userId);
+
+       // Update backend first
+       const res = await fetch(`${API_BASE}/api/profile/removePhoto/${userId}`, {
+         method: "DELETE",
+       });
+
+       console.log("📥 Response status:", res.status);
+       const data = await res.json();
+       console.log("📥 Response data:", data);
+
+       if (!res.ok) {
+         throw new Error(data.error || `Server returned ${res.status}`);
+       }
+
+       // Clear from localStorage only after success
+       localStorage.removeItem("profilePhoto");
+       setProfilePic(null);
+
+       // Update user state with backend response (clear profilePhoto)
+       if (data.user) {
+         setUser({ ...data.user, profilePhoto: "" });
+       } else {
+         // If backend doesn't return user, still clear local state
+         setUser((prev) => (prev ? { ...prev, profilePhoto: "" } : prev));
+       }
+
+       // Notify other components of photo update
+       window.dispatchEvent(new Event("profilePhotoUpdated"));
+
+       alert("✅ Profile photo removed successfully!");
+     } catch (err) {
+       console.error("❌ Remove failed:", err);
+       alert("⚠️ Failed to remove photo: " + err.message);
+     }
+   };
 
   // ✅ Mood Check-in (now saved to backend + local)
   const handleMoodCheckin = async () => {
@@ -219,14 +259,94 @@ function Profile() {
         {/* Content Section */}
         <div style={styles.section}>
           {/* Profile Tab */}
-          {activeTab === "profile" && (
-            <>
-              <label>Profile Picture</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-              />
+           {activeTab === "profile" && (
+             <>
+               <label style={{ fontWeight: "bold", marginBottom: "8px", display: "block" }}>
+                 Profile Picture
+               </label>
+
+               {/* Hidden file input - always present */}
+               <input
+                 id="photo-upload"
+                 type="file"
+                 accept="image/*"
+                 onChange={handlePhotoUpload}
+                 style={{ display: "none" }}
+               />
+
+               {/* Current Photo Preview or Add Button */}
+               {(profilePic || user?.profilePhoto) ? (
+                 <div style={{ marginBottom: "16px", textAlign: "center" }}>
+                   <img
+                     src={
+                       profilePic ||
+                       user?.profilePhoto ||
+                       "https://via.placeholder.com/120"
+                     }
+                     alt="Current profile"
+                     style={{
+                       width: "120px",
+                       height: "120px",
+                       borderRadius: "50%",
+                       border: "4px solid #6c5ce7",
+                       objectFit: "cover",
+                       marginBottom: "10px",
+                       cursor: "pointer",
+                     }}
+                     onClick={() => document.getElementById("photo-upload").click()}
+                     title="Click to change photo"
+                   />
+                   <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
+                     <label
+                       htmlFor="photo-upload"
+                       style={{
+                         ...styles.saveBtn,
+                         background: "#6c5ce7",
+                         width: "auto",
+                         padding: "8px 16px",
+                         fontSize: "14px",
+                         cursor: "pointer",
+                         textDecoration: "none",
+                       }}
+                     >
+                       ✏️ Change Photo
+                     </label>
+                     <button
+                       onClick={handlePhotoRemove}
+                       style={{
+                         ...styles.saveBtn,
+                         background: "#e74c3c",
+                         width: "auto",
+                         padding: "8px 16px",
+                         fontSize: "14px",
+                       }}
+                     >
+                       🗑️ Remove Photo
+                     </button>
+                   </div>
+                 </div>
+               ) : (
+                 <div style={{ marginBottom: "16px", textAlign: "center" }}>
+                   <label
+                     htmlFor="photo-upload"
+                     style={{
+                       display: "inline-block",
+                       ...styles.saveBtn,
+                       background: "#6c5ce7",
+                       cursor: "pointer",
+                       width: "auto",
+                       padding: "10px 20px",
+                       textAlign: "center",
+                       textDecoration: "none",
+                     }}
+                   >
+                     ➕ Add Photo
+                   </label>
+                   <p style={{ fontSize: "12px", color: "#888", marginTop: "8px" }}>
+                     Click to upload a profile picture
+                   </p>
+                 </div>
+               )}
 
               <label>First Name</label>
               <input

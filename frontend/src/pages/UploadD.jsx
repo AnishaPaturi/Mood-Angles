@@ -80,37 +80,54 @@ function UploadD() {
     }
   };
 
-  // ✅ Analyze document
+// ✅ Analyze document
   const handleAnalyze = async () => {
-    if (!files.length) return alert("Please select a file!");
-    if (!userId) return alert("Please log in to analyze documents");
+     if (!files.length) return alert("Please select a file!");
+     if (!userId) return alert("Please log in to analyze documents");
 
-    setAnalyzing(true);
-    setAnalysisResult(null);
-    try {
-      const formData = new FormData();
-      formData.append("file", files[0]);
+     setAnalyzing(true);
+     setAnalysisResult(null);
+     try {
+       const formData = new FormData();
+       formData.append("file", files[0]);
 
-      const res = await fetch(`${API_BASE}/api/documents/analyze`, {
-        method: "POST",
-        body: formData,
-      });
+       const res = await fetch(`${API_BASE}/api/documents/analyze`, {
+         method: "POST",
+         body: formData,
+       });
 
-      const data = await res.json();
+       const data = await res.json();
 
-      if (res.ok) {
-        setAnalysisResult(data);
-        alert("Document analyzed successfully!");
-      } else {
-        alert("Analysis failed: " + data.error);
-      }
-    } catch (error) {
-      console.error("Analysis error:", error);
-      alert("Something went wrong!");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
+       if (res.ok) {
+         // Check if extraction produced meaningful text
+         const extractedText = data.extractedText || "";
+         const extractionFailed =
+           !extractedText ||
+           extractedText.length < 10 ||
+           extractedText.toLowerCase().includes("error") ||
+           extractedText.toLowerCase().includes("missing library") ||
+           extractedText.toLowerCase().includes("tesseract");
+
+         if (extractionFailed) {
+           setAnalysisResult({
+             ...data,
+             extractionError: true,
+             extractedText: extractedText || "No text could be extracted. The OCR engine (Tesseract) may not be installed, or the document may not contain readable text."
+           });
+         } else {
+           setAnalysisResult(data);
+         }
+         alert("Document analyzed successfully!");
+       } else {
+         alert("Analysis failed: " + (data.error || "Unknown error"));
+       }
+     } catch (error) {
+       console.error("Analysis error:", error);
+       alert("Something went wrong: " + error.message);
+     } finally {
+       setAnalyzing(false);
+     }
+   };
 
   const css = `
     .upload-section { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-bottom: 2rem; }
@@ -207,25 +224,44 @@ function UploadD() {
            )}
          </div>
 
-         {/* ✅ Analysis Results */}
-         {analysisResult && (
-           <div className="upload-card" style={{ marginTop: "1rem" }}>
-             <h3 className="text-lg font-semibold mb-2">📊 Analysis Results</h3>
-             <div style={{ textAlign: "left", padding: "1rem" }}>
-               <p><strong>File:</strong> {analysisResult.file}</p>
-               <p><strong>Extracted Text Preview:</strong></p>
-               <p style={{ fontSize: "0.85rem", color: "#555", maxHeight: "100px", overflow: "auto", background: "#f9f9f9", padding: "0.5rem" }}>
-                 {analysisResult.extractedText?.substring(0, 500)}...
-               </p>
-               {analysisResult.analysis?.agentJ && (
-                 <div style={{ marginTop: "1rem" }}>
-                   <p><strong>Assessment:</strong> {analysisResult.analysis.agentJ.decision}</p>
-                   <p><strong>Urgency:</strong> {analysisResult.analysis.agentJ.urgency}</p>
-                 </div>
-               )}
-             </div>
-           </div>
-         )}
+{/* ✅ Analysis Results */}
+          {analysisResult && (
+            <div className="upload-card" style={{ marginTop: "1rem" }}>
+              <h3 className="text-lg font-semibold mb-2">📊 Analysis Results</h3>
+              <div style={{ textAlign: "left", padding: "1rem" }}>
+                <p><strong>File:</strong> {analysisResult.file}</p>
+
+                {analysisResult.extractionError ? (
+                  <div style={{
+                    marginTop: "0.5rem",
+                    padding: "0.75rem",
+                    background: "#fff3f3",
+                    border: "1px solid #f5baba",
+                    borderRadius: "0.5rem",
+                    color: "#7e3a3a"
+                  }}>
+                    <p><strong>⚠️ Extraction Failed</strong></p>
+                    <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>
+                      {analysisResult.extractedText}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p><strong>Extracted Text Preview:</strong></p>
+                    <p style={{ fontSize: "0.85rem", color: "#555", maxHeight: "100px", overflow: "auto", background: "#f9f9f9", padding: "0.5rem" }}>
+                      {analysisResult.extractedText?.substring(0, 500)}...
+                    </p>
+                    {analysisResult.analysis?.agentJ && (
+                      <div style={{ marginTop: "1rem" }}>
+                        <p><strong>Assessment:</strong> {analysisResult.analysis.agentJ.decision}</p>
+                        <p><strong>Urgency:</strong> {analysisResult.analysis.agentJ.urgency}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
 {/* ✅ Uploaded file list */}
         <div className="uploaded-list">

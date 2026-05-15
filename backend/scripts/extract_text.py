@@ -8,7 +8,7 @@ import os
 
 def extract_text(filepath):
     ext = os.path.splitext(filepath)[1].lower()
-    
+
     try:
         if ext == '.pdf':
             import pdfplumber
@@ -29,12 +29,14 @@ def extract_text(filepath):
         else:
             return "Unsupported file type"
     except ImportError as e:
-        return f"Missing library: {str(e)}"
+        print(f"Missing library: {str(e)}", file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
-        return f"Error extracting text: {str(e)}"
+        print(f"Error extracting text: {str(e)}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python extract_text.py <filepath>")
+        print("Usage: python extract_text.py <filepath>", file=sys.stderr)
         sys.exit(1)
     print(extract_text(sys.argv[1]))

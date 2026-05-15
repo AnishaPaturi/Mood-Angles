@@ -32,6 +32,27 @@ router.put("/update/:id", async (req, res) => {
   }
 });
 
+// ✅ Remove profile photo
+router.delete("/removePhoto/:id", async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { profilePhoto: "" },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log(`✅ Profile photo removed for ${user.email}`);
+    res.json({ message: "Profile photo removed successfully", user });
+  } catch (err) {
+    console.error("❌ Error in DELETE /removePhoto:", err);
+    res.status(500).json({ error: "Failed to remove profile photo" });
+  }
+});
+
 // ✅ Upload profile photo (base64)
 router.put("/uploadPhoto/:id", async (req, res) => {
   try {
