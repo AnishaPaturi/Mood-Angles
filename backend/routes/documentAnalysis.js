@@ -94,6 +94,15 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
 
    try {
      const extractedText = await extractText(req.file.path);
+
+     // If extraction returned an OCR error marker, return 400 with guidance
+     if (extractedText && extractedText.includes("OCR_ERROR:")) {
+       return res.status(400).json({
+         error: "ocr_missing",
+         details: extractedText.replace("OCR_ERROR:", "").trim(),
+       });
+     }
+
      const agentResults = await runAgentPipeline(extractedText);
 
      res.json({

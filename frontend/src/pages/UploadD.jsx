@@ -98,29 +98,36 @@ function UploadD() {
 
        const data = await res.json();
 
-       if (res.ok) {
-         // Check if extraction produced meaningful text
-         const extractedText = data.extractedText || "";
-         const extractionFailed =
-           !extractedText ||
-           extractedText.length < 10 ||
-           extractedText.toLowerCase().includes("error") ||
-           extractedText.toLowerCase().includes("missing library") ||
-           extractedText.toLowerCase().includes("tesseract");
+if (res.ok) {
+          // Check if extraction produced meaningful text
+          const extractedText = data.extractedText || "";
+          const extractionFailed =
+            !extractedText ||
+            extractedText.length < 10 ||
+            extractedText.toLowerCase().includes("error") ||
+            extractedText.toLowerCase().includes("missing library") ||
+            extractedText.toLowerCase().includes("tesseract");
 
-         if (extractionFailed) {
-           setAnalysisResult({
-             ...data,
-             extractionError: true,
-             extractedText: extractedText || "No text could be extracted. The OCR engine (Tesseract) may not be installed, or the document may not contain readable text."
-           });
-         } else {
-           setAnalysisResult(data);
-         }
-         alert("Document analyzed successfully!");
-       } else {
-         alert("Analysis failed: " + (data.error || "Unknown error"));
-       }
+          if (extractionFailed) {
+            setAnalysisResult({
+              ...data,
+              extractionError: true,
+              extractedText: extractedText || "No text could be extracted. The OCR engine (Tesseract) may not be installed, or the document may not contain readable text."
+            });
+          } else {
+            setAnalysisResult(data);
+          }
+          alert("Document analyzed successfully!");
+        } else if (data.error === "ocr_missing") {
+          setAnalysisResult({
+            extractionError: true,
+            extractedText: data.details || "OCR engine (Tesseract) is not installed. Please install it to analyze image/PDF documents.",
+            file: files[0]?.name || "unknown"
+          });
+          alert("OCR not available — see results panel for details.");
+        } else {
+          alert("Analysis failed: " + (data.error || "Unknown error"));
+        }
      } catch (error) {
        console.error("Analysis error:", error);
        alert("Something went wrong: " + error.message);

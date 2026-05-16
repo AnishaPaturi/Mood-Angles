@@ -19,6 +19,7 @@ import chatbotRoute from "./routes/chatbotRoute.js";
 
 // ✅ Load environment variables
 dotenv.config();
+console.log('MONGO_URI from env:', process.env.MONGO_URI ? 'SET' : 'NOT SET');
 
 // ✅ Connect to MongoDB
 connectDB();

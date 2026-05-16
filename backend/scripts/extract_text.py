@@ -29,10 +29,18 @@ def extract_text(filepath):
         else:
             return "Unsupported file type"
     except ImportError as e:
-        print(f"Missing library: {str(e)}", file=sys.stderr)
+        missing = str(e)
+        if "pytesseract" in missing or "TesseractNotFoundError" in missing or "tesseract" in missing.lower():
+            print(f"OCR_ERROR: Tesseract is not installed or not in PATH. Install it from https://github.com/tesseract-ocr/tesseract", file=sys.stdout)
+            sys.exit(0)
+        print(f"Missing library: {missing}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
-        print(f"Error extracting text: {str(e)}", file=sys.stderr)
+        err_msg = str(e)
+        if "tesseract" in err_msg.lower() or "TesseractNotFoundError" in err_msg:
+            print(f"OCR_ERROR: Tesseract is not installed or not in PATH. Install it from https://github.com/tesseract-ocr/tesseract", file=sys.stdout)
+            sys.exit(0)
+        print(f"Error extracting text: {err_msg}", file=sys.stderr)
         sys.exit(1)
 
 if __name__ == "__main__":
