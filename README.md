@@ -571,23 +571,10 @@ The `userId` is required for RAG context retrieval. If omitted, Luna responds wi
 { "chunks": [{ "userId": "global", "content": "...", "embedding": [], "metadata": { "source": "dsm5" } }] }
 ```
 
-**POST `/rag-query``** — Manual retrieval test:
+**POST `/rag-query`** — Manual retrieval test:
 ```json
 { "question": "What are symptoms of depression?", "userId": "global", "topK": 4 }
 ```
-
----
-
-### 🐍 RAG Data Seeding (`data/ingest_rag_data.py`)
-
-Ingests knowledge-base documents into MongoDB:
-```bash
-cd backend
-python data/ingest_rag_data.py [dsm5 | cases | both]
-```
-- **`dsm5`** — Loads `data/dsm5_knowledge.json` (DSM-5 diagnostic criteria)
-- **`cases`** — Loads `data/DataSet.csv` (clinical patient case studies)
-- **`both`** — Seeds both data sources
 
 ---
 
