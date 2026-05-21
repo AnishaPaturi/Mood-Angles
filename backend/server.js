@@ -259,6 +259,110 @@ app.post("/api/angelJ", (req, res) => {
 
 
 
+function cosineSim(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length === 0 || b.length === 0) return 0;
+  let dot=0, ma=0, mb=0;
+  for (let i=0; i<a.length; i++) { dot+=a[i]*b[i]; ma+=a[i]*a[i]; mb+=b[i]*b[i]; }
+  const denom=Math.sqrt(ma)*Math.sqrt(mb);
+  return denom === 0 ? 0 : dot/denom;
+}
+
+
+
+/* =========================================================
+   📚 RAG ADMIN ROUTES
+   Bulk write & query DocumentChunk via HTTP
+   (used by data/ingest_rag_data.py)
+   ========================================================= */
+
+import DocumentChunk from "./models/DocumentChunk.js";
+
+/**
+ * POST /api/admin/rag-batch
+ * Body: { chunks: [{ userId, content, embedding[], metadata{} }] }
+ * Upserts each chunk idempotently.
+ */
+app.post("/api/admin/rag-batch", async (req, res) => {
+  try {
+    const { chunks } = req.body || {};
+    if (!Array.isArray(chunks) || chunks.length === 0) {
+      return res.status(400).json({ error: "chunks array required" });
+    }
+    let stored = 0;
+    for (const c of chunks) {
+      try {
+        const filter = { _id: c.id };
+        const update = {
+          userId:         c.userId        || "system",
+          conversationId: c.conversationId || null,
+          chunkIndex:     c.chunkIndex    ?? 0,
+          content:        c.content,
+          embedding:      c.embedding     || [],
+          metadata:       c.metadata      || {},
+        };
+        const opts = { new: true, upsert: true };
+        await DocumentChunk.findOneAndUpdate(filter,   update, opts);
+        stored++;
+      } catch (e) {
+        console.warn("[rag-batch] skip chunk:", e.message);
+      }
+    }
+    res.json({ stored, total: chunks.length });
+  } catch (err) {
+    console.error("[rag-batch] fatal:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/admin/rag-query
+ * Body: { userId, query, topK: 5 }
+ *   — if the body also contains 'queryEmbedding: [float]' we use it directly;
+ *     otherwise we compute embedding via OpenAI and return scored results.
+ * Returns [{ pageContent, metadata, score }] top-K similar chunks.
+ */
+app.post("/api/admin/rag-query", async (req, res) => {
+  try {
+    const { userId, query, topK = 5, queryEmbedding } = req.body || {};
+    if (!userId) {
+      return res.status(400).json({ error: "userId required" });
+    }
+
+    // Fetch all chunks for this user
+    const docs = await DocumentChunk.find({ userId }).lean();
+    if (!docs.length) return res.json({ results: [] });
+
+    let qVec = queryEmbedding;
+    if (!qVec && query) {
+      // Compute embedding lazily via OpenAI — async, grab from environment
+      try {
+        const { OpenAIEmbeddings } = (await import("@langchain/openai"));
+        const emb  = new OpenAIEmbeddings({ modelName: "text-embedding-ada-002" });
+        qVec      = await emb.embedQuery(query);
+      } catch(err) {
+        console.warn("[rag-query] OpenAI embedding failed:", err.message);
+      }
+    }
+
+    const scored = docs
+      .filter(d => Array.isArray(d.embedding) && d.embedding.length > 0)
+      .map(d => ({ doc: d, score: cosineSim(qVec || [], d.embedding) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK)
+      .map(s => ({
+        pageContent : s.doc.content,
+        metadata    : s.doc.metadata,
+        score       : parseFloat(s.score.toFixed(4)),
+      }));
+    res.json({ results: scored });
+  } catch (err) {
+    console.error("[rag-query] fatal:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 /* =========================================================
    ✅ START SERVER
    ========================================================= */

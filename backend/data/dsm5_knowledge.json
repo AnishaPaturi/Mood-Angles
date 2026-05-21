@@ -1,0 +1,186 @@
+[
+  {
+    "id": "mdd",
+    "name": "Major Depressive Disorder",
+    "category": "Depressive Disorders",
+    "diagnostic_criteria": {
+      "A": "Five (or more) of the following symptoms present during the same 2-week period and represent a change from previous functioning; at least one of the symptoms is either (1) depressed mood or (2) loss of interest or pleasure.",
+      "B": "The symptoms cause clinically significant distress or impairment in social, occupational, or other important areas of functioning.",
+      "C": "The episode is not attributable to the physiological effects of a substance or to another medical condition.",
+      "D": "The occurrence is not better explained by schizoaffective disorder, schizophrenia, delusional disorder, or other psychotic disorders."
+    },
+    "symptoms": [
+      { "number": 1,  "name": "Depressed mood",                 "description": "Nearly every day, subjectively reported or observed by others." },
+      { "number": 2,  "name": "Diminished interest",             "description": "Markedly diminished interest or pleasure in all or almost all activities." },
+      { "number": 3,  "name": "Weight/appetite change",          "description": "Significant weight loss when not dieting or weight gain, or decrease/increase in appetite." },
+      { "number": 4,  "name": "Insomnia or hypersomnia",         "description": "Nearly every day — difficulty falling or staying asleep, or sleeping excessively." },
+      { "number": 5,  "name": "Psychomotor agitation/retardation", "description": "Observable psychomotor changes (restlessness or slowing)." },
+      { "number": 6,  "name": "Fatigue or energy loss",          "description": "Fatigue or loss of energy nearly every day." },
+      { "number": 7,  "name": "Feelings of worthlessness",       "description": "Feelings of worthlessness or excessive/inappropriate guilt." },
+      { "number": 8,  "name": "Cognitive impairment",            "description": "Diminished ability to think, concentrate, or make decisions." },
+      { "number": 9,  "name": "Suicidal ideation",               "description": "Recurrent thoughts of death, recurrent suicidal ideation without a specific plan, or a suicide attempt." }
+    ],
+    "symptom_groups": ["depressive_mood", "loss_of_interest", "insomnia", "fatigue", "suicidal_ideation"],
+    "severity_mild_cutoff": 5,
+    "severity_sig_cutoff": 10,
+    "specifiers": ["single_episode", "recurrent", "in_partial_remission", "in_full_remission", "anxious_distress", "mixed_features", "melancholic_features", "atypical_features", "psychotic_features"]
+  },
+  {
+    "id": "bipolar1",
+    "name": "Bipolar I Disorder",
+    "category": "Bipolar Disorders",
+    "diagnostic_criteria": {
+      "A": "A distinct period of abnormally and persistently elevated, expansive, or irritable mood and abnormally increased activity or energy, lasting at least 1 week (or any duration if hospitalization required), present most of the day, nearly every day.",
+      "B": "During the period of mood disturbance and increased energy or activity, three (or more) of the following are present (four if the mood is only irritable): inflated self-esteem or grandiosity; decreased need for sleep; more talkative than usual or pressure to keep talking; flight of ideas or subjective experience that thoughts are racing; distractibility; increase in goal-directed activity or psychomotor agitation; excessive involvement in activities with high potential for painful consequences.",
+      "C": "The mood disturbance is sufficiently severe to cause marked impairment in social or occupational functioning or to necessitate hospitalization, or there are psychotic features.",
+      "D": "The episode is not attributable to the physiological effects of a substance or to another medical condition."
+    },
+    "symptoms": [
+      { "number": 1, "name": "Elevated or irritable mood",       "description": "Abnormally and persistently elevated, expansive, or irritable mood." },
+      { "number": 2, "name": "Grandiosity",                      "description": "Inflated self-esteem or grandiosity." },
+      { "number": 3, "name": "Decreased need for sleep",         "description": "Decreased need for sleep (feels rested after 3 hours)." },
+      { "number": 4, "name": "Pressured speech",                 "description": "More talkative than usual or pressure to keep talking." },
+      { "number": 5, "name": "Flight of ideas / racing thoughts", "description": "Flight of ideas or subjective experience of racing thoughts." },
+      { "number": 6, "name": "Distractibility",                  "description": "Distractibility (attention too easily drawn to unimportant stimuli)." },
+      { "number": 7, "name": "Goal-directed activity / agitation", "description": "Increase in goal-directed activity or psychomotor agitation." },
+      { "number": 8, "name": "Risky/pleasurable activities",     "description": "Excessive involvement in activities with high potential for painful consequences." }
+    ],
+    "symptom_groups": ["elevated_mood", "energy_spike", "hypersomnia_reversal", "goal_directed_activity"],
+    "specifiers": ["episode_type_manic", "episode_type_hypomanic", "episode_type_depressed", "current_episode_manic", "current_episode_hypomanic", "current_episode_depressed", "mood_congruent", "mood_incongruent"]
+  },
+  {
+    "id": "bipolar2",
+    "name": "Bipolar II Disorder",
+    "category": "Bipolar Disorders",
+    "diagnostic_criteria": {
+      "A": "A distinct period of abnormally and persistently elevated, expansive, or irritable mood and abnormally increased activity or energy (hypomanic episode) lasting at least 4 consecutive days.",
+      "B": "Either the hypomanic episode or a major depressive episode must be a part of the current (or most recent) presentation.",
+      "C": "There has never been a manic episode or mixed episode. The hypomanic episode causes clinically significant distress or impairment. The episode is not attributable to substance/medical condition."
+    },
+    "symptoms": ["Same as Bipolar I manic criteria (hypomanic variant) + Major Depressive Episode criteria"],
+    "symptom_groups": ["mood_instability", "depressive_mood", "loss_of_interest", "hypomanic_episode"]
+  },
+  {
+    "id": "gad",
+    "name": "Generalized Anxiety Disorder",
+    "category": "Anxiety Disorders",
+    "diagnostic_criteria": {
+      "A": "Excessive anxiety and worry (apprehensive expectation), occurring more days than not for at least 6 months, about a number of events or activities.",
+      "B": "The individual finds it difficult to control the worry.",
+      "C": "The anxiety and worry are associated with three (or more) of the following six symptoms: restlessness or feeling keyed up; easily fatigued; difficulty concentrating; irritability; muscle tension; sleep disturbance.",
+      "D": "The anxiety, worry, or physical symptoms cause clinically significant distress or impairment.",
+      "E": "The disturbance is not attributable to substance/medical condition or another mental disorder."
+    },
+    "symptoms": [
+      { "number": 1, "name": "Restlessness or feeling on edge",    "description": "Feeling restless, keyed up, or on edge." },
+      { "number": 2, "name": "Being easily fatigued",              "description": "Becoming easily fatigued." },
+      { "number": 3, "name": "Difficulty concentrating",           "description": "Difficulty concentrating or mind going blank." },
+      { "number": 4, "name": "Irritability",                       "description": "Becoming easily irritated or annoyed." },
+      { "number": 5, "name": "Muscle tension",                     "description": "Muscle tension." },
+      { "number": 6, "name": "Sleep disturbance",                  "description": "Difficulty falling or staying asleep, or restless unsatisfying sleep." }
+    ],
+    "symptom_groups": ["anxiety", "fatigue", "cognitive_impairment", "irritability", "insomnia"],
+    "specifiers": ["panic_attacks", "with_anxious_distress_specifiers"]
+  },
+  {
+    "id": "mdd_recurrent",
+    "name": "Recurrent Major Depressive Disorder",
+    "category": "Depressive Disorders",
+    "diagnostic_criteria": {
+      "inherits": "mdd",
+      "additional": "Two or more major depressive episodes in lifetime, with inter-episode period(s) in which criteria not met for a major depressive episode."
+    },
+    "symptom_groups": ["depressive_mood", "loss_of_interest", "insomnia", "fatigue", "suicidal_ideation"]
+  },
+  {
+    "id": "panic_disorder",
+    "name": "Panic Disorder",
+    "category": "Anxiety Disorders",
+    "diagnostic_criteria": {
+      "A": "Recurrent unexpected panic attacks (abrupt surges of intense fear or discomfort) reaching a peak within minutes, accompanied by at least four of: palpitations; sweating; trembling; sensations of shortness of breath; chest pain; nausea or abdominal distress; dizziness; chills/heat; paresthesia; derealization; fear of losing control; fear of dying.",
+      "B": "At least one of the attacks has been followed by 1 month or more of persistent concern about additional attacks or consequences, or significant maladaptive change in behavior.",
+      "C": "The disturbance is not attributable to substance/medical condition or another mental disorder."
+    },
+    "symptom_groups": ["panic_attacks", "anticipatory_anxiety", "avoidance_behavior"]
+  },
+  {
+    "id": "adhd",
+    "name": "Attention-Deficit/Hyperactivity Disorder",
+    "category": "Neurodevelopmental Disorders",
+    "diagnostic_criteria": {
+      "inattention": "A persistent pattern of inattention and/or hyperactivity-impulsivity that interferes with functioning or development. Six (for older) or more (for ages 17+) symptoms from both the inattention and hyperactivity-impulsivity categories for at least 6 months.",
+      "inattention_items": [ "Often fails to give close attention to details", "Often has difficulty sustaining attention", "Often does not seem to listen when spoken to directly", "Often does not follow through on instructions", "Often has difficulty organizing tasks", "Often avoids/reluctant/grudgingly engages in tasks requiring sustained effort", "Often loses things for tasks", "Often easily distracted by extraneous stimuli", "Often forgetful in daily activities" ],
+      "hyperactivity_items": [ "Often fidgets/squirms", "Often leaves seat", "Often runs/climbs in inappropriate situations", "Often unable to play quietly", "Often 'on the go' acting as if driven", "Often talks excessively", "Often blurts out answers", "Often difficulty waiting turn", "Often interrupts/intrudes on others" ]
+    },
+    "symptom_groups": ["inattention", "hyperactivity", "impulsivity"]
+  },
+  {
+    "id": "asd",
+    "name": "Autism Spectrum Disorder",
+    "category": "Neurodevelopmental Disorders",
+    "diagnostic_criteria": {
+      "A": "Persistent deficits in social communication and social interaction across multiple contexts, manifested by deficits in social-emotional reciprocity; nonverbal communicative behaviors; and developing/maintaining relationships.",
+      "B": "Restricted, repetitive patterns of behavior, interests, or activity manifested by at least two types (stereotyped movements; insistence on sameness; highly restrictive/fixated interests; hyper/hyporeactivity to sensory input).",
+      "C": "Symptoms present from early developmental period — though they may not become fully manifest until social demands exceed capacities.",
+      "D": "Symptoms cause clinically significant impairment in social, occupational, or other important areas of current functioning.",
+      "E": "Disturbances not better explained by intellectual disability or global developmental delay."
+    },
+    "symptom_groups": ["social_communication_deficit", "repetitive_restrictive_behavior"]
+  },
+  {
+    "id": "ocd",
+    "name": "Obsessive-Compulsive Disorder",
+    "category": "Obsessive-Compulsive and Related Disorders",
+    "diagnostic_criteria": {
+      "A": "Presence of obsessions, compulsions, or both. Obsessions: recurrent and persistent thoughts, urges, or images experienced as intrusive, unwanted, and causing marked anxiety; individual attempts to ignore/suppress or neutralize them. Compulsions: repetitive behaviors performed in response to an obsession or according to rigid rules.",
+      "B": "The obsessions or compulsions are time-consuming (more than 1 hour per day) or cause clinically significant distress or impairment.",
+      "C": "The obsessive-compulsive symptoms are not attributable to a substance/medical condition or another mental disorder."
+    },
+    "symptom_groups": ["obsessions", "compulsions"]
+  },
+  {
+    "id": "no_diagnosis",
+    "name": "No Diagnosis",
+    "category": "No Diagnosis",
+    "diagnostic_criteria": {
+      "description": "Client does not meet criteria for any of the primary mental health disorders; scale scores within normal/expected ranges. May warrant routine periodic monitoring but no acute clinical intervention.",
+      "note": "Coach/counselor should review with client to verify self-assessment accuracy and determine if further evaluation is warranted."
+    },
+    "symptom_groups": ["normal_range_cognition", "normal_range_mood", "normal_range_energy"]
+  },
+  {
+    "id": "gapd",
+    "name": "Generalized Anxiety Disorder",
+    "category": "Anxiety Disorders",
+    "diagnostic_criteria": {
+      "A": "Excessive anxiety and worry more days than not for at least 6 months about a number of events or activities.",
+      "B": "The individual finds it difficult to control the worry.",
+      "C": "The anxiety and worry are associated with three or more of the following symptoms: restlessness; easily fatigued; difficulty concentrating; irritability; muscle tension; sleep disturbance.",
+      "D": "Clinically significant distress or impairment.",
+      "E": "Not attributable to substance/medical condition or another mental disorder."
+    },
+    "symptom_groups": ["anxiety", "fatigue", "cognitive_impairment", "irritability", "insomnia"]
+  },
+  {
+    "id": "npd",
+    "name": "Narcissistic Personality Disorder",
+    "category": "Personality Disorders",
+    "diagnostic_criteria": {
+      "A": "A pervasive pattern of grandiosity (in fantasy or behavior), need for admiration, and lack of empathy, beginning by early adulthood.",
+      "grandiosity_criteria": [ "Grandiose sense of self-importance", "Preoccupied with fantasies of unlimited success/power/brilliance", "Belief that they are special and can only be understood by/associate with special people", "Requires excessive admiration", "Sense of entitlement", "Interpersonally exploitative", "Lacks empathy", "Often envious of others or believes others are envious of them", "Shows arrogant, haughty behaviors or attitudes" ],
+      "severity_note": "Five or more of the nine criteria must be met for diagnosis."
+    },
+    "symptom_groups": ["grandiosity", "lack_of_empathy", "need_for_admiration", "attention_seeking"]
+  },
+  {
+    "id": "aspd",
+    "name": "Antisocial Personality Disorder",
+    "category": "Personality Disorders",
+    "diagnostic_criteria": {
+      "A": "A pervasive pattern of disregard for and violation of the rights of others, occurring since age 15, as indicated by at least three of the following: failure to conform to social norms with respect to lawful behaviors; deceitfulness; impulsivity or failure to plan ahead; irritability and aggressiveness; reckless disregard for safety of self or others; consistent irresponsibility; lack of remorse.",
+      "B": "The individual must be at least 18 years old.",
+      "C": "There is evidence of conduct disorder with onset before age 15."
+    },
+    "symptom_groups": ["disregard_for_rights", "deceitfulness", "impulsivity", "aggression", "recklessness", "irresponsibility", "lack_of_remorse"]
+  }
+]

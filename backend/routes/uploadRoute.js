@@ -2,6 +2,8 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { spawn } from "child_process";
+import { ingestTextSafe, deleteByFilename } from "../rag/ingest.js";
 
 const router = express.Router();
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -32,6 +34,27 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter, limits: { fileSize: MAX_SIZE } });
 
+/* ─────────────────────── helpers ─────────────────────── */
+
+/** Run the existing Python extract_text.py and return raw text */
+const PYTHON_TEXT_EXTRACTOR = path.join(process.cwd(), "scripts", "extract_text.py");
+
+function extractText(filePath) {
+  return new Promise((resolve) => {
+    const py = spawn("python", [PYTHON_TEXT_EXTRACTOR, filePath], {
+      env: { ...process.env }, cwd: process.cwd(),
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let out = "";
+    py.stdout.on("data", d => (out += d.toString()));
+    py.stderr.on("data", d => console.warn("[extract_text]", d.toString().trim()));
+    py.on("close", () => resolve(out.trim()));
+    setTimeout(() => { try { py.kill("SIGKILL"); } catch {} resolve(""); }, 30_000);
+  });
+}
+
+/* ─────────────────────── routes ─────────────────────── */
+
 // ✅ Upload file with category and user association
 router.post("/", upload.single("file"), async (req, res) => {
   if (!req.file)
@@ -43,15 +66,37 @@ router.post("/", upload.single("file"), async (req, res) => {
     return res.status(400).json({ message: "userId is required" });
   }
 
+  const fileMeta = {
+    filename:       req.file.filename,
+    filePath:       `/uploads/${req.file.filename}`,
+    category,
+    uploadCategory: category,
+    originalName:   req.file.originalname,
+  };
+
+  // ── Best-effort RAG ingestion (fire-and-forget) ────────────────────
+  // Extract text with Python, embed it, store vectors in MongoDB.
+  // Never blocks the upload response.
+  (async () => {
+    try {
+      const text = await extractText(req.file.path);
+      if (text && text.length > 10) {
+        const { stored } = await ingestTextSafe({ userId, text, metadata: fileMeta });
+        if (stored > 0) console.log(`[RAG] indexed ${stored} chunks from ${req.file.originalname}`);
+      } else {
+        console.log(`[RAG] insufficient text for ${req.file.originalname}, skipping`);
+      }
+    } catch (err) {
+      console.warn(`[RAG] upload ingestion failed for ${req.file.originalname}:`, err?.message);
+    }
+  })();
+
   res.json({
     message: "File uploaded successfully",
     file: {
-      filename: req.file.filename,
-      filePath: `/uploads/${req.file.filename}`,
-      category,
+      ...fileMeta,
       userId,
-      originalName: req.file.originalname,
-      size: req.file.size,
+      size:     req.file.size,
       uploadedAt: new Date().toISOString(),
     },
   });
@@ -89,12 +134,17 @@ router.get("/", async (req, res) => {
 });
 
 // ✅ Delete file
-router.delete("/:filename", (req, res) => {
+router.delete("/:filename", async (req, res) => {
   const { filename } = req.params;
-  const filePath = path.join(uploadDir, filename);
+  const userId       = req.body.userId || req.query.userId;
+  const filePath     = path.join(uploadDir, filename);
 
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
+    // Also purge RAG vectors for this file (best-effort, don't fail the request)
+    if (userId) {
+      try { await deleteByFilename(String(userId), filename); } catch (_) { /* ignore */ }
+    }
     res.json({ message: "File deleted successfully" });
   } else {
     res.status(404).json({ message: "File not found" });

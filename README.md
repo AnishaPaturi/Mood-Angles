@@ -46,11 +46,19 @@ Mental health care faces significant challenges:
 
 ### 🧠 Multi-Agent Assessment System
 Five specialized Python AI agents for psychological analysis:
-- **Agent C**: Cognitive assessment  
-- **Agent D**: Depression analysis  
-- **Agent E**: Emotional evaluation  
-- **Agent J**: Judgement & behavior analysis  
-- **Agent R**: Risk & safety evaluation  
+- **Agent C**: Cognitive assessment
+- **Agent D**: Depression analysis
+- **Agent E**: Emotional evaluation
+- **Agent J**: Judgement & behavior analysis
+- **Agent R**: Risk & safety evaluation
+
+### 💬 RAG-Powered AI Chatbot ("Luna")
+An empathetic mental health chatbot backed by **Retrieval-Augmented Generation (RAG)**:
+- Converts user questions into mathematical embeddings via OpenAI (`text-embedding-ada-002`)
+- Searches MongoDB for the **top 4 most relevant document chunks** using cosine similarity
+- Injects retrieved context into the LLM prompt (Claude via OpenRouter) for accurate, knowledge-grounded replies
+- Knowledge base includes **DSM-5 diagnostic criteria** and **clinical case studies** pre-loaded via `data/ingest_rag_data.py`
+- User-uploaded documents (PDFs, images) are automatically extracted, chunked, embedded, and indexed into the RAG store in the background
 
 ### 👨‍⚕️ Telepsychiatry Portal
 - Real-time psychiatrist availability  
@@ -86,20 +94,39 @@ Five specialized Python AI agents for psychological analysis:
 ## 🏗️ System Architecture
 
 ```
-User Request → Express Backend → Python Agent (Subprocess)
-     ↓              ↓                    ↓
-React Frontend  REST API         ML Processing
-     ↓              ↓                    ↓
-  MongoDB ← Credential & Data Storage ← Results
-     ↓
-    Redis (optional caching)
-     ↓
-Email Service (nodemailer)
+User Chat / Upload
+        │
+        ▼
+React Frontend ──→ Express Backend ──→ Python Agent (Subprocess)
+                             │
+                    ┌────────┴──────────┐
+                    ▼                   ▼
+          RAG Retrieval         ML Processing
+     (embeddings → MongoDB    (ML prediction
+      similarity search)         pipeline)
+                    │                   │
+                    ▼                   ▼
+          DocumentChunk store      Assessment results
+          (text + embeddings)           │
+                    │                   ▼
+                    ▼            Claude via OpenRouter
+               LLM Prompt ←──────── "Luna" Chat Reply
+              (system + context
+               + user question)
+                    │
+                    ▼
+                 MongoDB ← Credential & Data Storage ← Results
+                    │
+             Redis (optional caching)
+                    │
+              Email Service (nodemailer)
 ```
 
 Core pipeline:
 - **Frontend**: React components → API calls
 - **Backend**: Express routes → Python agent spawning
+- **RAG Layer** (`backend/rag/`): `ragChain.js` embeds queries, `vectorStore.js` does similarity search, `ingest.js` ingests documents
+- **Knowledge Base**: DSM-5 criteria + clinical case studies seeded via `backend/data/ingest_rag_data.py`
 - **AI Agents**: JSON stdin/stdout communication
 - **Database**: MongoDB document storage
 
@@ -113,6 +140,7 @@ Core pipeline:
 | **Backend** | Node.js, Express.js, MongoDB, Mongoose |
 | **Authentication** | JWT, Bcrypt, Passport.js, Google OAuth 2.0 |
 | **AI/ML Engine** | Python 3.x, Scikit-Learn, Pandas, Joblib |
+| **AI Chat / RAG** | LangChain, OpenAI Embeddings (`text-embedding-ada-002`), OpenRouter (Claude) |
 | **File Upload** | Multer |
 | **Email** | Nodemailer |
 | **API Communication** | Python-Shell, Axios |
@@ -140,6 +168,19 @@ backend/
 │   ├── agentR.py               # Risk & safety evaluation agent
 │   └── validation.py           # Agent input/output validation
 │
+├── rag/                        # RAG (Retrieval-Augmented Generation) chatbot engine
+│   ├── ragChain.js             # Core RAG logic: query embedding, context retrieval, prompt building
+│   ├── vectorStore.js          # MongoDB-backed vector store: upsert chunks, similarity search
+│   └── ingest.js               # Document ingestion: text extraction, chunking, embedding, storing
+│
+├── data/                       # Knowledge-base data
+│   ├── dsm5_knowledge.json     # DSM-5 diagnostic criteria (knowledge base)
+│   ├── DataSet.csv             # Clinical case studies (knowledge base)
+│   └── ingest_rag_data.py      # Python script to seed DSM-5 + clinical cases into MongoDB
+│
+├── scripts/
+│   └── extract_text.py         # PDF/image text extraction for RAG ingestion
+│
 ├── config/
 │   └── db.js                   # MongoDB connection configuration
 │
@@ -165,13 +206,15 @@ backend/
 │   ├── Feedback.js             # User feedback
 │   ├── Invite.js               # Invitation system
 │   ├── InviteRequest.js        # Invitation requests
-│   └── DebateRecord.js         # Discussion/debate records
+│   ├── DebateRecord.js         # Discussion/debate records
+│   └── DocumentChunk.js        # RAG document chunks (content + embedding + metadata)
 │
 ├── routes/                     # API endpoints
 │   ├── authRoutes.js           # Registration, login, logout, Google OAuth
 │   ├── profileRoute.js         # User/profile management
 │   ├── results.js              # Test results & assessments
-│   ├── uploadRoute.js          # File upload handling
+│   ├── chatbotRoute.js         # AI chatbot ("Luna") — RAG-powered chat endpoint
+│   ├── uploadRoute.js          # File upload handling (triggers RAG ingestion)
 │   ├── otpRoutes.js            # OTP verification
 │   ├── inviteRoutes.js         # Invitation system
 │   ├── feedbackRoutes.js       # Feedback collection
@@ -280,6 +323,7 @@ Key packages:
 - **uuid** – Unique ID generation
 - **dotenv** – Environment variables
 - **cors** – Cross-origin resource sharing
+- **langchain** / **@langchain/openai** – RAG chain & embedding generation
 
 ### 🔹 Frontend
 
@@ -320,8 +364,8 @@ GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 # AI/ML Services
-OPENAI_API_KEY=your_openai_api_key
-OPENROUTER_API_KEY=your_openrouter_api_key
+OPENAI_API_KEY=your_openai_api_key         # Required for embeddings & RAG
+OPENROUTER_API_KEY=your_openrouter_api_key # Required for chatbot (Claude)
 HF_TOKEN=your_huggingface_token
 
 # Email Service
@@ -414,6 +458,17 @@ pip install pandas scikit-learn joblib
 python train_model.py  # Generates mood_model.pkl
 ```
 
+### 5️⃣ Seed the RAG Knowledge Base
+
+Load DSM-5 diagnostic criteria and clinical case studies into MongoDB for the chatbot:
+
+```bash
+cd backend
+python data/ingest_rag_data.py both
+```
+
+Then restart the backend server so the chatbot can access the new knowledge base.
+
 ---
 
 ## 🔌 API Endpoints
@@ -480,6 +535,59 @@ python train_model.py  # Generates mood_model.pkl
 |--------|----------|-------------|
 | POST | `/` | Submit user feedback |
 | GET | `/` | Get all feedback (admin) |
+
+---
+
+### 🤖 RAG Chatbot (`/api/chatbot`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/chat` | Send a message to "Luna" — retrieves relevant RAG context and returns a Claude-generated reply |
+
+**Request body:**
+```json { "message": "I've been feeling anxious lately", "history": [], "userId": "abc123" }
+```
+The `userId` is required for RAG context retrieval. If omitted, Luna responds without document context.
+
+**Response:**
+```json
+{
+  "reply": "I hear you, and it takes courage to share that...",
+  "rag": { "chunks": 2, "used": true }
+}
+```
+
+---
+
+### 📚 RAG Admin (`/api/admin`)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/rag-batch` | Bulk upsert document chunks (embeddings/computed at query time) |
+| POST | `/rag-query` | Test RAG retrieval — computes embedding on-the-fly and returns scored chunks |
+
+**POST `/rag-batch`** — Used by `data/ingest_rag_data.py` to seed the knowledge base:
+```json
+{ "chunks": [{ "userId": "global", "content": "...", "embedding": [], "metadata": { "source": "dsm5" } }] }
+```
+
+**POST `/rag-query``** — Manual retrieval test:
+```json
+{ "question": "What are symptoms of depression?", "userId": "global", "topK": 4 }
+```
+
+---
+
+### 🐍 RAG Data Seeding (`data/ingest_rag_data.py`)
+
+Ingests knowledge-base documents into MongoDB:
+```bash
+cd backend
+python data/ingest_rag_data.py [dsm5 | cases | both]
+```
+- **`dsm5`** — Loads `data/dsm5_knowledge.json` (DSM-5 diagnostic criteria)
+- **`cases`** — Loads `data/DataSet.csv` (clinical patient case studies)
+- **`both`** — Seeds both data sources
 
 ---
 

@@ -258,13 +258,7 @@ if (res.ok) {
                     <p style={{ fontSize: "0.85rem", color: "#555", maxHeight: "100px", overflow: "auto", background: "#f9f9f9", padding: "0.5rem" }}>
                       {analysisResult.extractedText?.substring(0, 500)}...
                     </p>
-                    {analysisResult.analysis?.agentJ && (
-                      <div style={{ marginTop: "1rem" }}>
-                        <p><strong>Assessment:</strong> {analysisResult.analysis.agentJ.decision}</p>
-                        <p><strong>Urgency:</strong> {analysisResult.analysis.agentJ.urgency}</p>
-                      </div>
-                    )}
-                  </>
+                    </>
                 )}
               </div>
             </div>
