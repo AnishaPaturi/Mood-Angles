@@ -13,6 +13,8 @@ export default function useDynamicQuestions(category, defaultQuestions = []) {
         const userId = localStorage.getItem("userId");
         
         let attemptNum = 1;
+        let prevQuestions = [];
+        
         if (userId) {
           try {
             const countRes = await fetch(`${API_BASE}/api/questions/${category}/attempt-count?userId=${userId}`);
@@ -23,11 +25,47 @@ export default function useDynamicQuestions(category, defaultQuestions = []) {
           } catch (e) {
             console.warn("Could not fetch attempt count:", e.message);
           }
+          
+          // Fetch previous questions from past results
+          if (attemptNum > 1) {
+            try {
+              const testRes = await fetch(`${API_BASE}/api/results/previous/${category}?userId=${userId}`);
+              if (testRes.ok) {
+                const testData = await testRes.json();
+                if (testData.previousResults) {
+                  // Extract questions from previous results
+                  testData.previousResults.forEach(result => {
+                    if (result.answers) {
+                      Object.values(result.answers).forEach(ans => {
+                        if (typeof ans === 'string' && ans.includes('→')) {
+                          const qText = ans.split('→')[0].trim();
+                          if (qText && !prevQuestions.includes(qText)) {
+                            prevQuestions.push(qText);
+                          }
+                        }
+                      });
+                    }
+                  });
+                }
+              }
+            } catch (e) {
+              console.warn("Could not fetch previous questions:", e.message);
+            }
+          }
         }
         
         setAttempt(attemptNum);
         
-        const res = await fetch(`${API_BASE}/api/questions/${category}?dynamic=true&attempt=${attemptNum}`);
+        const params = new URLSearchParams({
+          dynamic: "true",
+          attempt: attemptNum
+        });
+        
+        if (attemptNum > 1 && prevQuestions.length > 0) {
+          params.append("previousQuestions", JSON.stringify(prevQuestions));
+        }
+        
+        const res = await fetch(`${API_BASE}/api/questions/${category}?${params}`);
         if (res.ok) {
           const data = await res.json();
           if (data.questions && data.questions.length > 0) {

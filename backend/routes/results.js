@@ -64,13 +64,28 @@ router.get("/previous/:testType", async (req, res) => {
       return res.status(400).json({ error: "userId required" });
     }
 
+    // Map frontend category to actual stored test types
+    const testTypeMap = {
+      adhd: ["ADHD"],
+      depression: ["Depression"],
+      anxiety: ["Anxiety (GAD)"],
+      bipolar: ["Bipolar Test"],
+      autism: ["Autism"],
+      eq: ["EQ"],
+      personality: ["Personality"],
+      neuro: ["Neuro"],
+      mentalhealth: ["Mental Health Today"]
+    };
+    
+    const validTestTypes = testTypeMap[testType.toLowerCase()] || [testType];
+    
     const previousResults = await TestResult.find({
       user: userId,
-      testType: testType.charAt(0).toUpperCase() + testType.slice(1)
+      testType: { $in: validTestTypes }
     })
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
-      .select("score level createdAt")
+      .select("score level createdAt answers")
       .lean();
 
     return res.json({ previousResults });

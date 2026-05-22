@@ -2,6 +2,7 @@
 import express from "express";
 import Question from "../models/Question.js";
 import { OpenAI } from "openai";
+import dsm5Data from "../data/dsm5_knowledge.json" assert { type: "json" };
 
 const router = express.Router();
 
@@ -17,7 +18,24 @@ const CATEGORY_DESCRIPTIONS = {
   neuro: "neuroticism and emotional stability",
 };
 
-async function generateDynamicQuestions(category, count = 20, attempt = 1) {
+const CATEGORY_TO_DSM = {
+  anxiety: ["gad"],
+  depression: ["mdd"],
+  adhd: ["adhd"],
+  autism: ["asd"],
+  bipolar: ["bipolar1", "bipolar2"],
+  eq: ["mdd", "gad"],
+  mentalhealth: ["mdd", "gad"],
+  personality: ["npd", "aspd"],
+  neuro: ["mdd", "gad"],
+};
+
+function getDSMCriteria(category) {
+  const dsmIds = CATEGORY_TO_DSM[category] || [];
+  return dsmData.filter(d => dsmIds.includes(d.id));
+}
+
+async function generateDynamicQuestions(category, count = 20, attempt = 1, previousQuestions = []) {
   if (!process.env.OPENROUTER_API_KEY) {
     return null;
   }
@@ -28,16 +46,25 @@ async function generateDynamicQuestions(category, count = 20, attempt = 1) {
   });
   
   const desc = CATEGORY_DESCRIPTIONS[category] || "mental health symptoms";
+  const dsmCriteria = getDSMCriteria(category);
   
-  const attemptContext = {
-    1: "basic screening questions to identify initial symptoms and surface-level concerns",
-    2: "intermediate questions probing deeper into symptom patterns, triggers, and impact on daily life",
-    3: "advanced questions exploring coping mechanisms, lifestyle factors, and detailed behavioral patterns",
-    4: "comprehensive questions addressing personality traits, emotional regulation, and long-term patterns",
-    5: "in-depth personality assessment covering all aspects including interpersonal dynamics and self-perception"
+  const attemptInstructions = {
+    1: "Basic screening questions covering core DSM-5 diagnostic symptoms. Focus on fundamental symptom identification. Cover at least 3 different symptom domains from the DSM-5 criteria.",
+    2: "Intermediate questions exploring symptom frequency, duration, and functional impairment. Ask about triggers and patterns. Focus on different symptoms than attempt 1.",
+    3: "Advanced questions about coping mechanisms, symptom severity, and daily life impact. Include situational context. Avoid questions similar to attempts 1 and 2.",
+    4: "Comprehensive questions addressing comorbid symptoms, personality factors, and long-term patterns. Ask about relationships and self-perception. Use entirely new symptom angles.",
+    5: "In-depth personality and interpersonal assessment. Cover emotional regulation, stress responses, and nuanced behavioral patterns. Focus on advanced diagnostic indicators."
   };
   
-  const depthInstruction = attemptContext[attempt] || attemptContext[5];
+  const dsmContext = dsmCriteria.length > 0 
+    ? `Use these DSM-5 criteria as reference: ${JSON.stringify(dsmCriteria.map(d => ({ name: d.name, symptoms: d.symptoms })))}`
+    : "";
+  
+  const depthInstruction = attemptInstructions[attempt] || attemptInstructions[5];
+  
+  const previousQuestionsNote = previousQuestions.length > 0
+    ? `\n\nIMPORTANT: Do NOT generate questions similar to these previously asked questions:\n${previousQuestions.slice(0, 30).map((q, i) => `${i + 1}. ${q}`).join("\n")}\nGenerate completely different questions.`
+    : "";
 
   function cleanJsonResponse(raw) {
     let text = String(raw).trim();
@@ -53,10 +80,23 @@ async function generateDynamicQuestions(category, count = 20, attempt = 1) {
       model: process.env.LLM_MODEL || "openrouter/free",
       messages: [{
         role: "system",
-        content: `You are a mental health screening questionnaire generator. Generate ${count} clear, concise, self-assessment questions about ${desc}. These should be ${depthInstruction}. Each question must be a single sentence and a plain string. Return ONLY a valid JSON array of ${count} strings. Do NOT include markdown code blocks, explanations, or any text before or after the JSON array.`,
+        content: `You are a mental health screening questionnaire generator. Generate ${count} clear, concise, self-assessment questions about ${desc}. 
+
+${depthInstruction}
+
+${dsmContext}
+
+Each question must:
+- Be a single sentence
+- Focus on a different aspect than previous questions
+- Progress from concrete to abstract concepts
+- Be appropriate for attempt level ${attempt}
+- Cover unique symptoms from the DSM-5 criteria${previousQuestionsNote}
+
+Return ONLY a valid JSON array of ${count} strings. No markdown, no extra text.`
       }],
       max_tokens: 2000,
-      temperature: 0.3,
+      temperature: 0.7,
     });
 
     const rawContent = response.choices[0].message.content || "[]";
@@ -72,10 +112,11 @@ async function generateDynamicQuestions(category, count = 20, attempt = 1) {
 router.get("/:category", async (req, res) => {
   try {
     const { category } = req.params;
-    const { dynamic, attempt = 1 } = req.query;
+    const { dynamic, attempt = 1, previousQuestions } = req.query;
     
     if (dynamic === "true") {
-      const questions = await generateDynamicQuestions(category, 20, parseInt(attempt));
+      const prevQs = previousQuestions ? JSON.parse(previousQuestions) : [];
+      const questions = await generateDynamicQuestions(category, 20, parseInt(attempt), prevQs);
       if (questions && questions.length > 0) {
         return res.json({ category, questions, count: questions.length, dynamic: true, attempt: parseInt(attempt) });
       }
@@ -90,7 +131,7 @@ router.get("/:category", async (req, res) => {
       return res.json({ category, questions, count: questions.length, dynamic: false });
     }
     
-    const questions = await generateDynamicQuestions(category, 20, parseInt(attempt));
+    const questions = await generateDynamicQuestions(category, 20, parseInt(attempt), []);
     if (questions && questions.length > 0) {
       return res.json({ category, questions, count: questions.length, dynamic: true, attempt: parseInt(attempt) });
     }
@@ -105,9 +146,9 @@ router.get("/:category", async (req, res) => {
 router.post("/:category/generate", async (req, res) => {
   try {
     const { category } = req.params;
-    const { count = 20, attempt = 1 } = req.body;
+    const { count = 20, attempt = 1, previousQuestions = [] } = req.body;
     
-    const questions = await generateDynamicQuestions(category, count, parseInt(attempt));
+    const questions = await generateDynamicQuestions(category, count, parseInt(attempt), previousQuestions);
     if (questions && questions.length > 0) {
       return res.json({ category, questions, count: questions.length, dynamic: true, attempt: parseInt(attempt) });
     }
@@ -129,9 +170,25 @@ router.get("/:category/attempt-count", async (req, res) => {
     }
     
     const TestResult = (await import("../models/TestResult.js")).default;
+    
+    // Map category to actual test types stored in database
+    const testTypeMap = {
+      adhd: ["ADHD"],
+      depression: ["Depression"],
+      anxiety: ["Anxiety (GAD)"],
+      bipolar: ["Bipolar Test"],
+      autism: ["Autism"],
+      eq: ["EQ"],
+      personality: ["Personality"],
+      neuro: ["Neuro"],
+      mentalhealth: ["Mental Health Today"]
+    };
+    
+    const validTestTypes = testTypeMap[category] || [category.charAt(0).toUpperCase() + category.slice(1)];
+    
     const count = await TestResult.countDocuments({ 
       user: userId, 
-      testType: category.charAt(0).toUpperCase() + category.slice(1) 
+      testType: { $in: validTestTypes }
     });
     
     return res.json({ category, userId, previousAttempts: count, nextAttempt: count + 1 });
