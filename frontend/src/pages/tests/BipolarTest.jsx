@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import UserWrapper from "../../components/UserWrapper";
 import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function BipolarTest() {
+  const navigate = useNavigate();
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Bipolar Test";
   const userId = localStorage.getItem("userId");
@@ -30,7 +32,7 @@ export default function BipolarTest() {
     "These changes in mood and energy have interfered with my daily life or responsibilities."
   ];
 
-  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("bipolar", defaultQuestions);
+  const { questions, answers, handleSelect } = useDynamicQuestions("bipolar", defaultQuestions);
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
@@ -457,15 +459,66 @@ body: JSON.stringify({
                     Results saved (id: {result.savedId || "n/a"})
                   </p>
                 )}
-                {result.savedOk === false && result.savedError && (
-                  <p style={{ marginTop: "8px", color: "#b91c1c" }}>
-                    Save error: {result.savedError}
-                  </p>
-                )}
-              </div>
-            )}
-          </>
-        )}
+{result.savedOk === false && result.savedError && (
+                   <p style={{ marginTop: "8px", color: "#b91c1c" }}>
+                     Save error: {result.savedError}
+                   </p>
+                 )}
+                 
+                 {/* Action Buttons */}
+                 <div style={{ marginTop: "25px", display: "flex", gap: "15px", justifyContent: "center" }}>
+                   <button
+                     onClick={() => navigate(-1)}
+                     style={{
+                       background: "#6b7280",
+                       color: "#fff",
+                       border: "none",
+                       borderRadius: "10px",
+                       padding: "12px 24px",
+                       fontSize: "15px",
+                       fontWeight: "600",
+                       cursor: "pointer",
+                       boxShadow: "0 4px 12px rgba(107, 114, 128, 0.3)",
+                       transition: "transform 0.2s ease"
+                     }}
+                     onMouseEnter={(e) => e.target.style.transform = "translateY(-2px)"}
+                     onMouseLeave={(e) => e.target.style.transform = "translateY(0)"}
+                   >
+                     ← Go Back
+                   </button>
+                   <button
+                     onClick={() => navigate("/chat", { 
+                       state: { 
+                         testResult: {
+                           score: result.scorePercent,
+                           level: result.level,
+                           testType: testName,
+                           previousResults: previousResults
+                         }
+                       } 
+                     })}
+                     style={{
+                       background: "linear-gradient(135deg, #7b61ff, #9371ff)",
+                       color: "#fff",
+                       border: "none",
+                       borderRadius: "10px",
+                       padding: "12px 24px",
+                       fontSize: "15px",
+                       fontWeight: "600",
+                       cursor: "pointer",
+                       boxShadow: "0 4px 12px rgba(123, 97, 255, 0.3)",
+                       transition: "transform 0.2s ease"
+                     }}
+                     onMouseEnter={(e) => e.target.style.transform = "translateY(-2px)"}
+                     onMouseLeave={(e) => e.target.style.transform = "translateY(0)"}
+                   >
+                     💬 Talk to Luna
+                   </button>
+                 </div>
+               </div>
+             )}
+           </>
+         )}
       </div>
     </UserWrapper>
   );

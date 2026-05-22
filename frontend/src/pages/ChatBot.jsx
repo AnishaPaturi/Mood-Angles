@@ -1,12 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function MentalHealthChat() {
-  const [messages, setMessages] = useState([
-    {
-      sender: "bot",
-      text: "Hey there, I'm Luna. I'm here to listen — how are you really feeling today?",
-    },
-  ]);
+  const location = useLocation();
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const chatEndRef = useRef(null);
 
@@ -18,6 +15,28 @@ export default function MentalHealthChat() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const initMessages = [{
+      sender: "bot",
+      text: "Hey there, I'm Luna. I'm here to listen — how are you really feeling today?",
+    }];
+    
+    // Check for test result context from URL state
+    if (location.state?.testResult) {
+      const ctx = location.state.testResult;
+      const score = ctx.score || 0;
+      const level = ctx.level || "";
+      const testType = ctx.testType || "assessment";
+      
+      initMessages[0] = {
+        sender: "bot",
+        text: `I see you just completed the ${testType} assessment with a score of ${score}% (${level}). I'm Luna, and I'll provide you with an accurate interpretation of your results and what they might mean. Let me analyze your responses and previous progress to give you a comprehensive understanding. 🌙`
+      };
+    }
+    
+    setMessages(initMessages);
+  }, [location.state]);
 
   const getStaticReply = (text) => {
     if (/(fuck|shit|bitch|bullshit|damn|crap)/.test(text)) {
@@ -77,7 +96,11 @@ export default function MentalHealthChat() {
       const response = await fetch(`${API_BASE}/api/chatbot/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input.trim(), history }),
+        body: JSON.stringify({ 
+          message: input.trim(), 
+          history,
+          context: location.state?.testResult || null
+        }),
       });
 
       if (response.ok) {
@@ -92,7 +115,7 @@ export default function MentalHealthChat() {
       const reply = getStaticReply(input.trim().toLowerCase());
       setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
     }
-};
+  };
 
   const styles = `
     @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap');

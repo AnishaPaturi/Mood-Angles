@@ -12,7 +12,7 @@ const router = express.Router();
  */
 router.post("/chat", async (req, res) => {
   try {
-    const { message, history = [] } = req.body;
+    const { message, history = [], context } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
@@ -23,6 +23,7 @@ router.post("/chat", async (req, res) => {
     /* ── RAG: retrieve relevant document chunks ─────────────────── */
     let contextDocs = [];
     let contextUsed = false;
+    
     if (userId) {
       try {
         contextDocs = await getContext({ userId, question: message });
@@ -32,6 +33,25 @@ router.post("/chat", async (req, res) => {
       } catch (ragErr) {
         console.warn("[RAG] retrieval error (continuing without context):", ragErr?.message);
       }
+    }
+    
+    /* ── Build test result context for diagnosis ─────────────────── */
+    if (context?.testResult) {
+      const tr = context.testResult;
+      const resultContext = `
+PREVIOUS TEST RESULTS CONTEXT:
+Test: ${tr.testType}
+Current Score: ${tr.score}%
+Level: ${tr.level}
+${tr.previousResults && tr.previousResults.length > 0 
+  ? `Previous attempts: ${tr.previousResults.map(r => `score:${r.score}, level:${r.level}`).join('; ')}`
+  : 'No previous attempts'}
+
+INTERPRETATION:
+Based on the ${tr.testType} assessment with a score of ${tr.score}% (${tr.level}), provide an accurate diagnosis interpretation. Consider the DSM-5 criteria and explain what this score means in plain terms. Discuss possible symptoms, severity indicators, and recommended next steps without giving clinical advice.
+`;
+      contextDocs.push({ pageContent: resultContext, source: "test_results" });
+      contextUsed = true;
     }
 
     const messages = buildMessages(message, history, contextDocs, SYSTEM_PROMPT);
