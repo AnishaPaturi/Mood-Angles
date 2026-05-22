@@ -478,7 +478,7 @@ export default function ADHDTest() {
                      ← Go Back
                    </button>
                    <button
-                     onClick={() => navigate("/chat", { 
+                      onClick={() => navigate("/chatbot", {
                        state: { 
                          testResult: {
                            score: result.score,

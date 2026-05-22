@@ -48,22 +48,58 @@ async function generateDynamicQuestions(category, count = 20, attempt = 1, previ
   const desc = CATEGORY_DESCRIPTIONS[category] || "mental health symptoms";
   const dsmCriteria = getDSMCriteria(category);
   
+  // Map attempt number to its dynamic depth instruction
   const attemptInstructions = {
-    1: "Basic screening questions covering core DSM-5 diagnostic symptoms. Focus on fundamental symptom identification. Cover at least 3 different symptom domains from the DSM-5 criteria.",
-    2: "Intermediate questions exploring symptom frequency, duration, and functional impairment. Ask about triggers and patterns. Focus on different symptoms than attempt 1.",
-    3: "Advanced questions about coping mechanisms, symptom severity, and daily life impact. Include situational context. Avoid questions similar to attempts 1 and 2.",
-    4: "Comprehensive questions addressing comorbid symptoms, personality factors, and long-term patterns. Ask about relationships and self-perception. Use entirely new symptom angles.",
-    5: "In-depth personality and interpersonal assessment. Cover emotional regulation, stress responses, and nuanced behavioral patterns. Focus on advanced diagnostic indicators."
+    1: "Attempt 1 — Basic screening: Identify whether the person experiences each DSM-5 symptom at all. Focus on fundamental symptom identification. Use simple, direct questions. Do NOT explore frequency, severity, or background context yet.",
+    2: "Attempt 2 — Intermediate depth: Explore how often each symptom appears and how long it lasts. Ask about triggers, patterns, and how it affects daily life. Do NOT simply rephrase attempt-1 questions — ask entirely new follow-ups.",
+    3: "Attempt 3 — Functional & severity: Ask how symptoms impact specific areas of life (school/work/relationships/sleep) and how severe they feel. Include situational context. Do NOT reuse any question from attempts 1 or 2.",
+    4: "Attempt 4 — Coping & history: Ask about self-awareness, coping strategies used, length of time symptoms have been present, and whether anyone has noticed changes. Use entirely new angles.",
+    5: "Attempt 5 — Personality & interpersonal: Explore emotional regulation style, stress responses, self-perception, and how symptoms interact with personality traits. Focus on advanced diagnostic indicators."
   };
   
+  // Build a concrete symptom item list from DSM-5 criteria when available,
+  // so the LLM can assign one unique item per question instead of paraphrasing.
+  let enumeratedSymptomsNote = "";
+  
+  if (dsmCriteria.length > 0) {
+    const primary = dsmCriteria.find(d => d.id === category);
+    const ref = primary || dsmCriteria[0];
+    const cri = ref.diagnostic_criteria || {};
+    
+    // ADHD: use the 9 inattention + 9 hyperactivity items
+    if (cri.inattention_items && cri.hyperactivity_items) {
+      const allItems = [
+        ...cri.inattention_items.map((s, i) => `[I${i+1}] ${s}`),
+        ...cri.hyperactivity_items.map((s, i) => `[H${i+1}] ${s}`)
+      ];
+      enumeratedSymptomsNote = `\nADHD DSM-5 ACRONYM-CODED SYMPTOM LIST (use [I#] or [H#] label at start of every question, one unique item per question — NO repeats across or within attempts):\n${allItems.map(s => `  - ${s}`).join('\n')}`;
+    }
+    // Depression: use the 9 numbered MDD symptoms
+    else if (ref.symptoms && ref.symptoms.length > 0 && ref.id === "mdd") {
+      enumeratedSymptomsNote = `\nDSM-5 MDD SYMPTOM LIST (pick one item per question, labelled [S#] — NO repeats across or within attempts):\n${ref.symptoms.map(s => `  - [S${s.number}] ${s.name}: ${s.description}`).join('\n')}`;
+    }
+    // Anxiety / GAD: use the 6 numbered GAD symptoms
+    else if (ref.symptoms && ref.symptoms.length > 0 && (ref.id === "gad" || ref.id === "gapd")) {
+      enumeratedSymptomsNote = `\nDSM-5 GAD SYMPTOM LIST (pick one item per question, labelled [S#] — NO repeats across or within attempts):\n${ref.symptoms.map(s => `  - [S${s.number}] ${s.name}: ${s.description}`).join('\n')}`;
+    }
+    // Bipolar: use the 8 Bipolar I manic criteria
+    else if (ref.symptoms && ref.symptoms.length > 0 && ref.id === "bipolar1") {
+      enumeratedSymptomsNote = `\nDSM-5 BIPOLAR I MANIC SYMPTOM LIST (pick one item per question, labelled [S#] — NO repeats across or within attempts):\n${ref.symptoms.map(s => `  - [S${s.number}] ${s.name}: ${s.description}`).join('\n')}`;
+    }
+    // NPD / ASPD: use grandiosity / antisocial criteria arrays
+    else if (cri.grandiosity_criteria) {
+      enumeratedSymptomsNote = `\nDSM-5 NARCISSISTIC PERSONALITY DISORDER CRITERIA (pick one per question, labelled [S#] — NO repeats):\n${cri.grandiosity_criteria.map((s, i) => `  - [S${i+1}] ${s}`).join('\n')}`;
+    }
+  }
+  
   const dsmContext = dsmCriteria.length > 0 
-    ? `Use these DSM-5 criteria as reference: ${JSON.stringify(dsmCriteria.map(d => ({ name: d.name, symptoms: d.symptoms })))}`
+    ? `Reference DSM-5 criterion name: ${dsmCriteria.map(d => d.name).join(", ")}.${enumeratedSymptomsNote}`
     : "";
   
   const depthInstruction = attemptInstructions[attempt] || attemptInstructions[5];
   
   const previousQuestionsNote = previousQuestions.length > 0
-    ? `\n\nIMPORTANT: Do NOT generate questions similar to these previously asked questions:\n${previousQuestions.slice(0, 30).map((q, i) => `${i + 1}. ${q}`).join("\n")}\nGenerate completely different questions.`
+    ? `\n\n=== FORBIDDEN — DO NOT USE THESE EXACT QUESTIONS OR PARAPHRASES ===\n${previousQuestions.slice(0, 30).map((q, i) => `${i + 1}. ${q}`).join("\n")}\n\nIMPORTANT RULES FOR NON-REPETITION:\n- Do NOT use any sentence with the same meaning, structure, or wording as the above questions — even if you paraphrase slightly.\n- Do NOT ask the same symptom twice.\n- If you have been instructed to focus on "symptom X" in a previous attempt, find a completely new symptom from the symptom list above.\n- Generate completely different questions targeting different specific DSM-5 checklist items.`
     : "";
 
   function cleanJsonResponse(raw) {
@@ -80,20 +116,25 @@ async function generateDynamicQuestions(category, count = 20, attempt = 1, previ
       model: process.env.LLM_MODEL || "openrouter/free",
       messages: [{
         role: "system",
-        content: `You are a mental health screening questionnaire generator. Generate ${count} clear, concise, self-assessment questions about ${desc}. 
+        content: `You are a mental health screening questionnaire generator for ${desc}. Generate exactly ${count} unique, self-assessment questions.
 
 ${depthInstruction}
 
 ${dsmContext}
 
-Each question must:
-- Be a single sentence
-- Focus on a different aspect than previous questions
-- Progress from concrete to abstract concepts
-- Be appropriate for attempt level ${attempt}
-- Cover unique symptoms from the DSM-5 criteria${previousQuestionsNote}
+=== CRITICAL QUESTION GENERATION RULES ===
 
-Return ONLY a valid JSON array of ${count} strings. No markdown, no extra text.`
+1. UNIQUENESS — Each question must target ONE specific symptom item from the DSM-5 symptom list above.
+   - If symptom items are listed (e.g. [I1], [H1], [S1] labels), prefix each question with the item label in brackets and ensure every question uses a DIFFERENT item label. Every item in the list must appear at least once before any item appears twice.
+   - If no item list is given, each question must explore a distinct symptom dimension — two questions must never ask about the same symptom with only minor rephrasing.
+
+2. PROGRESSION WITHIN THIS SET — Order the ${count} questions from simpler/more direct to more complex/contextual. Early questions = baseline / "do you experience this?" format. Later questions = "how often…", "how severely…", "in what situations…", "what do you do about it…" format.
+
+3. FORMAT — Each question is a single, stand-alone sentence. No introductory text, no markdown, no numbering in the output — the JSON array index provides the number.
+
+4. ANTI-REPETITION ACROSS CALLS —${previousQuestionsNote}
+
+Return ONLY a valid JSON array of ${count} strings. No markdown code fences, no extra text before or after the array.`
       }],
       max_tokens: 2000,
       temperature: 0.7,

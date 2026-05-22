@@ -484,7 +484,7 @@ const { questions, answers, handleSelect } = useDynamicQuestions("anxiety", defa
                      ← Go Back
                    </button>
                    <button
-                     onClick={() => navigate("/chat", { 
+                      onClick={() => navigate("/chatbot", {
                        state: { 
                          testResult: {
                            score: result.score,
