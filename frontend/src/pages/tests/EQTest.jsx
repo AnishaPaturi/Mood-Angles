@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import UserWrapper from "../../components/UserWrapper";
 import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
@@ -30,11 +30,28 @@ export default function EmotionalIntelligenceTest() {
     "I occasionally struggle to identify exactly what I'm feeling inside."
   ];
 
-  const { questions, answers, handleSelect } = useDynamicQuestions("eq", defaultQuestions);
+  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("eq", defaultQuestions);
+  const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
+
+  useEffect(() => {
+    const fetchPreviousResults = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/results/previous/eq?userId=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPreviousResults(data.previousResults || []);
+        }
+      } catch (err) {
+        console.warn("Could not fetch previous results:", err.message);
+      }
+    };
+    fetchPreviousResults();
+  }, [userId]);
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {
@@ -200,22 +217,23 @@ export default function EmotionalIntelligenceTest() {
       eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
       setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
 
-       // ---------- Angel J (Judge) ----------
-      try {
-        const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            condition: testName,
-            testName,
-            agentR_result: finalSummary,
-            agentD_result: dData.result || dData.Result || safeText(dData),
-            agentC_result: cSummary,
-            agentE_result: eSummary,
-            score,
-            level
-          })
-        });
+// ---------- Angel J (Judge) ----------
+       try {
+         const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({
+             condition: testName,
+             testName,
+             agentR_result: finalSummary,
+             agentD_result: dData.result || dData.Result || safeText(dData),
+             agentC_result: cSummary,
+             agentE_result: eSummary,
+             score,
+             level,
+             previousResults: previousResults
+           })
+         });
 
         if (!jRes.ok) {
           const txt = await jRes.text();

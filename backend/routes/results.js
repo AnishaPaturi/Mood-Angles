@@ -4,9 +4,6 @@ import TestResult from "../models/TestResult.js";
 
 const router = express.Router();
 
-// If you have auth middleware that attaches req.user, import it and add it to the route.
-// import { requireAuth } from "../middleware/auth.js";
-
 router.post("/", /* requireAuth, */ async (req, res) => {
   try {
     const {
@@ -26,8 +23,6 @@ router.post("/", /* requireAuth, */ async (req, res) => {
       return res.status(400).json({ error: "missing_fields", details: "testType, score, level required" });
     }
 
-    // `results` route currently has no auth middleware, so `req.user` may be undefined.
-    // Frontend sends `user` in the body (localStorage userId). Prefer body user if present.
     const userFromBody = req.body.user;
 
     const doc = new TestResult({
@@ -56,6 +51,31 @@ router.post("/", /* requireAuth, */ async (req, res) => {
     return res.status(201).json({ ok: true, id: doc._id });
   } catch (err) {
     console.error("Error saving test result:", err);
+    return res.status(500).json({ error: "internal_server_error", details: err.message });
+  }
+});
+
+router.get("/previous/:testType", async (req, res) => {
+  try {
+    const { testType } = req.params;
+    const { userId, limit = 5 } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId required" });
+    }
+
+    const previousResults = await TestResult.find({
+      user: userId,
+      testType: testType.charAt(0).toUpperCase() + testType.slice(1)
+    })
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .select("score level createdAt")
+      .lean();
+
+    return res.json({ previousResults });
+  } catch (err) {
+    console.error("Error fetching previous results:", err);
     return res.status(500).json({ error: "internal_server_error", details: err.message });
   }
 });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import UserWrapper from "../../components/UserWrapper";
 import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
@@ -30,11 +30,28 @@ export default function ADHDTest() {
     "Do you sometimes say or do things you regret right after?"
   ];
 
-  const { questions, answers, handleSelect } = useDynamicQuestions("adhd", defaultQuestions);
+  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("adhd", defaultQuestions);
+  const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
+
+  useEffect(() => {
+    const fetchPreviousResults = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/results/previous/adhd?userId=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPreviousResults(data.previousResults || []);
+        }
+      } catch (err) {
+        console.warn("Could not fetch previous results:", err.message);
+      }
+    };
+    fetchPreviousResults();
+  }, [userId]);
 
   // helper to build answers object
   const buildAnswersPayload = () =>
@@ -193,22 +210,23 @@ export default function ADHDTest() {
         `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
       setResult((prev) => ({ ...prev, agentEDebate: eSummary }));
 
-      // ---------- Agent J (Judge) ----------
-      try {
-        const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            condition: testName,
-            testName,
-            agentR_result: finalSummary,
-            agentD_result: dData.result || dData.Result || String(dData),
-            agentC_result: cSummary,
-            agentE_result: eSummary,
-            score,
-            level
-          })
-        });
+// ---------- Agent J (Judge) ----------
+       try {
+         const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({
+             condition: testName,
+             testName,
+             agentR_result: finalSummary,
+             agentD_result: dData.result || dData.Result || String(dData),
+             agentC_result: cSummary,
+             agentE_result: eSummary,
+             score,
+             level,
+             previousResults: previousResults
+           })
+         });
 
         if (!jRes.ok) {
           const txt = await jRes.text();
@@ -274,13 +292,18 @@ export default function ADHDTest() {
           />
           <div style={styles.headerOverlay}></div>
 
-          <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>ADHD Test</h1>
-            <div style={styles.testMeta}>
-              <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
-              <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
-            </div>
-          </div>
+<div style={styles.headerContent}>
+             <h1 style={styles.mainTitle}>ADHD Test</h1>
+             <div style={styles.testMeta}>
+               <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
+               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
+             </div>
+             {attempt > 1 && (
+               <div style={{ marginTop: "10px", fontSize: "14px", color: "#fbbf24" }}>
+                 Attempt #{attempt} • Deeper assessment based on previous results
+               </div>
+             )}
+           </div>
         </div>
 
         {/* SUBSECTION */}

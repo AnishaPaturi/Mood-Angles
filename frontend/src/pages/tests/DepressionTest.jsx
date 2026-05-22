@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import UserWrapper from "../../components/UserWrapper";
 import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
@@ -30,11 +30,28 @@ export default function DepressionTest() {
     "I don't feel as affectionate or close to others as I used to."
   ];
 
-  const { questions, answers, handleSelect } = useDynamicQuestions("depression", defaultQuestions);
+  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("depression", defaultQuestions);
+  const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
+
+  useEffect(() => {
+    const fetchPreviousResults = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/results/previous/depression?userId=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPreviousResults(data.previousResults || []);
+        }
+      } catch (err) {
+        console.warn("Could not fetch previous results:", err.message);
+      }
+    };
+    fetchPreviousResults();
+  }, [userId]);
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {
@@ -179,22 +196,23 @@ export default function DepressionTest() {
         `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
       setResult((prev) => ({ ...prev, AngelEDebate: eSummary }));
 
-      // ---------- Angel J ----------
-      try {
-      const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          condition: testName,
-          testName,
-          AngelR_result: finalSummary,
-          AngelD_result: dData.result || dData.Result,
-          AngelC_result: cSummary,
-          AngelE_result: eSummary,
-          score,
-          level
-        })
-      });
+// ---------- Angel J ----------
+       try {
+       const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+           condition: testName,
+           testName,
+           AngelR_result: finalSummary,
+           AngelD_result: dData.result || dData.Result,
+           AngelC_result: cSummary,
+           AngelE_result: eSummary,
+           score,
+           level,
+           previousResults: previousResults
+         })
+       });
 
       if (!jRes.ok) {
         const txt = await jRes.text();

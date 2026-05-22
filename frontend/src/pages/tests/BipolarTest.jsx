@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import UserWrapper from "../../components/UserWrapper";
 import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
@@ -30,10 +30,27 @@ export default function BipolarTest() {
     "These changes in mood and energy have interfered with my daily life or responsibilities."
   ];
 
-  const { questions, answers, handleSelect } = useDynamicQuestions("bipolar", defaultQuestions);
+  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("bipolar", defaultQuestions);
+  const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchPreviousResults = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/results/previous/bipolar?userId=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPreviousResults(data.previousResults || []);
+        }
+      } catch (err) {
+        console.warn("Could not fetch previous results:", err.message);
+      }
+    };
+    fetchPreviousResults();
+  }, [userId]);
 
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
@@ -215,15 +232,16 @@ export default function BipolarTest() {
       const jRes = await fetch(`${API_BASE}/api/angelJ`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          testName,
-          AngelR_result: AngelR_summary,
-          AngelD_result: dData.result || dData.Result || safeText(dData),
-          AngelC_result: cSummary,
-          AngelE_result: eSummary,
-          score_percent: percentScore,
-          score_10: norm10,
-        }),
+body: JSON.stringify({
+           testName,
+           AngelR_result: AngelR_summary,
+           AngelD_result: dData.result || dData.Result || safeText(dData),
+           AngelC_result: cSummary,
+           AngelE_result: eSummary,
+           score_percent: percentScore,
+           score_10: norm10,
+           previousResults: previousResults,
+         }),
       });
 
       if (!jRes.ok) {

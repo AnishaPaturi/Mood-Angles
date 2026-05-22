@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import UserWrapper from "../../components/UserWrapper";
 import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function NeuroTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Neuroticism Traits";
+  const userId = localStorage.getItem("userId");
 
   const defaultQuestions = [
     "I get stressed or overwhelmed easily.",
@@ -29,10 +30,27 @@ export default function NeuroTest() {
     "I can usually keep my emotions steady, even under stress."
   ];
 
-  const { questions, answers, handleSelect } = useDynamicQuestions("neuro", defaultQuestions);
+  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("neuro", defaultQuestions);
+  const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchPreviousResults = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/results/previous/neuro?userId=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPreviousResults(data.previousResults || []);
+        }
+      } catch (err) {
+        console.warn("Could not fetch previous results:", err.message);
+      }
+    };
+    fetchPreviousResults();
+  }, [userId]);
 
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
@@ -206,21 +224,22 @@ export default function NeuroTest() {
       eSummary = eData.final_consensus || eData.result || `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
       setResult((prev) => ({ ...prev, AngelEDebate: eSummary }));
 
-       // ---------- Angel J (Judge) ----------
-       try {
-         const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-           method: "POST",
-           headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({
-             testName,
-             AngelR_result: AngelR_summary,
-             AngelD_result: dData.result || dData.Result || safeText(dData),
-             AngelC_result: cSummary,
-             AngelE_result: eSummary,
-             score_percent: percentScore,
-             score_10: normalized10,
-           }),
-         });
+// ---------- Angel J (Judge) ----------
+        try {
+          const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              testName,
+              AngelR_result: AngelR_summary,
+              AngelD_result: dData.result || dData.Result || safeText(dData),
+              AngelC_result: cSummary,
+              AngelE_result: eSummary,
+              score_percent: percentScore,
+              score_10: normalized10,
+              previousResults: previousResults,
+            }),
+          });
 
          if (!jRes.ok) {
            const txt = await jRes.text();

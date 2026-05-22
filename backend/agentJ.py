@@ -168,6 +168,21 @@ def build_clinical_context(data):
     ctx = f"Condition (if known): {condition}\nNumeric score: {score}\nLevel: {level}\nKey self-report highlights:\n{highlights_text}"
     return ctx
 
+def build_progress_context(data):
+    """Build context string for progress comparison using previous test results."""
+    previous_results = data.get("previousResults", [])
+    if not previous_results:
+        return ""
+    
+    progress_lines = ["Previous test history:"]
+    for i, prev in enumerate(previous_results[:5]):
+        prev_score = prev.get("score", "N/A")
+        prev_date = prev.get("createdAt", "Unknown date")
+        prev_level = prev.get("level", "N/A")
+        progress_lines.append(f"  Test {i+1} (on {prev_date}): Score {prev_score}, Level: {prev_level}")
+    
+    return "\n".join(progress_lines)
+
 def main():
     try:
         raw = sys.stdin.read()
@@ -187,13 +202,23 @@ def main():
 
 # Build a clinical-only prompt (explicitly forbid referencing other agents)
     clinical_context = build_clinical_context(data)
+    progress_context = build_progress_context(data)
+    
+    progress_section = ""
+    if progress_context:
+        progress_section = f"""
+Progress Assessment:
+{progress_context}
+
+"""
+    
     prompt = f"""
 You are a clinical reasoning assistant producing a concise, medical-style diagnostic judgment.
 Do NOT mention or refer to any other agent names, system internals, or tooling. Use only the clinical data (score, level, condition if provided, family history, and the patient's self-report highlights) to produce medical reasoning.
 
 Context:
 {clinical_context}
-
+{progress_section}
 Task:
 1) Give a short diagnostic decision label in plain language (one of: "Likely", "Possible", or "Unlikely"). 
    - Do NOT use "Insufficient evidence" or any wording that implies lack of information.
@@ -211,6 +236,7 @@ Task:
      "unclear",
      or any equivalent.
    - Always produce a clear, clinically grounded explanation using whatever information is available (score, level, symptoms, highlights).
+   - If previous test history is available, note any significant changes (improvement, deterioration, or stability).
 
 4) Recommend 0–3 concrete next actions (short phrases) including self-help strategies BEFORE professional consultation. These should be specific to the condition:
    - Autism/ADHD: mention AQ-50, RAADS-R, tracking routines, social scripts
@@ -222,7 +248,7 @@ Task:
 
 6) Include a "timeline" field based on urgency: "Routine screening" (low), "Within 1-2 months" (medium), "Within 2-4 weeks" (medium-high), "Within 1-2 weeks" (high), "Within days" (urgent).
 
-7) Produce a "final_call" field — a single sentence summarizing the overall judgment in simple clinical language.
+7) Produce a "final_call" field — a single sentence summarizing the overall judgment in simple clinical language. If previous test history shows change, mention whether the condition has improved, worsened, or remained stable.
 
 Constraints:
 - Output only valid JSON (no surrounding markdown, no extra text).

@@ -1,48 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function AnxietyTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Anxiety (GAD)";
   const userId = localStorage.getItem("userId");
 
- 
-  const questions = [
-    "I often feel tense, nervous, or on edge — even when there’s no clear reason.",
+  const defaultQuestions = [
+    "I often feel tense, nervous, or on edge — even when there's no clear reason.",
     "I worry a lot about different things, even small ones that others might not think about.",
     "I find it hard to control or stop my worrying once it starts.",
-    "I often feel restless, like I can’t sit still or relax fully.",
+    "I often feel restless, like I can't sit still or relax fully.",
     "I get tired easily because my mind is constantly racing with worries.",
     "I notice physical tension in my body, such as tight shoulders or jaw clenching.",
     "I sometimes experience a pounding heart, sweating, or trembling when I feel anxious.",
     "I often overthink past situations or replay conversations in my head.",
     "I have trouble falling asleep or staying asleep because my thoughts keep me awake.",
     "I feel easily startled or jumpy when something unexpected happens.",
-    "I find it difficult to concentrate when I’m worried about something else.",
+    "I find it difficult to concentrate when I'm worried about something else.",
     "I tend to imagine the worst possible outcomes, even in ordinary situations.",
     "I feel like I have to be constantly prepared for something bad to happen.",
-    "I sometimes feel lightheaded, dizzy, or short of breath when I’m anxious.",
-    "I get irritable or snappy when I’m feeling tense or under stress.",
+    "I sometimes feel lightheaded, dizzy, or short of breath when I'm anxious.",
+    "I get irritable or snappy when I'm feeling tense or under stress.",
     "I worry that I might lose control or embarrass myself in front of others.",
-    "I find it hard to enjoy life because I’m always thinking about what could go wrong.",
-    "I sometimes feel detached or spaced out when I’m overwhelmed by anxiety.",
+    "I find it hard to enjoy life because I'm always thinking about what could go wrong.",
+    "I sometimes feel detached or spaced out when I'm overwhelmed by anxiety.",
     "I notice that my anxiety gets in the way of work, relationships, or daily tasks.",
     "Even on calm days, I feel a sense of unease, like something bad could happen soon."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+const { questions, answers, handleSelect, attempt } = useDynamicQuestions("anxiety", defaultQuestions);
+  const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
+  useEffect(() => {
+    const fetchPreviousResults = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/results/previous/anxiety?userId=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setPreviousResults(data.previousResults || []);
+        }
+      } catch (err) {
+        console.warn("Could not fetch previous results:", err.message);
+      }
+    };
+    fetchPreviousResults();
+  }, [userId]);
 
-  const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
-    const updated = [...answers];
-    updated[qIndex] = value;
-    setAnswers(updated);
-  };
+  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {
@@ -207,22 +217,23 @@ export default function AnxietyTest() {
         `${eData.supportive_argument || ""} ${eData.counter_argument || ""}`.trim();
       setResult((prev) => ({ ...prev, AngelEDebate: eSummary }));
 
-      // ---------- Angel J (Judge) ----------
-      try {
-        const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            condition: testName,
-            testName,
-            AngelR_result: finalSummary,
-            AngelD_result: dData.result || dData.Result || String(dData),
-            AngelC_result: cSummary,
-            AngelE_result: eSummary,
-            score,
-            level
-          })
-        });
+// ---------- Angel J (Judge) ----------
+       try {
+         const jRes = await fetch(`${API_BASE}/api/angelJ`, {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({
+             condition: testName,
+             testName,
+             AngelR_result: finalSummary,
+             AngelD_result: dData.result || dData.Result || String(dData),
+             AngelC_result: cSummary,
+             AngelE_result: eSummary,
+             score,
+             level,
+             previousResults: previousResults
+           })
+         });
 
         if (!jRes.ok) {
           const txt = await jRes.text();

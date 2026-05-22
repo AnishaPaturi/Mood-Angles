@@ -17,7 +17,7 @@ const CATEGORY_DESCRIPTIONS = {
   neuro: "neuroticism and emotional stability",
 };
 
-async function generateDynamicQuestions(category, count = 20) {
+async function generateDynamicQuestions(category, count = 20, attempt = 1) {
   if (!process.env.OPENROUTER_API_KEY) {
     return null;
   }
@@ -28,6 +28,16 @@ async function generateDynamicQuestions(category, count = 20) {
   });
   
   const desc = CATEGORY_DESCRIPTIONS[category] || "mental health symptoms";
+  
+  const attemptContext = {
+    1: "basic screening questions to identify initial symptoms and surface-level concerns",
+    2: "intermediate questions probing deeper into symptom patterns, triggers, and impact on daily life",
+    3: "advanced questions exploring coping mechanisms, lifestyle factors, and detailed behavioral patterns",
+    4: "comprehensive questions addressing personality traits, emotional regulation, and long-term patterns",
+    5: "in-depth personality assessment covering all aspects including interpersonal dynamics and self-perception"
+  };
+  
+  const depthInstruction = attemptContext[attempt] || attemptContext[5];
 
   function cleanJsonResponse(raw) {
     let text = String(raw).trim();
@@ -43,7 +53,7 @@ async function generateDynamicQuestions(category, count = 20) {
       model: process.env.LLM_MODEL || "openrouter/free",
       messages: [{
         role: "system",
-        content: `You are a mental health screening questionnaire generator. Generate ${count} clear, concise, self-assessment questions about ${desc}. Each question must be a single sentence and a plain string. Return ONLY a valid JSON array of ${count} strings. Do NOT include markdown code blocks, explanations, or any text before or after the JSON array.`,
+        content: `You are a mental health screening questionnaire generator. Generate ${count} clear, concise, self-assessment questions about ${desc}. These should be ${depthInstruction}. Each question must be a single sentence and a plain string. Return ONLY a valid JSON array of ${count} strings. Do NOT include markdown code blocks, explanations, or any text before or after the JSON array.`,
       }],
       max_tokens: 2000,
       temperature: 0.3,
@@ -62,12 +72,12 @@ async function generateDynamicQuestions(category, count = 20) {
 router.get("/:category", async (req, res) => {
   try {
     const { category } = req.params;
-    const { dynamic } = req.query;
+    const { dynamic, attempt = 1 } = req.query;
     
     if (dynamic === "true") {
-      const questions = await generateDynamicQuestions(category);
+      const questions = await generateDynamicQuestions(category, 20, parseInt(attempt));
       if (questions && questions.length > 0) {
-        return res.json({ category, questions, count: questions.length, dynamic: true });
+        return res.json({ category, questions, count: questions.length, dynamic: true, attempt: parseInt(attempt) });
       }
     }
     
@@ -80,9 +90,9 @@ router.get("/:category", async (req, res) => {
       return res.json({ category, questions, count: questions.length, dynamic: false });
     }
     
-    const questions = await generateDynamicQuestions(category);
+    const questions = await generateDynamicQuestions(category, 20, parseInt(attempt));
     if (questions && questions.length > 0) {
-      return res.json({ category, questions, count: questions.length, dynamic: true });
+      return res.json({ category, questions, count: questions.length, dynamic: true, attempt: parseInt(attempt) });
     }
     
     res.status(404).json({ error: "no_questions_found", category });
@@ -95,16 +105,38 @@ router.get("/:category", async (req, res) => {
 router.post("/:category/generate", async (req, res) => {
   try {
     const { category } = req.params;
-    const { count = 20 } = req.body;
+    const { count = 20, attempt = 1 } = req.body;
     
-    const questions = await generateDynamicQuestions(category, count);
+    const questions = await generateDynamicQuestions(category, count, parseInt(attempt));
     if (questions && questions.length > 0) {
-      return res.json({ category, questions, count: questions.length, dynamic: true });
+      return res.json({ category, questions, count: questions.length, dynamic: true, attempt: parseInt(attempt) });
     }
     
     res.status(500).json({ error: "generation_failed" });
   } catch (err) {
     console.error("Error generating questions:", err);
+    res.status(500).json({ error: "internal_server_error", details: err.message });
+  }
+});
+
+router.get("/:category/attempt-count", async (req, res) => {
+  try {
+    const { category } = req.params;
+    const { userId } = req.query;
+    
+    if (!userId) {
+      return res.status(400).json({ error: "userId required" });
+    }
+    
+    const TestResult = (await import("../models/TestResult.js")).default;
+    const count = await TestResult.countDocuments({ 
+      user: userId, 
+      testType: category.charAt(0).toUpperCase() + category.slice(1) 
+    });
+    
+    return res.json({ category, userId, previousAttempts: count, nextAttempt: count + 1 });
+  } catch (err) {
+    console.error("Error counting attempts:", err);
     res.status(500).json({ error: "internal_server_error", details: err.message });
   }
 });
