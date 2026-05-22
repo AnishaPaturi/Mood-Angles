@@ -48,7 +48,7 @@ def main():
     condition = data.get("condition", "the condition")
 
     # Use deterministic fallback if OpenAI unavailable or no API key
-    if not OPENAI_AVAILABLE or not os.getenv("OPENAI_API_KEY"):
+    if not OPENAI_AVAILABLE or not os.getenv("OPENROUTER_API_KEY"):
         fallback = deterministic_debate(agentR_result, agentD_result, agentC_result, condition)
         safe_json_output(fallback)
         return

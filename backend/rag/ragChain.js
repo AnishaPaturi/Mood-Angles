@@ -4,6 +4,12 @@ import { similaritySearch } from "./vectorStore.js";
 
 const embeddings = new OpenAIEmbeddings({
   modelName: "text-embedding-ada-002",
+  configuration: {
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+    },
+  },
 });
 
 const SYSTEM_PROMPT = `You are Luna, a compassionate mental health assistant trained in evidence-based support techniques. You provide emotional support, coping strategies, and mental health resources. You are NOT a licensed therapist, but you can offer guidance and encouragement. Always respond with empathy and validate the user's feelings.

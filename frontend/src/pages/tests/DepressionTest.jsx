@@ -1,46 +1,40 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function DepressionTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Depression";
   const userId = localStorage.getItem("userId");
 
-  
-  const questions = [
+  const defaultQuestions = [
     "I often feel sad or down, even when things are going okay.",
-    "I don’t enjoy my usual hobbies or activities as much as I used to.",
+    "I don't enjoy my usual hobbies or activities as much as I used to.",
     "It feels hard to get started on new tasks or projects.",
-    "Things that used to make me happy don’t feel the same anymore.",
+    "Things that used to make me happy don't feel the same anymore.",
     "I sometimes get headaches, stomachaches, or other pains for no clear reason.",
     "I get irritated or upset more easily than before.",
     "I feel left out or disconnected from other people.",
-    "It’s hard to feel hopeful about the future.",
+    "It's hard to feel hopeful about the future.",
     "I cry more easily than I used to, or feel like I could cry for no reason.",
     "I have trouble falling asleep, staying asleep, or I sleep much longer than usual.",
-    "I often think I’m not doing as well in life as I should be.",
-    "It’s hard to focus on school, work, or everyday tasks.",
+    "I often think I'm not doing as well in life as I should be.",
+    "It's hard to focus on school, work, or everyday tasks.",
     "I tend to be very hard on myself when I make mistakes.",
     "I often feel tired or low on energy, even after resting.",
     "I lose interest in things like reading, shows, or games halfway through.",
     "Making simple decisions feels more stressful than it used to.",
-    "When I feel low, it’s hard for others to cheer me up.",
-    "I sometimes feel like I don’t matter or that people wouldn’t miss me if I weren’t around.",
-    "My appetite has changed — I’m eating much more or much less than usual.",
-    "I don’t feel as affectionate or close to others as I used to."
+    "When I feel low, it's hard for others to cheer me up.",
+    "I sometimes feel like I don't matter or that people wouldn't miss me if I weren't around.",
+    "My appetite has changed — I'm eating much more or much less than usual.",
+    "I don't feel as affectionate or close to others as I used to."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+  const { questions, answers, handleSelect } = useDynamicQuestions("depression", defaultQuestions);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
-
-  const handleSelect = (qIndex, value) => {
-    const updated = [...answers];
-    updated[qIndex] = value;
-    setAnswers(updated);
-  };
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

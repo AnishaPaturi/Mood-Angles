@@ -1,23 +1,23 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function NeuroTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Neuroticism Traits";
 
-  
-  const questions = [
+  const defaultQuestions = [
     "I get stressed or overwhelmed easily.",
     "It takes a lot for me to feel embarrassed or self-conscious.",
     "My mood tends to change quickly and often.",
     "I stay calm and steady when things go wrong.",
     "I generally feel positive and relaxed most of the time.",
-    "I’m easily startled or on edge in unexpected situations.",
-    "It’s easy for other people’s emotions to affect my own mood.",
+    "I'm easily startled or on edge in unexpected situations.",
+    "It's easy for other people's emotions to affect my own mood.",
     "When I worry, it can feel hard to stop thinking about it.",
-    "There aren’t many things that make me feel afraid.",
+    "There aren't many things that make me feel afraid.",
     "Once I start feeling anxious or sad, it takes time for me to calm down.",
-    "I feel down or low more often than I’d like to.",
+    "I feel down or low more often than I'd like to.",
     "I often imagine worst-case scenarios or focus on what might go wrong.",
     "Small problems rarely upset me for long.",
     "I can be very self-critical, even over small mistakes.",
@@ -29,19 +29,12 @@ export default function NeuroTest() {
     "I can usually keep my emotions steady, even under stress."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null)); // storing 1..5
+  const { questions, answers, handleSelect } = useDynamicQuestions("neuro", defaultQuestions);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
-
-  const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
-    const updated = [...answers];
-    updated[qIndex] = value; // value should be 1..5 (UI uses j+1)
-    setAnswers(updated);
-  };
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

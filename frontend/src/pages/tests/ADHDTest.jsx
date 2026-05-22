@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function ADHDTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "ADHD";
   const userId = localStorage.getItem("userId");
-  
-  const questions = [
+
+  const defaultQuestions = [
     "Do you find it hard to stay focused, even on things that interest you?",
     "Do you often start projects but lose motivation before finishing?",
     "Is it hard for you to keep your things organized — like your room, bag, or notes?",
@@ -22,24 +23,18 @@ export default function ADHDTest() {
     "Do you sometimes take on too many things and end up feeling overwhelmed?",
     "Do you lose track of time when doing something interesting?",
     "Do you find it hard to relax, even when you want to?",
-    "Do you have trouble sleeping because your mind won’t slow down?",
+    "Do you have trouble sleeping because your mind won't slow down?",
     "Do you often switch from one task to another before finishing?",
     "Do you forget small details even when you try to be careful?",
     "Do you feel like your energy level is always changing — either too high or too low?",
     "Do you sometimes say or do things you regret right after?"
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+  const { questions, answers, handleSelect } = useDynamicQuestions("adhd", defaultQuestions);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
-
-  const handleSelect = (qIndex, value) => {
-    const updated = [...answers];
-    updated[qIndex] = value;
-    setAnswers(updated);
-  };
 
   // helper to build answers object
   const buildAnswersPayload = () =>

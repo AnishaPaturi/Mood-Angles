@@ -1,7 +1,6 @@
 // backend/rag/vectorStore.js
 // Thin wrapper that lets the rest of the RAG code talk to "a vector store"
 // without caring whether it's in-memory or MongoDB-backed.
-import { OpenAIEmbeddings } from "@langchain/openai";
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import DocumentChunk from "../models/DocumentChunk.js";
 

@@ -12,6 +12,12 @@ const splitter = new RecursiveCharacterTextSplitter({
 
 const embeddings = new OpenAIEmbeddings({
   modelName: "text-embedding-ada-002",
+  configuration: {
+    baseURL: "https://openrouter.ai/api/v1",
+    defaultHeaders: {
+      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+    },
+  },
 });
 
 /**

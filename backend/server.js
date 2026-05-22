@@ -15,6 +15,7 @@ import inviteRoutes from "./routes/inviteRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import documentAnalysis from "./routes/documentAnalysis.js";
 import chatbotRoute from "./routes/chatbotRoute.js";
+import questionsRoutes from "./routes/questions.js";
 
 
 // ✅ Load environment variables
@@ -57,6 +58,7 @@ app.use("/api/invite", inviteRoutes);
 app.use("/api/documents", documentAnalysis);
 app.use("/api/results", resultsRoute);
 app.use("/api/chatbot", chatbotRoute);
+app.use("/api/questions", questionsRoutes);
 
 
 
@@ -333,13 +335,21 @@ app.post("/api/admin/rag-query", async (req, res) => {
     if (!docs.length) return res.json({ results: [] });
 
     let qVec = queryEmbedding;
-    if (!qVec && query) {
-      // Compute embedding lazily via OpenAI — async, grab from environment
-      try {
-        const { OpenAIEmbeddings } = (await import("@langchain/openai"));
-        const emb  = new OpenAIEmbeddings({ modelName: "text-embedding-ada-002" });
-        qVec      = await emb.embedQuery(query);
-      } catch(err) {
+if (!qVec && query) {
+       // Compute embedding lazily via OpenAI — async, grab from environment
+       try {
+         const { OpenAIEmbeddings } = (await import("@langchain/openai"));
+         const emb  = new OpenAIEmbeddings({
+           modelName: "text-embedding-ada-002",
+           configuration: {
+             baseURL: "https://openrouter.ai/api/v1",
+             defaultHeaders: {
+               "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+             },
+           },
+         });
+         qVec      = await emb.embedQuery(query);
+       } catch(err) {
         console.warn("[rag-query] OpenAI embedding failed:", err.message);
       }
     }

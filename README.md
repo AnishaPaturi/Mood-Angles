@@ -703,7 +703,7 @@ npm run test
 | GitHub Username | Name | Contributions |
 |-----------------|------|---------------|
 | [AnishaPaturi](https://github.com/AnishaPaturi) | Anisha | 112 |
-| [Parinamika-13](https://github.com/Parinamika-13) | Vindhya / Parinamika | 39 |
+| [Parinamika-13](https://github.com/Parinamika-13) | Parinamika | 39 |
 | [vahinichilukamarri](https://github.com/vahinichilukamarri) | Vahini | 29 |
 | [vindhya-tech](https://github.com/vindhya-tech) | Vindhya | 17 |
 

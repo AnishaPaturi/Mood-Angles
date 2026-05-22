@@ -50,7 +50,7 @@ def main():
     level = data.get("level", "")
 
     # If OpenAI not available or API key missing, return deterministic fallback
-    if not OPENAI_AVAILABLE or not os.getenv("OPENAI_API_KEY"):
+    if not OPENAI_AVAILABLE or not os.getenv("OPENROUTER_API_KEY"):
         out = deterministic_summary(score, level, agentR_result)
         print(json.dumps({"result": out}))
         return

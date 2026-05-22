@@ -1,47 +1,40 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function PsychopathyTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Psychopathy Test";
 
-  
-  const questions = [
+  const defaultQuestions = [
     "I can be very persuasive when I want something.",
-    "When I know someone is struggling, I genuinely hope they’re doing okay.",
+    "When I know someone is struggling, I genuinely hope they're doing okay.",
     "I often notice when others make mistakes and feel I could do better.",
     "I sometimes bend the truth to get what I need.",
-    "If I hurt someone’s feelings, I usually feel sorry afterward.",
-    "I get impatient when people don’t think as quickly as I do.",
+    "If I hurt someone's feelings, I usually feel sorry afterward.",
+    "I get impatient when people don't think as quickly as I do.",
     "I feel that others sometimes blame me unfairly for things that go wrong.",
     "I believe following rules too strictly can hold people back.",
     "When I see someone crying, I feel concerned and want to help.",
     "I occasionally tease or provoke people just to see their reaction.",
     "The idea of breaking the law makes me uneasy.",
-    "I’m good at reading people and knowing how to influence them.",
+    "I'm good at reading people and knowing how to influence them.",
     "I enjoy excitement and taking risks.",
     "I believe in keeping my promises and financial commitments.",
     "I tend to stay calm when others get emotional.",
-    "I think helping others is important, even when there’s nothing in it for me.",
-    "I don’t get frightened easily, even in stressful situations.",
+    "I think helping others is important, even when there's nothing in it for me.",
+    "I don't get frightened easily, even in stressful situations.",
     "Everyone deserves a fair chance to succeed, regardless of background.",
-    "I’m open about my feelings and show them easily.",
-    "If a rule seems unfair, I think it’s okay to question or challenge it."
+    "I'm open about my feelings and show them easily.",
+    "If a rule seems unfair, I think it's okay to question or challenge it."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null)); // store 1..5
+  const { questions, answers, handleSelect } = useDynamicQuestions("personality", defaultQuestions);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
-
-  const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
-    const updated = [...answers];
-    updated[qIndex] = value; // value expected 1..5
-    setAnswers(updated);
-  };
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

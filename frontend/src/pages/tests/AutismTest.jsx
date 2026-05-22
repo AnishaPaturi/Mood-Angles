@@ -1,47 +1,41 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
+
+const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
 
 export default function AutismTest() {
-  const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Autism Traits";
 
-  
-  const questions = [
-    "I often notice patterns or details that other people don’t see.",
+  const defaultQuestions = [
+    "I often notice patterns or details that other people don't see.",
     "I prefer to follow familiar routines and can get stressed when they change unexpectedly.",
     "I sometimes struggle to understand social cues, like tone of voice or body language.",
-    "People have told me that I sound blunt or rude, even when I don’t mean to be.",
+    "People have told me that I sound blunt or rude, even when I don't mean to be.",
     "I have specific interests or hobbies that I can focus on for long periods of time.",
-    "I’m very sensitive to physical sensations, such as certain fabrics, lights, or textures.",
+    "I'm very sensitive to physical sensations, such as certain fabrics, lights, or textures.",
     "Making or maintaining eye contact can feel uncomfortable for me.",
     "I find casual small talk or social chitchat difficult or tiring.",
     "I tend to interpret things very literally and sometimes miss hidden meanings or jokes.",
-    "In group conversations, I’m often unsure when it’s my turn to speak.",
-    "Repetitive movements or routines, like pacing or tapping, help me stay calm when I’m stressed.",
+    "In group conversations, I'm often unsure when it's my turn to speak.",
+    "Repetitive movements or routines, like pacing or tapping, help me stay calm when I'm stressed.",
     "When my usual schedule or environment changes, I can feel anxious or upset.",
     "I enjoy collecting or memorizing information about specific topics or categories.",
-    "I sometimes copy other people’s behavior or expressions to fit in socially.",
+    "I sometimes copy other people's behavior or expressions to fit in socially.",
     "It can be difficult for me to guess what others are thinking or feeling unless they say it directly.",
     "I can talk about my favorite interests or topics for a very long time.",
     "I sometimes miss when people use sarcasm, irony, or subtle humor.",
-    "Certain everyday sounds, lights, or textures that don’t bother others can feel overwhelming to me.",
+    "Certain everyday sounds, lights, or textures that don't bother others can feel overwhelming to me.",
     "It can be hard to follow conversations when several people are talking at once.",
-    "I find it challenging to imagine situations or experiences that I haven’t personally encountered."
+    "I find it challenging to imagine situations or experiences that I haven't personally encountered."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+const { questions, answers, handleSelect } = useDynamicQuestions("autism", defaultQuestions);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
-
-  const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
-    const updated = [...answers];
-    updated[qIndex] = value;
-    setAnswers(updated);
-  };
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

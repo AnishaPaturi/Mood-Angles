@@ -1,46 +1,40 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function EmotionalIntelligenceTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Emotional Intelligence";
   const userId = localStorage.getItem("userId");
 
-  const questions = [
+  const defaultQuestions = [
     "I can recognize and understand my emotions as they happen.",
-    "I notice and interpret other people’s body language and tone of voice.",
-    "I sometimes lose my temper more quickly than I’d like.",
+    "I notice and interpret other people's body language and tone of voice.",
+    "I sometimes lose my temper more quickly than I'd like.",
     "I learn and grow from emotional experiences, even difficult ones.",
     "When making an important decision, I consider both my current feelings and how I might feel later.",
     "I recover well from emotional setbacks or disappointments.",
-    "I’m comfortable expressing a wide range of emotions in healthy ways.",
+    "I'm comfortable expressing a wide range of emotions in healthy ways.",
     "I can stay calm and respectful during disagreements or conflict.",
-    "I try to understand and accept other people’s emotions without judging them.",
+    "I try to understand and accept other people's emotions without judging them.",
     "I can stay grounded and steady in challenging or stressful situations.",
-    "I’m able to stay composed and think clearly when things get tough.",
+    "I'm able to stay composed and think clearly when things get tough.",
     "I sometimes speak or react impulsively before thinking about how it affects others.",
     "I often feel and express gratitude toward others.",
-    "I accept my emotions, even when they’re uncomfortable or unpleasant.",
+    "I accept my emotions, even when they're uncomfortable or unpleasant.",
     "I adjust my behavior when situations or people require something different from me.",
-    "I’m open to feedback and willing to try new approaches when things don’t work.",
-    "I try to validate and acknowledge other people’s feelings.",
+    "I'm open to feedback and willing to try new approaches when things don't work.",
+    "I try to validate and acknowledge other people's feelings.",
     "I can adapt easily to changing circumstances or environments.",
     "I sometimes find it hard to understand what others are feeling.",
-    "I occasionally struggle to identify exactly what I’m feeling inside."
+    "I occasionally struggle to identify exactly what I'm feeling inside."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+  const { questions, answers, handleSelect } = useDynamicQuestions("eq", defaultQuestions);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
-
-  const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
-    const updated = [...answers];
-    updated[qIndex] = value;
-    setAnswers(updated);
-  };
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

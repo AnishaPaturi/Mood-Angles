@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function MentalHealthTodayTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Mental Health Today";
 
- 
-  const questions = [
+  const defaultQuestions = [
     "I often feel overwhelmed by my emotions.",
     "I can usually handle the amount of stress in my life.",
     "I sometimes notice physical signs of anxiety, such as tense muscles or sweaty palms.",
@@ -19,8 +19,8 @@ export default function MentalHealthTodayTest() {
     "I sometimes engage in habits that make it harder to function at my best.",
     "When I feel strong emotions, I usually understand what triggered them.",
     "My mood stays fairly steady from day to day.",
-    "I often avoid or put off important tasks, even when I know I shouldn’t.",
-    "I feel sad or down more often than I’d like to.",
+    "I often avoid or put off important tasks, even when I know I shouldn't.",
+    "I feel sad or down more often than I'd like to.",
     "I have a sense of meaning or purpose in my life.",
     "I sometimes feel lonely or disconnected from others.",
     "I get frustrated, upset, or angry easily.",
@@ -29,19 +29,12 @@ export default function MentalHealthTodayTest() {
     "Most days, I manage my time and responsibilities fairly well."
   ];
 
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+  const { questions, answers, handleSelect } = useDynamicQuestions("mentalhealth", defaultQuestions);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
-
-  const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
-    const updated = [...answers];
-    updated[qIndex] = value;
-    setAnswers(updated);
-  };
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

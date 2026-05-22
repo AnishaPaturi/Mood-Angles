@@ -1,37 +1,36 @@
 import React, { useState } from "react";
 import UserWrapper from "../../components/UserWrapper";
+import useDynamicQuestions from "../../hooks/useDynamicQuestions";
 
 export default function BipolarTest() {
   const API_BASE = (import.meta.env.DEV ? import.meta.env.VITE_LOCAL_BACKEND : import.meta.env.VITE_PROD_BACKEND) || "http://localhost:5000";
   const testName = "Bipolar Test";
   const userId = localStorage.getItem("userId");
 
-  
-  const questions = [
+  const defaultQuestions = [
     "I often experience bursts of energy or excitement that feel much stronger than my usual mood.",
     "There are times when I talk more rapidly or feel an unusual pressure to keep talking.",
     "I sometimes sleep far less than usual but still feel full of energy or alert.",
     "My thoughts can race so quickly that it becomes difficult to focus or stay organized.",
     "I occasionally feel unusually confident or capable, almost as if nothing could go wrong.",
-    "I’ve made impulsive or risky decisions during periods of high energy (such as overspending or taking big chances).",
-    "At times, I’ve felt easily irritated or short-tempered, even over small issues.",
+    "I've made impulsive or risky decisions during periods of high energy (such as overspending or taking big chances).",
+    "At times, I've felt easily irritated or short-tempered, even over small issues.",
     "I experience phases of extreme productivity or creativity that are hard to sustain.",
     "People close to me have commented on noticeable changes in my mood or behavior.",
     "I have felt unusually cheerful, talkative, or excitable for no clear reason.",
     "My mood can shift quickly — from feeling very good or energetic to feeling sad or hopeless.",
     "There are periods when I start big projects or plans but lose motivation shortly after.",
-    "I’ve noticed physical restlessness, such as pacing or being unable to sit still.",
-    "My eating habits or appetite change significantly depending on how I’m feeling.",
+    "I've noticed physical restlessness, such as pacing or being unable to sit still.",
+    "My eating habits or appetite change significantly depending on how I'm feeling.",
     "Sometimes I feel more outgoing or sexually confident than usual for me.",
-    "I’ve had stretches of time where I felt deeply sad, hopeless, or uninterested in daily activities.",
+    "I've had stretches of time where I felt deeply sad, hopeless, or uninterested in daily activities.",
     "When I feel down, I tend to withdraw from others or avoid social contact.",
     "My emotional ups and downs have affected my performance at school, work, or in relationships.",
     "A close family member has been diagnosed with bipolar disorder or another mood disorder.",
     "These changes in mood and energy have interfered with my daily life or responsibilities."
-];
+  ];
 
-  // answers store 1..5
-  const [answers, setAnswers] = useState(Array(questions.length).fill(null));
+  const { questions, answers, handleSelect } = useDynamicQuestions("bipolar", defaultQuestions);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -98,14 +97,6 @@ export default function BipolarTest() {
       console.error("Error saving result to DB:", err);
       return { error: String(err) };
     }
-  };
-
-  // --- Selection handler: store 1..5 ---
-  const handleSelect = (qIndex, value) => {
-    if (qIndex < 0 || qIndex >= questions.length) return;
-    const updated = [...answers];
-    updated[qIndex] = value; // value should be 1..5
-    setAnswers(updated);
   };
 
   // --- Submit & Angel chain ---

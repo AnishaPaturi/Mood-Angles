@@ -180,7 +180,7 @@ def main():
     data = sanitize_obj(data)
 
     # Use deterministic fallback if OpenAI unavailable or no API key
-    if not OPENAI_AVAILABLE or not os.getenv("OPENAI_API_KEY"):
+    if not OPENAI_AVAILABLE or not os.getenv("OPENROUTER_API_KEY"):
         fallback = deterministic_judgment(data.get("score"), data.get("condition", ""))
         safe_print_json(fallback)
         return
