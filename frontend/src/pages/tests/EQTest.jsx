@@ -248,19 +248,20 @@ export default function EmotionalIntelligenceTest() {
        }
 
 // ---------- Save to DB ----------
-       const payloadToSave = {
-         user: userId,
-         testType: testName,
-         score: score, // REQUIRED by backend
-         level,
-         answers: buildAnswersPayload(),
-         agentR_result: finalSummary || null,
-         agentD_result: dData?.result || null,
-         agentC_result: cSummary || null,
-         agentE_result: eSummary || null,
-         agentJ_result: jData || null,
-         meta: { submittedAt: new Date().toISOString() }
-       };
+        const payloadToSave = {
+          user: userId,
+          testType: testName,
+          score: score, // REQUIRED by backend
+          level,
+          attempt: attempt,
+          answers: buildAnswersPayload(),
+          agentR_result: finalSummary || null,
+          agentD_result: dData?.result || null,
+          agentC_result: cSummary || null,
+          agentE_result: eSummary || null,
+          agentJ_result: jData || null,
+          meta: { submittedAt: new Date().toISOString() }
+        };
 
       const saveResp = await sendResultToDB(payloadToSave);
 

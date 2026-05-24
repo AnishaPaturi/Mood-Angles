@@ -37,7 +37,6 @@ export default function DepressionTest() {
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
-  const [loading, setLoading] = useState(false);
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   useEffect(() => {
@@ -233,19 +232,20 @@ export default function DepressionTest() {
      }
 
 // ---------- Save to DB ----------
-      const payloadToSave = {
-        user: userId,
-        testType: testName,
-        score: score, // REQUIRED by backend
-        level,
-        answers: buildAnswersPayload(),
-        agentR_result: finalSummary || null,
-        agentD_result: dData?.result || null,
-        agentC_result: cSummary || null,
-        agentE_result: eSummary || null,
-        agentJ_result: jData || null,
-        meta: { submittedAt: new Date().toISOString() }
-      };
+       const payloadToSave = {
+         user: userId,
+         testType: testName,
+         score: score, // REQUIRED by backend
+         level,
+         attempt: attempt,
+         answers: buildAnswersPayload(),
+         agentR_result: finalSummary || null,
+         agentD_result: dData?.result || null,
+         agentC_result: cSummary || null,
+         agentE_result: eSummary || null,
+         agentJ_result: jData || null,
+         meta: { submittedAt: new Date().toISOString() }
+       };
 
      const saveResp = await sendResultToDB(payloadToSave);
 

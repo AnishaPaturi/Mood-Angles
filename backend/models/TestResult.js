@@ -8,6 +8,7 @@ const TestResultSchema = new Schema(
     testType: { type: String, required: true }, // e.g. "Bipolar", "ADHD"
     score: { type: Number, required: true },
     level: { type: String, required: true },
+    attempt: { type: Number, required: true, default: 1 }, // Track which attempt (1st, 2nd, 3rd, etc.)
     answers: { type: Schema.Types.Mixed }, // object mapping Q1..Q20 -> "Answer..."
     agents: {
       agentR: { type: Schema.Types.Mixed },

@@ -71,16 +71,28 @@ export default function AnxietyTest() {
     return Math.round((rawScore / maxPossible) * 100);
   };
 
-   const interpretLevel = (score) =>
-     score <= 19
-       ? "Low chance"
-       : score <= 50
-       ? "Moderate chance"
-       : score <= 74
-       ? "Some concern (monitor symptoms)"
-       : score <= 86
-       ? "Significant concern"
-       : "High likelihood";
+const interpretLevel = (score) =>
+    score <= 19
+      ? "Low chance"
+      : score <= 50
+      ? "Moderate chance"
+      : score <= 74
+      ? "Some concern (monitor symptoms)"
+      : score <= 86
+      ? "Significant concern"
+      : "High likelihood";
+
+  const getAttemptSuggestion = () => {
+    const attemptText = {
+      1: "This is your first screening. Your responses help establish a baseline for tracking.",
+      2: "Your second assessment shows deeper patterns. Changes in scores may indicate improvement or decline.",
+      3: "Third assessment - you're building a history. Compare with previous results.",
+      4: "Fourth assessment - tracking your progress. Significant changes since attempt 1?",
+    };
+    return attempt > 4
+      ? `Attempt #${attempt} - You're actively monitoring your wellbeing. Keep tracking patterns.`
+      : attemptText[attempt] || "";
+  };
 
   // --- Save results to DB helper ---
   const sendResultToDB = async (payload) => {
@@ -253,19 +265,20 @@ export default function AnxietyTest() {
       }
 
 // ---------- Save to DB ----------
-       const payloadToSave = {
-         user: userId,
-         testType: testName,
-         score: score, // REQUIRED by backend
-         level,
-         answers: buildAnswersPayload(),
-         agentR_result: finalSummary || null,
-         agentD_result: dData?.result || null,
-         agentC_result: cSummary || null,
-         agentE_result: eSummary || null,
-         agentJ_result: jData || null,
-         meta: { submittedAt: new Date().toISOString() }
-       };
+        const payloadToSave = {
+          user: userId,
+          testType: testName,
+          score: score, // REQUIRED by backend
+          level,
+          attempt: attempt,
+          answers: buildAnswersPayload(),
+          agentR_result: finalSummary || null,
+          agentD_result: dData?.result || null,
+          agentC_result: cSummary || null,
+          agentE_result: eSummary || null,
+          agentJ_result: jData || null,
+          meta: { submittedAt: new Date().toISOString() }
+        };
 
       const saveResp = await sendResultToDB(payloadToSave);
 
@@ -307,6 +320,16 @@ export default function AnxietyTest() {
               <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
               <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
             </div>
+            {attempt > 1 && (
+              <div style={{ marginTop: "10px", fontSize: "14px", color: "#fbbf24" }}>
+                Attempt #{attempt} • Deeper assessment based on previous results
+              </div>
+            )}
+            {loading && questions.length === 0 && (
+              <div style={{ marginTop: "10px", fontSize: "14px", color: "#6b7280" }}>
+                Loading dynamic questions...
+              </div>
+            )}
           </div>
         </div>
 
@@ -441,11 +464,25 @@ export default function AnxietyTest() {
                        result.AngelJDecision.urgency === "medium" ? "Within 1-2 months" : "Routine — a few months is okay"}
                     </div>
 
-                    <div style={styles.toolsBox}>
-                      <strong>Tools you can use:</strong> Consider taking a validated assessment for {testName} or consult a mental health professional.
+<div style={styles.toolsBox}>
+                       <strong>Tools you can use:</strong> Consider taking a validated assessment for {testName} or consult a mental health professional.
+                     </div>
+                     
+{attempt > 1 && (
+                        <div style={{ marginTop: "10px", fontSize: "14px", color: "#fbbf24" }}>
+                          Attempt #{attempt} • Deeper assessment based on previous results
+                        </div>
+                      )}
+                      {loading && questions.length === 0 && (
+                        <div style={{ marginTop: "10px", fontSize: "14px", color: "#6b7280" }}>
+                          Loading dynamic questions...
+                        </div>
+                      )}
                     </div>
-                  </>
-                )}
+                  </div>
+                     )}
+                   </>
+                 )}
                 {result.chainError && (
                   <p style={{ marginTop: "10px", color: "#b91c1c" }}>
                     <strong>Chain error:</strong> {result.chainError}

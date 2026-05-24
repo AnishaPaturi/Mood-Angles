@@ -35,6 +35,7 @@ export default function NeuroTest() {
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   useEffect(() => {
     const fetchPreviousResults = async () => {
@@ -253,19 +254,21 @@ export default function NeuroTest() {
          setResult((prev) => ({ ...prev, AngelJDecision: "⚠️ Could not connect to Angel J backend." }));
        }
 
-       // ---------- Save to DB ----------
-       const payloadToSave = {
-         testType: testName,
-         score: percentScore, // REQUIRED by backend
-         level,
-         answers: buildAnswersPayload(),
-         agentR_result: AngelR_summary || null,
-         agentD_result: dData?.result || null,
-         agentC_result: cSummary || null,
-         agentE_result: eSummary || null,
-         agentJ_result: jData || null,
-         meta: { submittedAt: new Date().toISOString() }
-       };
+// ---------- Save to DB ----------
+        const payloadToSave = {
+          user: userId,
+          testType: testName,
+          score: percentScore, // REQUIRED by backend
+          level,
+          attempt: attempt,
+          answers: buildAnswersPayload(),
+          agentR_result: AngelR_summary || null,
+          agentD_result: dData?.result || null,
+          agentC_result: cSummary || null,
+          agentE_result: eSummary || null,
+          agentJ_result: jData || null,
+          meta: { submittedAt: new Date().toISOString() }
+        };
 
        const saveResp = await sendResultToDB(payloadToSave);
 

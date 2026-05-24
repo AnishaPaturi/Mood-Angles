@@ -10,6 +10,7 @@ router.post("/", /* requireAuth, */ async (req, res) => {
       testType,
       score,
       level,
+      attempt = 1,
       answers,
       agentR_result,
       agentD_result,
@@ -30,6 +31,7 @@ router.post("/", /* requireAuth, */ async (req, res) => {
       testType,
       score,
       level,
+      attempt: parseInt(attempt) || 1,
       answers: answers || null,
       agents: {
         agentR: agentR_result || null,

@@ -6,9 +6,11 @@ export default function useDynamicQuestions(category, defaultQuestions = []) {
   const [questions, setQuestions] = useState(defaultQuestions);
   const [answers, setAnswers] = useState(Array(defaultQuestions.length).fill(null));
   const [attempt, setAttempt] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchQuestions = async () => {
+      setLoading(true);
       try {
         const userId = localStorage.getItem("userId");
         
@@ -75,6 +77,8 @@ export default function useDynamicQuestions(category, defaultQuestions = []) {
         }
       } catch (e) {
         console.warn("Using default questions:", e.message);
+      } finally {
+        setLoading(false);
       }
     };
     fetchQuestions();
@@ -89,5 +93,5 @@ export default function useDynamicQuestions(category, defaultQuestions = []) {
     });
   };
 
-  return { questions, answers, handleSelect, attempt };
+  return { questions, answers, handleSelect, attempt, loading };
 }

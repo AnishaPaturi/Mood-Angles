@@ -251,6 +251,7 @@ export default function ADHDTest() {
           testType: testName,
           score: score, // REQUIRED by backend
           level,
+          attempt: attempt,
           answers: buildAnswersPayload(),
           agentR_result: finalSummary || null,
           agentD_result: dData?.result || null,

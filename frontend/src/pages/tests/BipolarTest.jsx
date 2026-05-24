@@ -37,7 +37,6 @@ export default function BipolarTest() {
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchPreviousResults = async () => {
@@ -256,19 +255,20 @@ body: JSON.stringify({
       }
 
 // ---------- Save to DB ----------
-      const payloadToSave = {
-        user: userId,
-        testType: testName,
-        score: percentScore, // REQUIRED by backend
-        level,
-        answers: buildAnswersPayload(),
-        agentR_result: AngelR_summary || null,
-        agentD_result: dData?.result || null,
-        agentC_result: cSummary || null,
-        agentE_result: eSummary || null,
-        agentJ_result: jData || null,
-        meta: { submittedAt: new Date().toISOString() }
-      };
+       const payloadToSave = {
+         user: userId,
+         testType: testName,
+         score: percentScore, // REQUIRED by backend
+         level,
+         attempt: attempt,
+         answers: buildAnswersPayload(),
+         agentR_result: AngelR_summary || null,
+         agentD_result: dData?.result || null,
+         agentC_result: cSummary || null,
+         agentE_result: eSummary || null,
+         agentJ_result: jData || null,
+         meta: { submittedAt: new Date().toISOString() }
+       };
 
 
       const saveResp = await sendResultToDB(payloadToSave);

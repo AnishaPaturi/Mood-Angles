@@ -37,6 +37,9 @@ const { questions, answers, handleSelect, attempt } = useDynamicQuestions("autis
   const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
+  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
+
   useEffect(() => {
     const fetchPreviousResults = async () => {
       if (!userId) return;
@@ -249,9 +252,11 @@ const { questions, answers, handleSelect, attempt } = useDynamicQuestions("autis
 
       // ---------- Save to DB ----------
       const payloadToSave = {
+        user: userId,
         testType: testName,
         score: score, // REQUIRED by backend
         level,
+        attempt: attempt,
         answers: buildAnswersPayload(),
         agentR_result: finalSummary || null,
         agentD_result: dData?.result || null,
