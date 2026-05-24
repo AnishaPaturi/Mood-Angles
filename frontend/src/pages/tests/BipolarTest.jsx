@@ -32,7 +32,8 @@ export default function BipolarTest() {
     "These changes in mood and energy have interfered with my daily life or responsibilities."
   ];
 
-  const { questions, answers, handleSelect } = useDynamicQuestions("bipolar", defaultQuestions);
+  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("bipolar", defaultQuestions);
+  const [loading, setLoading] = useState(false);
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);

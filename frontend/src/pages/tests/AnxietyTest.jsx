@@ -32,7 +32,7 @@ export default function AnxietyTest() {
     "Even on calm days, I feel a sense of unease, like something bad could happen soon."
   ];
 
-const { questions, answers, handleSelect } = useDynamicQuestions("anxiety", defaultQuestions);
+  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("anxiety", defaultQuestions);
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);

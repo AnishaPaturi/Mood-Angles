@@ -32,7 +32,8 @@ export default function DepressionTest() {
     "I don't feel as affectionate or close to others as I used to."
   ];
 
-  const { questions, answers, handleSelect } = useDynamicQuestions("depression", defaultQuestions);
+  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("depression", defaultQuestions);
+  const [loading, setLoading] = useState(false);
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
@@ -279,13 +280,18 @@ export default function DepressionTest() {
             style={styles.headerBg}
           />
           <div style={styles.headerOverlay}></div>
-          <div style={styles.headerContent}>
-            <h1 style={styles.mainTitle}>Depression Check</h1>
-            <div style={styles.testMeta}>
-              <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
-              <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
+            <div style={styles.headerContent}>
+              <h1 style={styles.mainTitle}>Depression Check</h1>
+              <div style={styles.testMeta}>
+                <span style={styles.metaBtnOrange}>✔ {questions.length} QUESTIONS</span>
+                <span style={styles.metaBtnPink}>⏱ 3 MINUTES</span>
+              </div>
+              {attempt > 1 && (
+                <div style={{ marginTop: "10px", fontSize: "14px", color: "#fbbf24" }}>
+                  Attempt #{attempt} • Deeper assessment based on previous results
+                </div>
+              )}
             </div>
-          </div>
         </div>
 
         {/* INTRO SECTION */}

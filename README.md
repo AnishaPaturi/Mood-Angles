@@ -52,6 +52,8 @@ Five specialized Python AI agents for psychological analysis:
 - **Agent J**: Judgement & behavior analysis
 - **Agent R**: Risk & safety evaluation
 
+**Dynamic Question Generation**: All psychological assessments now use Retrieval-Augmented Generation (RAG) to dynamically generate questions based on the user's previous attempts and DSM-5 diagnostic criteria, ensuring non-repetitive, progressively deeper assessments.
+
 ### 💬 RAG-Powered AI Chatbot ("Luna")
 An empathetic mental health chatbot backed by **Retrieval-Augmented Generation (RAG)**:
 - Converts user questions into mathematical embeddings via OpenAI (`text-embedding-ada-002`)
