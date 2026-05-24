@@ -38,7 +38,6 @@ const { questions, answers, handleSelect, attempt } = useDynamicQuestions("autis
   const [loading, setLoading] = useState(false);
 
   const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
-  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   useEffect(() => {
     const fetchPreviousResults = async () => {
@@ -55,8 +54,6 @@ const { questions, answers, handleSelect, attempt } = useDynamicQuestions("autis
     };
     fetchPreviousResults();
   }, [userId]);
-
-  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

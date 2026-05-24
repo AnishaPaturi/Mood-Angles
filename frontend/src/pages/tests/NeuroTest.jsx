@@ -30,7 +30,7 @@ export default function NeuroTest() {
     "I can usually keep my emotions steady, even under stress."
   ];
 
-  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("neuro", defaultQuestions);
+const { questions, answers, handleSelect, attempt } = useDynamicQuestions("neuro", defaultQuestions);
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
@@ -52,8 +52,6 @@ export default function NeuroTest() {
     };
     fetchPreviousResults();
   }, [userId]);
-
-  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

@@ -30,7 +30,7 @@ export default function PsychopathyTest() {
     "If a rule seems unfair, I think it's okay to question or challenge it."
   ];
 
-  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("personality", defaultQuestions);
+const { questions, answers, handleSelect, attempt } = useDynamicQuestions("personality", defaultQuestions);
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
@@ -52,8 +52,6 @@ export default function PsychopathyTest() {
     };
     fetchPreviousResults();
   }, [userId]);
-
-  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {

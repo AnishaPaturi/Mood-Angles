@@ -465,24 +465,20 @@ const interpretLevel = (score) =>
                     </div>
 
 <div style={styles.toolsBox}>
-                       <strong>Tools you can use:</strong> Consider taking a validated assessment for {testName} or consult a mental health professional.
-                     </div>
-                     
-{attempt > 1 && (
-                        <div style={{ marginTop: "10px", fontSize: "14px", color: "#fbbf24" }}>
-                          Attempt #{attempt} • Deeper assessment based on previous results
-                        </div>
-                      )}
-                      {loading && questions.length === 0 && (
-                        <div style={{ marginTop: "10px", fontSize: "14px", color: "#6b7280" }}>
-                          Loading dynamic questions...
-                        </div>
-                      )}
+                      <strong>Tools you can use:</strong> Consider taking a validated assessment for {testName} or consult a mental health professional.
                     </div>
-                  </div>
-                     )}
-                   </>
-                 )}
+                    {attempt > 1 && (
+                      <div style={{ marginTop: "10px", fontSize: "14px", color: "#fbbf24" }}>
+                        Attempt #{attempt} • Deeper assessment based on previous results
+                      </div>
+                    )}
+                    {loading && questions.length === 0 && (
+                      <div style={{ marginTop: "10px", fontSize: "14px", color: "#6b7280" }}>
+                        Loading dynamic questions...
+                      </div>
+                    )}
+                  </>
+                )}
                 {result.chainError && (
                   <p style={{ marginTop: "10px", color: "#b91c1c" }}>
                     <strong>Chain error:</strong> {result.chainError}

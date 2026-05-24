@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const [contact, setContact] = useState("");
-  const [otp, setOtp] = useState("");
+  const [_otp, setOtp] = useState("");
   const [enteredOtp, setEnteredOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

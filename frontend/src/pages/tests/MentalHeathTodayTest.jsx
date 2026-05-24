@@ -30,7 +30,7 @@ export default function MentalHealthTodayTest() {
     "Most days, I manage my time and responsibilities fairly well."
   ];
 
-  const { questions, answers, handleSelect, attempt } = useDynamicQuestions("mentalhealth", defaultQuestions);
+const { questions, answers, handleSelect, attempt } = useDynamicQuestions("mentalhealth", defaultQuestions);
   const [previousResults, setPreviousResults] = useState([]);
   const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
@@ -52,8 +52,6 @@ export default function MentalHealthTodayTest() {
     };
     fetchPreviousResults();
   }, [userId]);
-
-  const colors = ["#ef4444", "#f97316", "#facc15", "#3b82f6", "#22c55e"];
 
   const buildAnswersPayload = () =>
     questions.reduce((acc, q, i) => {
