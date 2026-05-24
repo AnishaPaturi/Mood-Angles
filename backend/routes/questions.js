@@ -2,7 +2,7 @@
 import express from "express";
 import Question from "../models/Question.js";
 import { OpenAI } from "openai";
-import dsm5Data from "../data/dsm5_knowledge.json" assert { type: "json" };
+import dsm5Data from "../data/dsm5_knowledge.json" with { type: "json" };
 
 const router = express.Router();
 
@@ -156,7 +156,15 @@ router.get("/:category", async (req, res) => {
     const { dynamic, attempt = 1, previousQuestions } = req.query;
     
     if (dynamic === "true") {
-      const prevQs = previousQuestions ? JSON.parse(previousQuestions) : [];
+      let prevQs = [];
+      if (previousQuestions) {
+        try {
+          prevQs = JSON.parse(previousQuestions);
+        } catch (e) {
+          console.warn("Failed to parse previousQuestions parameter:", e.message);
+          // Continue with empty prevQs
+        }
+      }
       const questions = await generateDynamicQuestions(category, 20, parseInt(attempt), prevQs);
       if (questions && questions.length > 0) {
         return res.json({ category, questions, count: questions.length, dynamic: true, attempt: parseInt(attempt) });
@@ -187,7 +195,16 @@ router.get("/:category", async (req, res) => {
 router.post("/:category/generate", async (req, res) => {
   try {
     const { category } = req.params;
-    const { count = 20, attempt = 1, previousQuestions = [] } = req.body;
+    let previousQuestions = [];
+    if (req.body.previousQuestions) {
+      try {
+        previousQuestions = JSON.parse(req.body.previousQuestions);
+      } catch (e) {
+        console.warn("Failed to parse previousQuestions in request body:", e.message);
+        // Continue with empty previousQuestions
+      }
+    }
+    const { count = 20, attempt = 1 } = req.body;
     
     const questions = await generateDynamicQuestions(category, count, parseInt(attempt), previousQuestions);
     if (questions && questions.length > 0) {

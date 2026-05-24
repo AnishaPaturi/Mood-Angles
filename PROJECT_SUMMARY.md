@@ -1,0 +1,5 @@
+Mood-Angles AI-POWERED MENTAL HEALTH PLATFORM MAY 2026 – ONGOING
+• Architected a comprehensive AI-driven mental health ecosystem featuring intelligent mood tracking, multi-agent psychological assessment system, RAG-powered chatbot ("Luna"), and telepsychiatry portal — built with MERN stack enhanced by Python ML agents and LangChain RAG architecture.
+• Designed distributed AI pipeline integrating five specialized Python agents (Cognitive, Depression, Emotional, Judgement, Risk) with Retrieval-Augmented Generation using OpenAI embeddings, MongoDB vector storage, and Claude via OpenRouter for contextual mental health support.
+• Implemented secure role-based authentication (JWT/OAuth), real-time analytics dashboards, DSM-5 knowledge base integration, and end-to-end encryption for sensitive mental health data — supporting seamless patient-to-psychiatrist workflows.
+• Stack: React 19, Node.js/Express, MongoDB, Python, Scikit-Learn, LangChain, OpenAI/OpenRouter, Tailwind CSS, Vite, JWT, Bcrypt | github.com/AnishaPaturi/Mood-Angles
