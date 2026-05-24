@@ -138,9 +138,9 @@ Core pipeline:
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | React 19, Vite, Tailwind CSS 4, React Router DOM |
-| **Backend** | Node.js, Express.js, MongoDB, Mongoose |
-| **Authentication** | JWT, Bcrypt, Passport.js, Google OAuth 2.0 |
+| **Frontend** | React 19, Vite 7, Tailwind CSS 4, React Router DOM 7 |
+| **Backend** | Node.js, Express.js, MongoDB, Mongoose, LangChain |
+| **Authentication** | JWT, Bcrypt, Google OAuth 2.0 |
 | **AI/ML Engine** | Python 3.x, Scikit-Learn, Pandas, Joblib |
 | **AI Chat / RAG** | LangChain, OpenAI Embeddings (`text-embedding-ada-002`), OpenRouter (Claude) |
 | **File Upload** | Multer |
@@ -162,7 +162,7 @@ backend/
 ├── package.json                 # Dependencies: express, mongoose, openai, python-shell
 ├── requirements.txt             # Python dependencies for ML agents
 │
-├── agents/ (Python scripts)
+├── agents/                      # Python agent scripts
 │   ├── agentC.py               # Cognitive assessment agent
 │   ├── agentD.py               # Depression analysis agent
 │   ├── agentE.py               # Emotional evaluation agent
@@ -175,6 +175,10 @@ backend/
 │   ├── vectorStore.js          # MongoDB-backed vector store: upsert chunks, similarity search
 │   └── ingest.js               # Document ingestion: text extraction, chunking, embedding, storing
 │
+├── ml/                         # Machine learning pipeline
+│   ├── train_model.py          # Model training script
+│   └── predict.py              # Prediction script
+│
 ├── data/                       # Knowledge-base data
 │   ├── dsm5_knowledge.json     # DSM-5 diagnostic criteria (knowledge base)
 │   ├── DataSet.csv             # Clinical case studies (knowledge base)
@@ -182,6 +186,9 @@ backend/
 │
 ├── scripts/
 │   └── extract_text.py         # PDF/image text extraction for RAG ingestion
+│
+├── middleware/                 # Express middleware
+│   └── auth.js                 # Authentication middleware
 │
 ├── config/
 │   └── db.js                   # MongoDB connection configuration
@@ -242,9 +249,12 @@ frontend/
 ├── .env                        # Frontend environment variables
 ├── vite.config.js              # Vite build configuration
 ├── tailwind.config.js          # Tailwind CSS configuration
-├── postcss.config.js           # PostCSS configuration
+├── postcss.config.cjs          # PostCSS configuration
 ├── eslint.config.js            # ESLint configuration
 ├── index.html                  # HTML entry point
+│
+├── public/                     # Static public assets
+│   └── vite.svg                # Vite logo
 │
 ├── src/
 │   ├── main.jsx               # React entry point
@@ -312,17 +322,17 @@ cd backend
 npm install
 ```
 
-Key packages:
-- **express** – REST API framework
-- **mongoose** – MongoDB ODM
+**Key packages:**
+- **express** (5.x) – REST API framework
+- **mongoose** (8.x) – MongoDB ODM
 - **jsonwebtoken** – JWT authentication
-- **bcryptjs** – Password hashing
+- **bcryptjs** (3.x) – Password hashing
 - **google-auth-library** – Google OAuth
 - **nodemailer** – Email sending
 - **python-shell** – Python ML agent integration
-- **openai** – OpenAI API integration
-- **multer** – File uploads
-- **uuid** – Unique ID generation
+- **openai** (6.x) – OpenAI API integration
+- **multer** (2.x) – File uploads
+- **uuid** (13.x) – Unique ID generation
 - **dotenv** – Environment variables
 - **cors** – Cross-origin resource sharing
 - **langchain** / **@langchain/openai** – RAG chain & embedding generation
@@ -334,7 +344,7 @@ cd frontend
 npm install
 ```
 
-Key packages:
+**Key packages:**
 - **react** (19.1.1) – UI library
 - **react-dom** – React renderer
 - **react-router-dom** (7.8.2) – Client-side routing
@@ -342,8 +352,7 @@ Key packages:
 - **tailwindcss** (4.1.12) – Utility-first CSS
 - **axios** – HTTP client
 - **lucide-react** – Icon library
-- **google-oauth-client** – Google authentication
-- **concurrently** – Run multiple commands
+- **@react-oauth/google** – Google authentication
 
 ---
 
@@ -424,6 +433,9 @@ npm start
 # Server runs on http://localhost:5000
 ```
 
+Available scripts:
+- `npm start` – Start the server
+
 ---
 
 ### 3️⃣ Frontend Setup
@@ -435,18 +447,13 @@ npm install
 
 Create `.env` file with required variables.
 
-Start development server:
+Run both backend and frontend in separate terminals.
 
-```bash
-npm run dev
-# Frontend runs on http://localhost:5173
-```
-
-Or run both simultaneously:
-
-```bash
-npm run dev:all
-```
+Available scripts:
+- `npm run dev` – Start dev server
+- `npm run build` – Build for production
+- `npm run lint` – Run ESLint
+- `npm run preview` – Preview production build
 
 ---
 
@@ -456,8 +463,7 @@ If training a custom mood prediction model:
 
 ```bash
 cd backend
-pip install pandas scikit-learn joblib
-python train_model.py  # Generates mood_model.pkl
+pip install -r requirements.txt
 ```
 
 ### 5️⃣ Seed the RAG Knowledge Base
@@ -650,14 +656,15 @@ npm test
 
 ```bash
 cd backend
-python -m pytest test_agents.py -v
+# Run agent tests manually or via pytest
+python -m pytest ml/ -v
 ```
 
-### Frontend Tests
+### Frontend Linting
 
 ```bash
 cd frontend
-npm run test
+npm run lint
 ```
 
 ### Manual Testing Checklist
