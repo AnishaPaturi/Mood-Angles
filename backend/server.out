@@ -1,0 +1,8 @@
+◇ injected env (11) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+MONGO_URI from env: SET
+🚀 Server running on port 5000
+✅ MongoDB connected: ac-frapivp-shard-00-00.aw3izih.mongodb.net

@@ -32,7 +32,7 @@ const CATEGORY_TO_DSM = {
 
 function getDSMCriteria(category) {
   const dsmIds = CATEGORY_TO_DSM[category] || [];
-  return dsmData.filter(d => dsmIds.includes(d.id));
+  return dsm5Data.filter(d => dsmIds.includes(d.id));
 }
 
 async function generateDynamicQuestions(category, count = 20, attempt = 1, previousQuestions = []) {
