@@ -31,8 +31,8 @@ const extractText = (filePath) => {
   });
 };
 
-// Run agent pipeline on extracted text
-const runAgentPipeline = async (text, testName = "Document Analysis") => {
+// Run agent pipeline on extracted text with smart triage
+const runAgentPipeline = async (text, category, testName = "Document Analysis") => {
   const API_BASE = process.env.API_BASE || "http://localhost:5000";
   const results = {};
 
@@ -51,71 +51,138 @@ const runAgentPipeline = async (text, testName = "Document Analysis") => {
     };
   }
 
-  try {
-    // Agent R
-    const rRes = await fetch(`${API_BASE}/api/angelR`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        condition: testName,
-        testName,
-        score_percent: 50,
-        level: "Analysis",
-        answers: {},
-        extractedText: text,
-      }),
-    });
-    results.agentR = await rRes.json();
-  } catch {
-    results.agentR = { result: "Analysis unavailable" };
+  // Normalize category to match agentMap keys
+  const normalizedCategory = category.toLowerCase().replace(/\s/g, '_');
+  // Define agent routing based on category
+  const agentMap = {
+    prescription: ["agentJ"],
+    lab_report: ["agentR", "agentD"],
+    psych_letter: ["agentR", "agentC"],
+    insurance: ["agentJ"],
+    other: ["agentJ"]
+  };
+  const agentsToRun = agentMap[normalizedCategory] || ["agentJ"];
+  
+  // Run specified agents
+  for (const agent of agentsToRun) {
+    try {
+      let res;
+      switch (agent) {
+        case "agentR":
+          res = await fetch(`${API_BASE}/api/angelR`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              condition: testName,
+              testName,
+              score_percent: 50,
+              level: "Analysis",
+              answers: {},
+              extractedText: text,
+            }),
+          });
+          results.agentR = await res.json();
+          break;
+        case "agentJ":
+          res = await fetch(`${API_BASE}/api/angelJ`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              condition: testName,
+              testName,
+              extractedText: text,
+            }),
+          });
+          results.agentJ = await res.json();
+          break;
+        case "agentD":
+          res = await fetch(`${API_BASE}/api/angelD`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              condition: testName,
+              testName,
+              extractedText: text,
+            }),
+          });
+          results.agentD = await res.json();
+          break;
+        case "agentC":
+          // Agent C will be run later as a fusion layer
+          break;
+      }
+    } catch (error) {
+      console.error(`Error running ${agent}:`, error);
+      // Set default error response based on agent type
+      if (agent === "agentR") {
+        results.agentR = { result: "Analysis unavailable" };
+      } else if (agent === "agentJ") {
+        results.agentJ = { decision: "Unknown", urgency: "medium" };
+      } else if (agent === "agentD") {
+        results.agentD = { result: "Analysis unavailable" };
+      }
+    }
   }
 
-  try {
-    // Agent J
-    const jRes = await fetch(`${API_BASE}/api/angelJ`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        condition: testName,
-        testName,
-        extractedText: text,
-      }),
-    });
-    results.agentJ = await jRes.json();
-  } catch {
-    results.agentJ = { decision: "Unknown", urgency: "medium" };
+  // Run Agent C as fusion layer if we have results from other agents
+  if (Object.keys(results).length > 0 && 
+      (results.agentR || results.agentJ || results.agentD)) {
+    try {
+      const fusionRes = await fetch(`${API_BASE}/api/angelC`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          condition: testName,
+          testName,
+          extractedText: text,
+          agentR: results.agentR || null,
+          agentJ: results.agentJ || null,
+          agentD: results.agentD || null,
+        }),
+      });
+      results.agentC = await fusionRes.json();
+    } catch (error) {
+      console.error("Error running Agent C (fusion layer):", error);
+      results.agentC = { 
+        result: "Fusion analysis unavailable",
+        confidence_score: 0.0,
+        contradiction_check: "failed"
+      };
+    }
   }
 
   return results;
 };
 
 router.post("/analyze", upload.single("file"), async (req, res) => {
-   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-   try {
-     const extractedText = await extractText(req.file.path);
+    try {
+      const extractedText = await extractText(req.file.path);
+      const { category } = req.body;
 
-     // If extraction returned an OCR error marker, return 400 with guidance
-     if (extractedText && extractedText.includes("OCR_ERROR:")) {
-       return res.status(400).json({
-         error: "ocr_missing",
-         details: extractedText.replace("OCR_ERROR:", "").trim(),
-       });
-     }
+      // If extraction returned an OCR error marker, return 400 with guidance
+      if (extractedText && extractedText.includes("OCR_ERROR:")) {
+        return res.status(400).json({
+          error: "ocr_missing",
+          details: extractedText.replace("OCR_ERROR:", "").trim(),
+        });
+      }
 
-     const agentResults = await runAgentPipeline(extractedText);
+      const agentResults = await runAgentPipeline(extractedText, category);
 
-     res.json({
-       message: "Document analyzed successfully",
-       file: req.file.filename,
-       extractedText,
-       analysis: agentResults,
-     });
-   } catch (err) {
-     const msg = err?.message || err || "Unknown extraction error";
-     console.error("Document analysis error:", msg);
-     res.status(500).json({ error: "extraction_failed", details: msg });
-   }
- });
+      res.json({
+        message: "Document analyzed successfully",
+        file: req.file.filename,
+        extractedText,
+        analysis: agentResults,
+        receivedCategory: category // Debug field
+      });
+    } catch (err) {
+      const msg = err?.message || err || "Unknown extraction error";
+      console.error("Document analysis error:", msg);
+      res.status(500).json({ error: "extraction_failed", details: msg });
+    }
+  });
 
 export default router;

@@ -90,6 +90,7 @@ function UploadD() {
      try {
        const formData = new FormData();
        formData.append("file", files[0]);
+       formData.append("category", category); // Add category to the request
 
        const res = await fetch(`${API_BASE}/api/documents/analyze`, {
          method: "POST",
@@ -98,55 +99,62 @@ function UploadD() {
 
        const data = await res.json();
 
-if (res.ok) {
-          // Check if extraction produced meaningful text
-          const extractedText = data.extractedText || "";
-          const extractionFailed =
-            !extractedText ||
-            extractedText.length < 10 ||
-            extractedText.toLowerCase().includes("error") ||
-            extractedText.toLowerCase().includes("missing library") ||
-            extractedText.toLowerCase().includes("tesseract");
+     if (res.ok) {
+            // Check if extraction produced meaningful text
+            const extractedText = data.extractedText || "";
+            const extractionFailed =
+              !extractedText ||
+              extractedText.length < 10 ||
+              extractedText.toLowerCase().includes("error") ||
+              extractedText.toLowerCase().includes("missing library") ||
+              extractedText.toLowerCase().includes("tesseract");
 
-          if (extractionFailed) {
+            if (extractionFailed) {
+              setAnalysisResult({
+                ...data,
+                extractionError: true,
+                extractedText: extractedText || "No text could be extracted. The OCR engine (Tesseract) may not be installed, or the document may not contain readable text."
+              });
+            } else {
+              setAnalysisResult(data);
+            }
+            alert("Document analyzed successfully!");
+          } else if (data.error === "ocr_missing") {
             setAnalysisResult({
-              ...data,
               extractionError: true,
-              extractedText: extractedText || "No text could be extracted. The OCR engine (Tesseract) may not be installed, or the document may not contain readable text."
+              extractedText: data.details || "OCR engine (Tesseract) is not installed. Please install it to analyze image/PDF documents.",
+              file: files[0]?.name || "unknown"
             });
+            alert("OCR not available — see results panel for details.");
           } else {
-            setAnalysisResult(data);
+            alert("Analysis failed: " + (data.error || "Unknown error"));
           }
-          alert("Document analyzed successfully!");
-        } else if (data.error === "ocr_missing") {
-          setAnalysisResult({
-            extractionError: true,
-            extractedText: data.details || "OCR engine (Tesseract) is not installed. Please install it to analyze image/PDF documents.",
-            file: files[0]?.name || "unknown"
-          });
-          alert("OCR not available — see results panel for details.");
-        } else {
-          alert("Analysis failed: " + (data.error || "Unknown error"));
-        }
-     } catch (error) {
-       console.error("Analysis error:", error);
-       alert("Something went wrong: " + error.message);
-     } finally {
-       setAnalyzing(false);
-     }
-   };
+      } catch (error) {
+        console.error("Analysis error:", error);
+        alert("Something went wrong: " + error.message);
+      } finally {
+        setAnalyzing(false);
+      }
+    };
 
-  const css = `
-    .upload-section { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-bottom: 2rem; }
-    .upload-card { background: rgba(255,250,240,0.9); backdrop-filter: blur(10px); border-radius: 1.5rem; padding: 2rem; max-width: 600px; width: 100%; text-align: center; box-shadow: 0 8px 30px rgba(200,180,200,0.2); border: 1px solid rgba(255,255,255,0.6); transition: all 0.3s ease; }
-    .upload-card:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(200,180,200,0.25); }
-    .drop-zone { border: 2px dashed #f0c4c4; border-radius: 1rem; padding: 2rem 1rem; background: #fff8f5; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; cursor: pointer; color: #d08b8b; transition: all 0.3s ease; }
-    .drop-zone:hover { background-color: #fff1ed; border-color: #f5baba; transform: scale(1.02); }
-    .drop-zone input { display: none; }
-    .upload-btn { background: #fcb8b8; color: #7e3a3a; padding: 0.75rem 1.5rem; border: none; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(200,180,200,0.3); margin-top: 1rem; }
-    .upload-btn:hover { background: #f7a5a5; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(200,180,200,0.4); }
-    .uploaded-item { background: #fff8f5; border-radius: 0.75rem; padding: 0.6rem 1rem; margin-bottom: 0.5rem; color: #8b5c5c; box-shadow: 0 2px 8px rgba(200,180,200,0.15); display: flex; justify-content: space-between; align-items: center; }
-  `;
+const css = `
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.25s;
+    animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  
+  .upload-section { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-bottom: 2rem; }
+  .upload-card { background: rgba(255,250,240,0.9); backdrop-filter: blur(10px); border-radius: 1.5rem; padding: 2rem; max-width: 600px; width: 100%; text-align: center; box-shadow: 0 8px 30px rgba(200,180,200,0.2); border: 1px solid rgba(255,255,255,0.6); transition: all 0.3s ease; }
+  .upload-card:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(200,180,200,0.25); }
+  .drop-zone { border: 2px dashed #f0c4c4; border-radius: 1rem; padding: 2rem 1rem; background: #fff8f5; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; cursor: pointer; color: #d08b8b; transition: all 0.3s ease; }
+  .drop-zone:hover { background-color: #fff1ed; border-color: #f5baba; transform: scale(1.02); }
+  .drop-zone input { display: none; }
+  .upload-btn { background: #fcb8b8; color: #7e3a3a; padding: 0.75rem 1.5rem; border: none; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(200,180,200,0.3); margin-top: 1rem; }
+  .upload-btn:hover { background: #f7a5a5; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(200,180,200,0.4); }
+  .uploaded-item { background: #fff8f5; border-radius: 0.75rem; padding: 0.6rem 1rem; margin-bottom: 0.5rem; color: #8b5c5c; box-shadow: 0 2px 8px rgba(200,180,200,0.15); display: flex; justify-content: space-between; align-items: center; }
+`;
 
   return (
     <UserWrapper>
