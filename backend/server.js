@@ -39,6 +39,8 @@ app.use(
       "https://mood-angels-6.onrender.com",
       "https://mood-angels.vercel.app",
       "https://mood-angels.onrender.com",
+      // Allow Vercel preview deployments
+      /^https:\/\/.*\.vercel\.app$/,
     ],
     credentials: true,
   })
