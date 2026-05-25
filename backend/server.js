@@ -36,7 +36,9 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://127.0.0.1:5173",
-      "https://mood-angles-6.onrender.com",
+      "https://mood-angels-6.onrender.com",
+      "https://mood-angels.vercel.app",
+      "https://mood-angels.onrender.com",
     ],
     credentials: true,
   })

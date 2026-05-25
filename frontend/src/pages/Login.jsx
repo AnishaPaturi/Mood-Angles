@@ -206,6 +206,9 @@ const handleGoogleLogin = async (credentialResponse) => {
               <GoogleLogin
                 onSuccess={handleGoogleLogin}
                 onError={() => setError("Google Sign-In Failed")}
+                text="signin_with"
+                shape="rectangular"
+                logo_alignment="left"
               />
             </div>
 

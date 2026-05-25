@@ -268,13 +268,16 @@ const handleGoogleSignup = async (credentialResponse) => {
             </button>
 
             <div className="divider" />
-            <div className="social">
-              <span>or</span>
-              <GoogleLogin
-                onSuccess={handleGoogleSignup}
-                onError={() => setError("Google Sign-In Failed")}
-              />
-            </div>
+<div className="social">
+               <span>or</span>
+               <GoogleLogin
+                 onSuccess={handleGoogleSignup}
+                 onError={() => setError("Google Sign-In Failed")}
+                 text="signup_with"
+                 shape="rectangular"
+                 logo_alignment="left"
+               />
+             </div>
 
             <p
               style={{
