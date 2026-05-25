@@ -75,9 +75,9 @@ An empathetic mental health chatbot backed by **Retrieval-Augmented Generation (
 - Role-based access control (User/Psychiatrist/Admin)  
 
 ### 📱 Comprehensive Profiles
-- Medical history vault  
-- Medication tracking  
-- Treatment records  
+- Medical history vault with document viewing (Medical tab shows all uploaded files with category labels)
+- Medication tracking
+- Treatment records
 - Safety assessments  
 
 ### 📈 Advanced Analytics
@@ -216,7 +216,8 @@ backend/
 │   ├── Invite.js               # Invitation system
 │   ├── InviteRequest.js        # Invitation requests
 │   ├── DebateRecord.js         # Discussion/debate records
-│   └── DocumentChunk.js        # RAG document chunks (content + embedding + metadata)
+│   ├── DocumentChunk.js        # RAG document chunks (content + embedding + metadata)
+│   └── UploadedFile.js         # User uploaded file metadata
 │
 ├── routes/                     # API endpoints
 │   ├── authRoutes.js           # Registration, login, logout, Google OAuth
@@ -276,7 +277,7 @@ frontend/
 │   │   ├── PSignup.jsx        # Psychiatrist registration
 │   │   ├── AdminInvites.jsx   # Admin invitation management
 │   │   ├── RequestInvite.jsx  # Invitation request page
-│   │   ├── Profile.jsx        # User profile view/edit
+│   │   ├── Profile.jsx        # User profile view/edit (includes Medical tab with uploaded document list)
 │   │   ├── Settings.jsx       # User settings
 │   │   ├── Help.jsx           # Help & support
 │   │   ├── Support.jsx        # Support contact
@@ -522,7 +523,11 @@ Then restart the backend server so the chatbot can access the new knowledge base
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/` | Upload file (profile pic, documents) |
+| GET | `/?userId=` | Get all files for a specific user |
 | GET | `/:filename` | Download uploaded file |
+| DELETE | `/:filename` | Delete uploaded file |
+
+**Note:** File uploads are associated with user IDs for privacy. Files are stored in MongoDB with metadata including filename, path, category, and upload timestamp.
 
 ---
 
