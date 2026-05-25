@@ -4,6 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { spawn } from "child_process";
+import MedicalRecord from "../models/MedicalRecord.js";
 
 const router = express.Router();
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -62,7 +63,7 @@ const runAgentPipeline = async (text, category, testName = "Document Analysis") 
     other: ["agentJ"]
   };
   const agentsToRun = agentMap[normalizedCategory] || ["agentJ"];
-  
+   
   // Run specified agents
   for (const agent of agentsToRun) {
     try {
@@ -159,7 +160,7 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
 
     try {
       const extractedText = await extractText(req.file.path);
-      const { category } = req.body;
+      const { category, userId } = req.body;
 
       // If extraction returned an OCR error marker, return 400 with guidance
       if (extractedText && extractedText.includes("OCR_ERROR:")) {
@@ -170,6 +171,28 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
       }
 
       const agentResults = await runAgentPipeline(extractedText, category);
+
+      // Save to MedicalRecord if userId is provided
+      if (userId) {
+        try {
+          const medicalRecord = new MedicalRecord({
+            userId,
+            narrative: extractedText,
+            structured: {
+              analysis: agentResults,
+              filename: req.file.filename,
+              originalname: req.file.originalname,
+              category
+            },
+            date: new Date()
+          });
+          await medicalRecord.save();
+          console.log(`Medical record saved for user ${userId}`);
+        } catch (saveError) {
+          console.error("Failed to save medical record:", saveError);
+          // Don't fail the request if medical record saving fails
+        }
+      }
 
       res.json({
         message: "Document analyzed successfully",

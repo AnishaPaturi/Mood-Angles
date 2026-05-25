@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { spawn } from "child_process";
 import { ingestTextSafe, deleteByFilename } from "../rag/ingest.js";
+import UploadedFile from "../models/UploadedFile.js";
 
 const router = express.Router();
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -74,9 +75,17 @@ router.post("/", upload.single("file"), async (req, res) => {
     originalName:   req.file.originalname,
   };
 
+  // Save file metadata to database
+  await UploadedFile.create({
+    userId,
+    filename: req.file.filename,
+    filePath: `/uploads/${req.file.filename}`,
+    category,
+    originalName: req.file.originalname,
+    size: req.file.size,
+  });
+
   // ── Best-effort RAG ingestion (fire-and-forget) ────────────────────
-  // Extract text with Python, embed it, store vectors in MongoDB.
-  // Never blocks the upload response.
   (async () => {
     try {
       const text = await extractText(req.file.path);
@@ -110,27 +119,13 @@ router.get("/", async (req, res) => {
     return res.status(400).json({ message: "userId query parameter is required" });
   }
 
-  fs.readdir(uploadDir, (err, files) => {
-    if (err)
-      return res.status(500).json({ message: "Error reading files" });
-
-    const filePaths = files
-      .filter((f) => f && typeof f === "string")
-      .map((f) => {
-        try {
-          return {
-            filename: f,
-            filePath: `/uploads/${f}`,
-            uploadedAt: fs.statSync(path.join(uploadDir, f)).mtime.toISOString(),
-          };
-        } catch {
-          // Skip files that can't be stat'd
-          return null;
-        }
-      })
-      .filter(Boolean);
-    res.json(filePaths);
-  });
+  try {
+    const files = await UploadedFile.find({ userId }).sort({ uploadedAt: -1 });
+    res.json(files);
+  } catch (err) {
+    console.error("Error fetching uploaded files:", err);
+    res.status(500).json({ message: "Error fetching files" });
+  }
 });
 
 // ✅ Delete file
@@ -139,9 +134,18 @@ router.delete("/:filename", async (req, res) => {
   const userId       = req.body.userId || req.query.userId;
   const filePath     = path.join(uploadDir, filename);
 
+  // Delete from database first
+  if (userId) {
+    try {
+      await UploadedFile.deleteOne({ userId, filename });
+    } catch (err) {
+      console.warn("Failed to delete file from DB:", err?.message);
+    }
+  }
+
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
-    // Also purge RAG vectors for this file (best-effort, don't fail the request)
+    // Also purge RAG vectors for this file (best-effort)
     if (userId) {
       try { await deleteByFilename(String(userId), filename); } catch (_) { /* ignore */ }
     }

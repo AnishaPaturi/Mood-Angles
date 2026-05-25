@@ -16,6 +16,7 @@ import feedbackRoutes from "./routes/feedbackRoutes.js";
 import documentAnalysis from "./routes/documentAnalysis.js";
 import chatbotRoute from "./routes/chatbotRoute.js";
 import questionsRoutes from "./routes/questions.js";
+import medicalRoutes from "./routes/medicalRoutes.js";
 
 
 // ✅ Load environment variables
@@ -60,7 +61,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/otp", otpRoutes);
 app.use("/api/invite", inviteRoutes);
 app.use("/api/documents", documentAnalysis);
-app.use("/api/results", resultsRoute);
+app.use("/api/medical", medicalRoutes);
 app.use("/api/chatbot", chatbotRoute);
 app.use("/api/questions", questionsRoutes);
 

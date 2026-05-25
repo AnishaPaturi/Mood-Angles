@@ -9,6 +9,7 @@ function Profile() {
   const [mood, setMood] = useState("");
   const [history, setHistory] = useState([]);
   const [testResults, setTestResults] = useState([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState([]);
 
   const userId = localStorage.getItem("userId");
 
@@ -53,6 +54,15 @@ function Profile() {
          setTestResults(data.testResults || []);
        })
        .catch((err) => console.error("Fetch test results failed:", err));
+   }, [userId]);
+
+   // ✅ Fetch uploaded documents
+   useEffect(() => {
+     if (!userId) return;
+     fetch(`${API_BASE}/api/uploads?userId=${userId}`)
+       .then((res) => res.json())
+       .then((data) => setUploadedDocuments(data))
+       .catch((err) => console.error("Error fetching uploaded documents:", err));
    }, [userId]);
 
   // ✅ Load saved photo when returning to page
@@ -435,8 +445,36 @@ function Profile() {
             </div>
           )}
 
-          {/* Medical Tab */}
-          {activeTab === "medical" && <p>Medical info coming soon</p>}
+{/* Medical Tab */}
+           {activeTab === "medical" && (
+             <div>
+               <h3>📄 Uploaded Medical Documents</h3>
+               {uploadedDocuments.length === 0 ? (
+                 <p>No documents uploaded yet.</p>
+               ) : (
+                 <div>
+                   {uploadedDocuments.map((doc, i) => {
+                     const filename = typeof doc === "string" ? doc.split("/").pop() : (doc.filename || doc.filePath?.split("/").pop() || "unknown");
+                     const filePath = typeof doc === "string" ? doc : (doc.filePath || `/uploads/${filename}`);
+                     const fileCategory = typeof doc === "string" ? "Other" : (doc.category || "Other");
+                     
+                     return (
+                       <div key={i} style={styles.docItem}>
+                         <div>
+                           <a href={`${API_BASE}${filePath}`} target="_blank" rel="noopener noreferrer">
+                             {filename}
+                           </a>
+                           <span style={{ marginLeft: "0.5rem", fontSize: "0.8rem", color: "#d08b8b" }}>
+                             [{fileCategory}]
+                           </span>
+                         </div>
+                       </div>
+                     );
+                   })}
+                 </div>
+               )}
+             </div>
+           )}
 
           {/* Tests Tab */}
           {activeTab === "tests" && (
@@ -570,13 +608,24 @@ const styles = {
   },
 
   testItem: {
-    background: "#fff",
-    padding: "15px",
-    marginBottom: "12px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-  },
-};
+     background: "#fff",
+     padding: "15px",
+     marginBottom: "12px",
+     borderRadius: "8px",
+     boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+   },
+
+   docItem: {
+     background: "#fff8f5",
+     padding: "10px 15px",
+     marginBottom: "8px",
+     borderRadius: "8px",
+     boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+     display: "flex",
+     justifyContent: "space-between",
+     alignItems: "center",
+   },
+ };
 
 
 export default Profile;
