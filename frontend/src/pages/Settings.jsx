@@ -34,13 +34,23 @@ export default function Settings() {
     localStorage.getItem("profileImage") || ""
   );
 
-  // 📊 Dynamic activity data
-  const [activityData, setActivityData] = useState({
-    timeSpent: "15 mins today",
-    testsTaken: 3,
-    moodLogs: 2,
-    streak: 5,
-  });
+   // 📊 Dynamic activity data
+   const [activityData, setActivityData] = useState({
+     timeSpent: "0 mins today",
+     testsTaken: 0,
+     moodLogs: 0,
+     streak: 0,
+   });
+
+   // Fetch real activity data from backend
+   useEffect(() => {
+     fetch("/api/user/activity")
+       .then(res => res.json())
+       .then(data => {
+         if (data.timeSpent !== undefined) setActivityData(data);
+       })
+       .catch(err => console.error("Failed to fetch activity data", err));
+   }, []); // run once on mount
 
   const [achievements, setAchievements] = useState(
     JSON.parse(localStorage.getItem("moodangels_achievements")) || {
@@ -117,20 +127,38 @@ export default function Settings() {
     }
   };
 
-  // 💬 Feedback
-  const handleFeedback = () => {
-    if (!feedback.trim()) return alert("Please share your feedback first 💬");
-    alert("Thank you for sharing your thoughts 🌸");
-    setFeedback("");
-    setRating(0);
-  };
+   // 💬 Feedback
+   const handleFeedback = async () => {
+     if (!feedback.trim()) return alert("Please share your feedback first 💬");
+     try {
+       const userId = localStorage.getItem('userId') || null;
+       await fetch("/api/feedback", {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+         },
+         body: JSON.stringify({ feedback, rating, userId }),
+       });
+       alert("Thank you for sharing your thoughts 🌸");
+       setFeedback("");
+       setRating(0);
+     } catch (err) {
+       console.error("Failed to send feedback", err);
+       alert("Failed to send feedback. Please try again.");
+     }
+   };
 
-  // 🚪 Logout
-  const handleLogout = () => {
-    // If you want to keep some localStorage items (like settings), consider clearing selective keys instead.
-    localStorage.clear();
-    navigate("/");
-  };
+   // 🚪 Logout
+   const handleLogout = async () => {
+     try {
+       await fetch("/api/auth/logout", { method: "POST" });
+     } catch (err) {
+       console.error("Logout failed", err);
+     } finally {
+       localStorage.clear();
+       navigate("/");
+     }
+   };
 
   return (
     <UserWrapper>
