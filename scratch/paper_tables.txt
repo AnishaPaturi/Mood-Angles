@@ -1,0 +1,283 @@
+
+=================== FOUND Table 1 ===================
+ assessments, although clients without
+diagnosed conditions do not have medical records available, and our agents are not pre-informed about
+this distinction. The dataset statistics are summarized in Table 1. Appendix E details the processing
+steps applied to both medical records and scale data, which aim to optimize the performance of
+LLM-based agents for more accurate analysis.
+Table 1: Dataset statistics of real-world clinical cases.
+Normal Mood Disorder Other Diseases Total
+cases for retrieval 1259 759 225 2243
+cases for test 315 56 190 561
+2.3 Diagnostic Agents
+To mitigate overreliance on past cases (which could overlook individual variability in psychiatric
+diagnoses), we develop three diagnostic variants with differing levels of historical dependence:
+Angel.R (no reference to previous cases), Angel.D (displays retrieved cases as context), and Angel.C
+(compares each retrieved case with the current query and returns an analysis as context).
+By aggregating independent diagnoses from these three agents and facilitating debate among their
+conclusions, our final diagnosis model, multi-Angels, bridges the gap between computational decision-
+making and the nuanced understanding essential for accurate psychiatric evaluations.
+The following parts introduce the main components of our agents:
+Symptom Matching To align client symptoms in medical records with DSM-5 diagnostic criteria
+----------------------------------------------------
+
+=================== FOUND Table 1 ===================
+re summarized in Table 1. Appendix E details the processing
+steps applied to both medical records and scale data, which aim to optimize the performance of
+LLM-based agents for more accurate analysis.
+Table 1: Dataset statistics of real-world clinical cases.
+Normal Mood Disorder Other Diseases Total
+cases for retrieval 1259 759 225 2243
+cases for test 315 56 190 561
+2.3 Diagnostic Agents
+To mitigate overreliance on past cases (which could overlook individual variability in psychiatric
+diagnoses), we develop three diagnostic variants with differing levels of historical dependence:
+Angel.R (no reference to previous cases), Angel.D (displays retrieved cases as context), and Angel.C
+(compares each retrieved case with the current query and returns an analysis as context).
+By aggregating independent diagnoses from these three agents and facilitating debate among their
+conclusions, our final diagnosis model, multi-Angels, bridges the gap between computational decision-
+making and the nuanced understanding essential for accurate psychiatric evaluations.
+The following parts introduce the main components of our agents:
+Symptom Matching To align client symptoms in medical records with DSM-5 diagnostic criteria,
+we process records and compute relevance between records and criteria using dense vector encoding.
+The BGE-M3 embedder [ 19] is employed for its strong semantic embedding capabiliti
+----------------------------------------------------
+
+=================== FOUND Table 1 ===================
+ frequencies and combinations. High scores (closer to 1.0) indicate the
+synthetic data successfully encompasses the complete range of real-world scenarios present in the
+original dataset, as shown in Table 10.
+Table 10: Score of column distribution. RC is short for RangeCoverage; CC is short for CategoryCov-
+erage.
+Column 0 1 2 3 4 5 6 7 8 9 10 11 12
+Metric RC RC RC RC RC RC RC RC RC RC RC RC RC
+Score 1.00 1.00 0.98 1.00 1.00 1.00 1.00 1.00 0.96 0.75 1.00 1.00 0.75
+Column 13 14 15 16 17 18 19 20 21 22 23 24
+Metric RC RC RC RC RC RC RC RC RC RC RC CC
+Score 1.00 0.78 0.83 0.95 0.95 0.94 0.98 1.00 0.86 0.90 0.90 1.00
+29
+--- PAGE 30 ---
+/uni00000014 /uni00000015 /uni00000016 /uni00000017 /uni00000018 /uni00000019 /uni0000001a /uni0000001b /uni0000001c /uni00000014/uni00000013 /uni00000014/uni00000014 /uni00000014/uni00000015 /uni00000014/uni00000016 /uni00000014/uni00000017 /uni00000014/uni00000018 /uni00000014/uni00000019 /uni00000014/uni0000001a /uni00000014/uni0000001b /uni00000014/uni0000001c /uni00000015/uni00000013 /uni00000015/uni00000014 /uni00000015/uni00000015 /uni00000015/uni00000016 /uni00000015/uni00000017
+/uni00000049/uni00000048/uni00000044/uni00000057/uni00000058/uni00000055/uni00000048/uni00000056
+/uni00000013 /uni00000014 /uni00000015 /uni00000016 /uni00000017 /uni00000018 /uni00000019 /uni0000001a /uni0000001b /uni0000001c /uni00000014/uni00000013 /uni00000014/un
+----------------------------------------------------
+
+=================== FOUND Table 1 ===================
+es and combinations. High scores (closer to 1.0) indicate the
+synthetic data successfully encompasses the complete range of real-world scenarios present in the
+original dataset, as shown in Table 10.
+Table 10: Score of column distribution. RC is short for RangeCoverage; CC is short for CategoryCov-
+erage.
+Column 0 1 2 3 4 5 6 7 8 9 10 11 12
+Metric RC RC RC RC RC RC RC RC RC RC RC RC RC
+Score 1.00 1.00 0.98 1.00 1.00 1.00 1.00 1.00 0.96 0.75 1.00 1.00 0.75
+Column 13 14 15 16 17 18 19 20 21 22 23 24
+Metric RC RC RC RC RC RC RC RC RC RC RC CC
+Score 1.00 0.78 0.83 0.95 0.95 0.94 0.98 1.00 0.86 0.90 0.90 1.00
+29
+--- PAGE 30 ---
+/uni00000014 /uni00000015 /uni00000016 /uni00000017 /uni00000018 /uni00000019 /uni0000001a /uni0000001b /uni0000001c /uni00000014/uni00000013 /uni00000014/uni00000014 /uni00000014/uni00000015 /uni00000014/uni00000016 /uni00000014/uni00000017 /uni00000014/uni00000018 /uni00000014/uni00000019 /uni00000014/uni0000001a /uni00000014/uni0000001b /uni00000014/uni0000001c /uni00000015/uni00000013 /uni00000015/uni00000014 /uni00000015/uni00000015 /uni00000015/uni00000016 /uni00000015/uni00000017
+/uni00000049/uni00000048/uni00000044/uni00000057/uni00000058/uni00000055/uni00000048/uni00000056
+/uni00000013 /uni00000014 /uni00000015 /uni00000016 /uni00000017 /uni00000018 /uni00000019 /uni0000001a /uni0000001b /uni0000001c /uni00000014/uni00000013 /uni00000014/uni00000014 
+----------------------------------------------------
+
+=================== FOUND Table 1 ===================
+tes the balance between precision and recall, AUROC
+measures the model’s discriminative ability across all classification thresholds, and accuracy assesses
+overall prediction correctness.
+As shown in Table 11, the results demonstrate our synthetic data’s strong capability to train performant
+models, with consistently high scores across all metrics indicating successful knowledge transfer
+from synthetic to real data scenarios. These findings validate that models trained on our synthetic
+30
+--- PAGE 31 ---
+data can effectively generalize to real-world applications while maintaining robust classification
+performance.
+Table 11: Machine Learning Efficiency (MLE) evaluation using XGBoost classifier.
+Metric binary f1 roc auc weighted f1 accuracy
+best f1 scores 0.884 0.9767 0.9037 0.9247
+best weighted scores 0.884 0.9767 0.9037 0.9247
+best auroc scores 0.8852 0.9735 0.9044 0.9247
+best acc scores 0.884 0.9767 0.9037 0.9247
+best avg scores 0.884 0.9767 0.9037 0.9247
+F.2.4 Privacy Evaluation
+We evaluate privacy protection using the Distance to Closest Record (DCR) metric by first prepro-
+cessing data: numerical features are normalized by their range, and categorical features are one-hot
+encoded to standardize feature scales for consistent distance calculations. For each synthetic record,
+the L1 distance (sum of absolute differences) to all real records and all test records is computed,
+an
+----------------------------------------------------
+
+=================== FOUND Table 1 ===================
+narios. These findings validate that models trained on our synthetic
+30
+--- PAGE 31 ---
+data can effectively generalize to real-world applications while maintaining robust classification
+performance.
+Table 11: Machine Learning Efficiency (MLE) evaluation using XGBoost classifier.
+Metric binary f1 roc auc weighted f1 accuracy
+best f1 scores 0.884 0.9767 0.9037 0.9247
+best weighted scores 0.884 0.9767 0.9037 0.9247
+best auroc scores 0.8852 0.9735 0.9044 0.9247
+best acc scores 0.884 0.9767 0.9037 0.9247
+best avg scores 0.884 0.9767 0.9037 0.9247
+F.2.4 Privacy Evaluation
+We evaluate privacy protection using the Distance to Closest Record (DCR) metric by first prepro-
+cessing data: numerical features are normalized by their range, and categorical features are one-hot
+encoded to standardize feature scales for consistent distance calculations. For each synthetic record,
+the L1 distance (sum of absolute differences) to all real records and all test records is computed,
+and the minimum distance for each synthetic record in both groups is identified. The DCR score is
+then calculated as the proportion of synthetic records where the closest real record is closer than the
+closest test record. A score approaching 0.5 indicates that synthetic data is equidistant to real and
+test datasets on average, suggesting stronger privacy protection by reducing the risk of re-identifying
+specific real in
+----------------------------------------------------
+
+=================== FOUND Table 2 ===================
+ addresses the critical need for clinically valid yet privacy-preserving data in
+computational psychiatry by introducing an open-source collection of 1,173 synthetic cases, as the
+statistics shown in Table 2. Each case captures the essential characteristics of psychiatric assessments
+through 25 carefully selected features, including 16 diagnostic questions, 8 standard scale scores, and
+expert-verified mood disorder labels. A data example is shown in Appendix F.1.
+Table 2: Descriptive statistics of the synthetic MoodSyn dataset. Positive counts represent cases with
+mood disorder diagnoses, while negative counts indicate an absence of mood disorders.
+positive amount negative amount Total
+cases for retieval 687 419 1106
+cases for test 73 67 140
+Dataset Construction. The MoodSyn dataset is constructed on an advanced synthesis pipeline
+built upon the TabSyn framework [ 20], which integrates variational autoencoders with diffusion
+models through several technical innovations. The architecture employs adaptive tokenization and
+hierarchical encoding to maintain the complex relationships between clinical features, while a condi-
+tional denoising process preserves the nuanced symptom patterns characteristic of mood disorders.
+During generation, dynamic loss weighting ensures the mathematical consistency between individual
+question responses and their corresponding scale scores, and conte
+----------------------------------------------------
+
+=================== FOUND Table 2 ===================
+tric assessments
+through 25 carefully selected features, including 16 diagnostic questions, 8 standard scale scores, and
+expert-verified mood disorder labels. A data example is shown in Appendix F.1.
+Table 2: Descriptive statistics of the synthetic MoodSyn dataset. Positive counts represent cases with
+mood disorder diagnoses, while negative counts indicate an absence of mood disorders.
+positive amount negative amount Total
+cases for retieval 687 419 1106
+cases for test 73 67 140
+Dataset Construction. The MoodSyn dataset is constructed on an advanced synthesis pipeline
+built upon the TabSyn framework [ 20], which integrates variational autoencoders with diffusion
+models through several technical innovations. The architecture employs adaptive tokenization and
+hierarchical encoding to maintain the complex relationships between clinical features, while a condi-
+tional denoising process preserves the nuanced symptom patterns characteristic of mood disorders.
+During generation, dynamic loss weighting ensures the mathematical consistency between individual
+question responses and their corresponding scale scores, and context-aware sampling maintains
+clinically meaningful feature correlations. The construction process is detailed in Appendix F.1.
+Dataset Evaluation. Following Zhang et al. [20], we conduct a comprehensive evaluation of
+MoodSyn across five critical dimensions: statistical
+----------------------------------------------------
+
+=================== FOUND Table 3 ===================
+sophisticated combination of innovations, each addressing specific limitations in
+conventional psychiatric assessment methods while working in concert to achieve more accurate and
+reliable diagnoses.
+Table 3: Diagnosis performances of all methods on real data.
+Model Sensitivity Accuracy MCC Macro F1
+in-context learning
+LLaMA3-8B-Instruct 0.393 0.506 0.315 0.492
+Mistral-7B-Instruct-v0.3 0.456 0.597 0.411 0.397
+GPT-4o 0.631 0.797 0.639 0.792
+Deepseek-V3 0.703 0.847 0.716 0.841
+GPT-4o based agents
+Angel.RGPT−4o 0.840 0.920 0.829 0.913
+Angel.DGPT−4o 0.845 0.923 0.837 0.917
+Angel.CGPT−4o 0.848 0.914 0.814 0.906
+multi-AngelsGPT−4o 0.881 0.925 0.834 0.917
+Deepseek-V3 based agents
+Angel.RDeepseek −V3 0.863 0.927 0.841 0.920
+Angel.DDeepseek −V3 0.864 0.920 0.823 0.911
+Angel.CDeepseek −V3 0.858 0.922 0.829 0.914
+multi-AngelsDeepseek −V3 0.866 0.923 0.832 0.916
+Table 4: Diagnosis performances of all methods on synthetic data.
+Method Recall Accuracy MCC Macro F1
+in-context learning
+LLaMA3-8B-Instruct 0.557 0.564 0.221 0.435
+Mistral-7B-Instruct-v0.3 0.589 0.636 0.375 0.563
+Deepseek-V3 0.761 0.821 0.664 0.816
+Deepseek-V3 based agents
+Angel.RDeepseek −V3 0.778 0.8 0.601 0.798
+Angel.DDeepseek −V3 0.787 0.807 0.615 0.805
+Angel.CDeepseek −V3 0.816 0.821 0.642 0.821
+multi-AngelsDeepseek −V3 0.824 0.821 0.642 0.821
+4.3 Ablation Study
+In this section, we adapt Angel.R on real data to test the effic
+----------------------------------------------------
+
+=================== FOUND Table 4 ===================
+ek-V3 based agents
+Angel.RDeepseek −V3 0.863 0.927 0.841 0.920
+Angel.DDeepseek −V3 0.864 0.920 0.823 0.911
+Angel.CDeepseek −V3 0.858 0.922 0.829 0.914
+multi-AngelsDeepseek −V3 0.866 0.923 0.832 0.916
+Table 4: Diagnosis performances of all methods on synthetic data.
+Method Recall Accuracy MCC Macro F1
+in-context learning
+LLaMA3-8B-Instruct 0.557 0.564 0.221 0.435
+Mistral-7B-Instruct-v0.3 0.589 0.636 0.375 0.563
+Deepseek-V3 0.761 0.821 0.664 0.816
+Deepseek-V3 based agents
+Angel.RDeepseek −V3 0.778 0.8 0.601 0.798
+Angel.DDeepseek −V3 0.787 0.807 0.615 0.805
+Angel.CDeepseek −V3 0.816 0.821 0.642 0.821
+multi-AngelsDeepseek −V3 0.824 0.821 0.642 0.821
+4.3 Ablation Study
+In this section, we adapt Angel.R on real data to test the efficiency of processed medical records and
+selected scales.
+4.3.1 Medical Record Format
+In this section, we investigated whether structured medical records improve the performance of
+the agents. Initially, we tested different formats in the symptom matching process, which extracts
+diagnostic criteria from the DSM-5 based on a medical record. Comparing Setting 1 and Setting 2,
+we observed only a slight decline in the agents’ performance. Upon further analysis of the diagnostic
+criteria retrieved for a specific case, we found that the extracted criteria were highly relevant and
+similar. In most instances, the diagnostic criteria extracted under both experimenta
+----------------------------------------------------
+
+=================== FOUND Table 5 ===================
+typical or subtle
+symptoms of mood disorders. This highlights the importance of balancing structured data with rich,
+descriptive narratives to ensure accurate and comprehensive psychiatric diagnosis.
+Table 5: Diagnosis accuracy of different medical record formats in symptom matching and agent
+processing steps. The numbers indicate different combinations of experimental settings for ease of
+reference. In the experimental analysis, these settings are directly referred to as Setting 1, Setting 2
+and Setting 3.
+Symptom Matching Return to Agent ACC MCC
+1 unstructured unstructured 0.920 \ 0.829 \
+2 structured unstructured 0.918 0.002 ↓ 0.822 0.007 ↓
+3 structured structured 0.914 0.006 ↓ 0.814 0.015 ↓
+4.3.2 Selection of Scales
+In this section, we compared the diagnostic accuracy of Angel.R when using two different input
+strategies: providing 16 selected questions most relevant to mood disorders from the 13 scales, and
+providing the total scores of all 13 scales without any filtering. The results revealed a significant
+performance drop of 6.8% in accuracy when using the unfiltered total scores, highlighting the
+importance of question selection. This substantial decline underscores that the inclusion of less
+relevant or noisy data from unrelated questions can adversely impact the agent’s diagnostic precision.
+By focusing on the most pertinent questions, our agent achieves more reliable 
+----------------------------------------------------
+
+=================== FOUND Table 6 ===================
+a from unrelated questions can adversely impact the agent’s diagnostic precision.
+By focusing on the most pertinent questions, our agent achieves more reliable and accurate mood
+disorder assessments.
+Table 6: Diagnosis accuracy of selected and unselected scales used in the agent processing steps.
+The numbers indicate different combinations of experimental settings for ease of reference. In the
+experimental analysis, these settings are directly referred to as Setting 1 and Setting 4.
+Scale Used ACC MCC
+1 selected 0.920 \ 0.829 \
+4 unselected 0.852 0.068 ↓ 0.708 0.121 ↓
+4.4 Case Study
+To demonstrate the robustness and diagnostic capabilities of our agents, we present two critical
+scenarios: inter-scale conflicts and overlapping symptoms. In inter-scale conflict cases, clients
+may misjudge their condition in self-reported scales or, due to certain personality traits or stress
+responses, may not fully disclose their true feelings to clinicians. In such situations, our approach
+of grouping and analyzing similar questions across different scales proves invaluable, enabling the
+agent to identify inconsistencies and arrive at a more accurate diagnosis. Additionally, we examine
+cases with overlapping symptoms, where a single symptom may be indicative of multiple diseases,
+significantly complicating the diagnostic process. In these instances, simple symptom matching alone
+may fail to pin
+----------------------------------------------------

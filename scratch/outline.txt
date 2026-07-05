@@ -1,0 +1,21 @@
+1 Introduction
+2 Retrieval-augmented Multi-agent Framework
+2.1 Granular-scale Analysis
+2.2 Retrieval Datastore
+2.3 Diagnostic Agents
+3 MoodSyn Dataset
+4 Experiment
+4.1 Experimental Settings
+190 cases of other mental disorders. Cases without mental disorders contain only scale data and no
+4.2 Analysis of Experimental Results
+4.3 Ablation Study
+4.3.1 Medical Record Format
+1 unstructured unstructured 0.920 \ 0.829 \
+2 structured unstructured 0.918 0.002 ↓ 0.822 0.007 ↓
+3 structured structured 0.914 0.006 ↓ 0.814 0.015 ↓
+4.3.2 Selection of Scales
+1 selected 0.920 \ 0.829 \
+4 unselected 0.852 0.068 ↓ 0.708 0.121 ↓
+4.4 Case Study
+4.5 Error Analysis
+5 Conclusion
